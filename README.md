@@ -1,5 +1,7 @@
 # FoxBox
 
+**Site en ligne : https://liskode.github.io/foxbox/**
+
 Cartes de révision (boîte de Leitner) pilotées par le professeur : le professeur crée et publie les cartes
 séquence par séquence, les élèves révisent chaque jour, et le professeur suit la progression.
 
@@ -51,9 +53,18 @@ Changer de navigateur = repartir de zéro. Le bouton « Tout effacer » (onglet 
 - RGPD / droit à l'image : photos d'élèves mineurs = données personnelles ; usage interne au professeur, avec
   l'accord de l'établissement. En ligne, elles seront dans un espace de stockage privé, visibles des seuls professeurs de l'élève (et de l'élève).
 
+## Version en ligne
+
+- Site publié automatiquement par GitHub Pages à chaque modification (`.github/workflows/deploy.yml`).
+- Base Supabase « foxbox » (région Paris) : schéma et règles d'accès dans `supabase/migrations/`, fonction serveur
+  de création des comptes élèves dans `supabase/functions/students/`.
+- Comptes professeurs : inscription sur le site, réservée aux adresses de la table `allowed_teachers`.
+- Comptes élèves : créés par le professeur (import CSV), identifiant + mot de passe, sans e-mail.
+- L'application garde une copie locale et se synchronise (indicateur ✓ / ⟳ en haut à droite).
+- Sans fichier `.env.local`, `npm run dev` lance la démo 100 % locale.
+
 ## Prochaines étapes
 
-- Mise en ligne : base Supabase (comptes, données partagées entre ordinateurs et téléphones) + hébergement GitHub Pages.
 - Comptes professeurs multiples, établissements, invitations de collègues.
 - Export / import de paquets entre professeurs.
 
