@@ -84,9 +84,9 @@ function Session({ entries, teacherId, onEnd }: { entries: Entry[]; teacherId: s
       if (ev.key === ' ' || ev.key === 'Enter') {
         ev.preventDefault();
         show();
-      } else if (ev.key === '1') answer('easy');
+      } else if (ev.key === '1') answer('forgot');
       else if (ev.key === '2') answer('hard');
-      else if (ev.key === '3') answer('forgot');
+      else if (ev.key === '3') answer('easy');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -136,14 +136,14 @@ function Session({ entries, teacherId, onEnd }: { entries: Entry[]; teacherId: s
         </button>
       ) : (
         <div className="answers">
-          <button className="easy" onClick={() => answer('easy')}>
-            Facile
+          <button className="forgot" onClick={() => answer('forgot')}>
+            Je ne sais pas
           </button>
           <button className="hard" onClick={() => answer('hard')}>
             Dur
           </button>
-          <button className="forgot" onClick={() => answer('forgot')}>
-            Je ne sais pas
+          <button className="easy" onClick={() => answer('easy')}>
+            Facile
           </button>
         </div>
       )}

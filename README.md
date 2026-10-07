@@ -29,7 +29,8 @@ Changer de navigateur = repartir de zéro. Le bouton « Tout effacer » (onglet 
 - Découpage : Séquence › Séance. Une carte peut appartenir à plusieurs séquences ; elle n'est jamais révisée en double.
 - Publication d'une séquence ou d'une séance pour une classe, à une date choisie (possible à l'avance).
 - Leitner 7 boîtes, intervalles 1-2-4-8-16-32-64 jours.
-  - Vert « Facile » : boîte suivante. Orange « Dur » : reste dans sa boîte. Rouge « Je ne sais pas » : boîte 1 (règle
+  - Boutons de gauche à droite : rouge « Je ne sais pas », orange « Dur », vert « Facile » (touches 1, 2, 3).
+  - Vert : boîte suivante. Orange : reste dans sa boîte. Rouge : boîte 1 (règle
     stricte, par défaut) ou boîte précédente (règle douce), réglable élève par élève par le professeur.
   - Nouvelle carte : vert → boîte 2, orange/rouge → boîte 1.
 - Objectif quotidien par matière, réglable par l'élève et par le professeur. Cartes en retard d'abord, puis les nouvelles.

@@ -47,9 +47,9 @@ export function ReviewSession() {
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         flip();
-      } else if (e.key === '1') answer('easy');
+      } else if (e.key === '1') answer('forgot');
       else if (e.key === '2') answer('hard');
-      else if (e.key === '3') answer('forgot');
+      else if (e.key === '3') answer('easy');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -66,9 +66,9 @@ export function ReviewSession() {
         <h1 className="title">{total ? 'Bravo !' : 'Rien à revoir'}</h1>
         {total > 0 && (
           <div className="row" style={{ justifyContent: 'center' }}>
-            <span className="chip" style={{ background: 'var(--easy)', color: '#fff' }}>{tally.easy} facile</span>
-            <span className="chip" style={{ background: 'var(--hard)' }}>{tally.hard} dur</span>
             <span className="chip" style={{ background: 'var(--forgot)', color: '#fff' }}>{tally.forgot} à revoir</span>
+            <span className="chip" style={{ background: 'var(--hard)' }}>{tally.hard} dur</span>
+            <span className="chip" style={{ background: 'var(--easy)', color: '#fff' }}>{tally.easy} facile</span>
           </div>
         )}
         <Link to="/eleve" className="btn primary big">
@@ -101,14 +101,14 @@ export function ReviewSession() {
           </button>
         ) : (
           <div className="answers">
-            <button className="easy" onClick={() => answer('easy')}>
-              Facile
+            <button className="forgot" onClick={() => answer('forgot')}>
+              Je ne sais pas
             </button>
             <button className="hard" onClick={() => answer('hard')}>
               Dur
             </button>
-            <button className="forgot" onClick={() => answer('forgot')}>
-              Je ne sais pas
+            <button className="easy" onClick={() => answer('easy')}>
+              Facile
             </button>
           </div>
         )}
