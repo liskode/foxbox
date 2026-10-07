@@ -1,0 +1,173 @@
+// Base de données locale (navigateur). Les tables reprennent le futur schéma Supabase
+// pour que la migration se limite à remplacer ce fichier et les fonctions d'accès.
+import Dexie, { type Table } from 'dexie';
+
+export type Rating = 'easy' | 'hard' | 'forgot';
+export type Rule = 'strict' | 'douce';
+
+export interface Card {
+  id: string;
+  code: string; // code unique FoxBox, ex. C0042
+  sourceRef?: string; // référence d'origine, ex. 410FC01
+  ankiGuid?: string;
+  subject: string;
+  level?: string; // ex. "4e"
+  theme?: string; // ex. "Matière"
+  tags: string[];
+  front: string; // HTML ; images référencées par src="media:ID"
+  back: string;
+  ocrFront?: string;
+  ocrBack?: string;
+  ocrDone?: boolean;
+  createdAt: number;
+  updatedAt: number;
+  deleted?: boolean;
+}
+
+export interface Media {
+  id: string;
+  name: string;
+  blob: Blob;
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  login: string;
+  password: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  schoolYear: string;
+  subject: string;
+  teacherIds: string[];
+  archived?: boolean;
+}
+
+export interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  login: string;
+  password: string;
+  rule: Rule;
+  goals: Record<string, number>; // objectif quotidien par matière
+}
+
+export interface Membership {
+  id: string;
+  groupId: string;
+  studentId: string;
+}
+
+export interface Unit {
+  id: string;
+  kind: 'sequence' | 'seance';
+  parentId?: string;
+  subject: string;
+  level?: string;
+  name: string;
+  order: number;
+}
+
+export interface UnitCard {
+  id: string; // unitId|cardId
+  unitId: string;
+  cardId: string;
+}
+
+export interface Publication {
+  id: string;
+  groupId: string;
+  unitId: string;
+  date: string; // AAAA-MM-JJ
+}
+
+export interface StudentCard {
+  id: string; // studentId|cardId
+  studentId: string;
+  cardId: string;
+  box: number; // 0 = nouvelle, 1 à 7 = boîtes de Leitner
+  due: string;
+  reps: number;
+  lapses: number;
+  lastReview?: string;
+}
+
+export interface Review {
+  id?: number;
+  studentId: string;
+  cardId: string;
+  subject: string;
+  date: string;
+  ts: number;
+  rating: Rating;
+  boxBefore: number;
+  boxAfter: number;
+}
+
+export interface Meta {
+  key: string;
+  value: unknown;
+}
+
+class FoxBoxDB extends Dexie {
+  cards!: Table<Card, string>;
+  media!: Table<Media, string>;
+  teachers!: Table<Teacher, string>;
+  groups!: Table<Group, string>;
+  students!: Table<Student, string>;
+  memberships!: Table<Membership, string>;
+  units!: Table<Unit, string>;
+  unitCards!: Table<UnitCard, string>;
+  publications!: Table<Publication, string>;
+  studentCards!: Table<StudentCard, string>;
+  reviews!: Table<Review, number>;
+  meta!: Table<Meta, string>;
+
+  constructor() {
+    super('foxbox');
+    this.version(1).stores({
+      cards: 'id, code, sourceRef, ankiGuid, subject, *tags',
+      media: 'id',
+      teachers: 'id, &login',
+      groups: 'id',
+      students: 'id, &login',
+      memberships: 'id, groupId, studentId',
+      units: 'id, parentId, subject',
+      unitCards: 'id, unitId, cardId',
+      publications: 'id, groupId, unitId',
+      studentCards: 'id, studentId, cardId',
+      reviews: '++id, studentId, cardId, date, [studentId+date]',
+      meta: 'key',
+    });
+    this.version(2).stores({ media: 'id, name' });
+  }
+}
+
+export const db = new FoxBoxDB();
+
+export const uid = () => crypto.randomUUID();
+
+export const SUBJECTS = ['Physique-Chimie', 'SVT', 'Technologie', 'Mathématiques'];
+
+// Compte professeur de démonstration (à remplacer par Supabase Auth en production)
+export const DEMO_TEACHER = { id: 'prof-demo', name: 'E. Renard', login: 'prof', password: 'foxbox' };
+
+export async function ensureSeed() {
+  if (!(await db.teachers.get(DEMO_TEACHER.id))) await db.teachers.put(DEMO_TEACHER);
+}
+
+export async function nextCardCode(): Promise<string> {
+  const m = await db.meta.get('cardCounter');
+  const n = ((m?.value as number) ?? 0) + 1;
+  await db.meta.put({ key: 'cardCounter', value: n });
+  return 'C' + String(n).padStart(4, '0');
+}
+
+export async function resetAll() {
+  await db.delete();
+  location.reload();
+}
