@@ -1,11 +1,75 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
-import { importApkg, type ImportReport } from '../../lib/apkg';
+import { importApkg, undoImport, importReviewCount, type ImportReport } from '../../lib/apkg';
 import { db, SUBJECTS, resetAll } from '../../lib/db';
 import { runOcr, subscribeOcr, type OcrState } from '../../lib/ocr';
 import { generateDemo } from '../../lib/demo';
 import { ONLINE } from '../../lib/supabase';
+
+function History() {
+  const imports = useLiveQuery(() => db.imports.orderBy('date').reverse().limit(10).toArray(), [], []);
+  const [busy, setBusy] = useState('');
+
+  async function undo(id: string, name: string, added: number, updated: number) {
+    const reviews = await importReviewCount(id);
+    const warn = reviews
+      ? `\n\nAttention : les élèves ont déjà fait ${reviews} révision(s) sur ces cartes. Leur historique est conservé, mais les cartes supprimées disparaîtront de leurs révisions.`
+      : '';
+    if (!confirm(`Annuler l'import « ${name} » ?\n\n• ${added} carte(s) ajoutée(s) seront supprimées\n• ${updated} carte(s) mise(s) à jour reprendront leur contenu d'avant${warn}`)) return;
+    setBusy(id);
+    await undoImport(id);
+    setBusy('');
+  }
+
+  if (!imports.length) return null;
+  return (
+    <div className="panel stack">
+      <h2>Derniers imports</h2>
+      <div style={{ overflowX: 'auto' }}>
+        <table className="list">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Fichier</th>
+              <th>Matière</th>
+              <th>Résultat</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {imports.map((i) => (
+              <tr key={i.id} style={{ opacity: i.undoneAt ? 0.55 : 1 }}>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  {new Date(i.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </td>
+                <td>{i.fileName}</td>
+                <td>{i.subject}</td>
+                <td className="small">
+                  {i.added.length} ajoutée(s), {i.updated} mise(s) à jour
+                  {i.skipped > 0 && `, ${i.skipped} ignorée(s)`}
+                </td>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {i.undoneAt ? (
+                    <span className="small muted">annulé le {new Date(i.undoneAt).toLocaleDateString('fr-FR')}</span>
+                  ) : (
+                    <button className="btn small danger" disabled={!!busy} onClick={() => undo(i.id, i.fileName, i.added.length, i.updated)}>
+                      {busy === i.id ? 'Annulation…' : 'Annuler cet import'}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <span className="small muted">
+        Annuler un import supprime les cartes qu'il a ajoutées (y compris dans les séquences) et rend aux cartes qu'il a
+        modifiées leur contenu d'avant. L'historique de révision des élèves est conservé.
+      </span>
+    </div>
+  );
+}
 
 export function ImportPage() {
   const [subject, setSubject] = useState(SUBJECTS[0]);
@@ -96,6 +160,8 @@ export function ImportPage() {
           </div>
         )}
       </div>
+
+      <History />
 
       <div className="panel stack">
         <h2>2. Lecture du texte des images</h2>

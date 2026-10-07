@@ -2,7 +2,7 @@
 import JSZip from 'jszip';
 import { decompress } from 'fzstd';
 import initSqlJs, { type Database } from 'sql.js';
-import { db, uid, nextCardCode, type Card } from './db';
+import { db, uid, nextCardCode, type Card, type CardSnapshot } from './db';
 
 export const THEMES: Record<string, string> = {
   '1': 'Matière',
@@ -13,6 +13,7 @@ export const THEMES: Record<string, string> = {
 };
 
 export interface ImportReport {
+  importId: string;
   added: number;
   updated: number;
   skipped: { reason: string; preview: string }[];
@@ -120,7 +121,9 @@ export async function importApkg(
   }
   const byName = new Map(Object.entries(mediaNames).map(([idx, name]) => [name, idx]));
 
-  const report: ImportReport = { added: 0, updated: 0, skipped: [], media: 0 };
+  const report: ImportReport = { importId: uid(), added: 0, updated: 0, skipped: [], media: 0 };
+  const addedIds: string[] = [];
+  const before: CardSnapshot[] = [];
   const mediaIds = new Map<string, string>(); // nom -> id FoxBox
 
   async function mediaFor(name: string): Promise<string | null> {
@@ -193,6 +196,10 @@ export async function importApkg(
     const now = Date.now();
     if (existing) {
       const changed = existing.front !== front || existing.back !== back;
+      if (changed || existing.deleted || existing.sourceRef !== (sourceRef ?? existing.sourceRef)) {
+        const { id, front: f, back: b, sourceRef: sr, deleted, ocrDone, ocrFront, ocrBack } = existing;
+        before.push({ id, front: f, back: b, sourceRef: sr, deleted, ocrDone, ocrFront, ocrBack });
+      }
       await db.cards.update(existing.id, {
         front,
         back,
@@ -218,8 +225,37 @@ export async function importApkg(
         updatedAt: now,
       };
       await db.cards.put(card);
+      addedIds.push(card.id);
       report.added++;
     }
   }
+  await db.imports.put({
+    id: report.importId,
+    date: Date.now(),
+    fileName: file.name,
+    subject,
+    added: addedIds,
+    updated: report.updated,
+    before,
+    skipped: report.skipped.length,
+  });
   return report;
+}
+
+// Annule un import : les cartes créées sont supprimées (l'historique des élèves est conservé),
+// les cartes modifiées retrouvent leur contenu d'avant l'import.
+export async function undoImport(importId: string) {
+  const rec = await db.imports.get(importId);
+  if (!rec || rec.undoneAt) return;
+  const now = Date.now();
+  for (const id of rec.added) await db.cards.update(id, { deleted: true, updatedAt: now });
+  for (const snap of rec.before) await db.cards.update(snap.id, { ...snap, updatedAt: now });
+  await db.imports.update(importId, { undoneAt: now });
+}
+
+// Nombre de révisions déjà faites par les élèves sur les cartes d'un import
+export async function importReviewCount(importId: string) {
+  const rec = await db.imports.get(importId);
+  if (!rec) return 0;
+  return db.reviews.where('cardId').anyOf([...rec.added, ...rec.before.map((b) => b.id)]).count();
 }

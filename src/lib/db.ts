@@ -124,6 +124,29 @@ export interface Meta {
   value: unknown;
 }
 
+// Historique des imports Anki, pour pouvoir annuler un import
+export interface CardSnapshot {
+  id: string;
+  front: string;
+  back: string;
+  sourceRef?: string;
+  deleted?: boolean;
+  ocrDone?: boolean;
+  ocrFront?: string;
+  ocrBack?: string;
+}
+export interface ImportRecord {
+  id: string;
+  date: number;
+  fileName: string;
+  subject: string;
+  added: string[]; // cartes créées par cet import
+  updated: number;
+  before: CardSnapshot[]; // état des cartes existantes modifiées, avant l'import
+  skipped: number;
+  undoneAt?: number;
+}
+
 // Modifications locales en attente d'envoi vers la base en ligne
 export interface Outbox {
   key: string; // table|id
@@ -144,6 +167,7 @@ class FoxBoxDB extends Dexie {
   studentCards!: Table<StudentCard, string>;
   reviews!: Table<Review, string>;
   outbox!: Table<Outbox, string>;
+  imports!: Table<ImportRecord, string>;
   meta!: Table<Meta, string>;
   trombi!: Table<TrombiCard, string>;
 
@@ -166,6 +190,7 @@ class FoxBoxDB extends Dexie {
       outbox: 'key',
     });
     this.version(2).stores({ media: 'id, name' });
+    this.version(3).stores({ imports: 'id, date' });
   }
 }
 

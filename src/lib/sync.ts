@@ -29,6 +29,7 @@ const SPECS: Record<string, TableSpec> = {
   studentCards: { remote: 'student_cards', cols: (s) => ({ student_id: s.studentId }) },
   reviews: { remote: 'reviews', cols: (r) => ({ student_id: r.studentId }) },
   trombi: { remote: 'trombi', cols: (t) => ({ teacher_id: t.teacherId }) },
+  imports: { remote: 'imports', cols: (i) => ({ owner_id: i.ownerId ?? me }) },
 };
 
 // ---------- Envoi ----------
