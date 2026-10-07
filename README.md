@@ -1,6 +1,6 @@
 # FoxBox
 
-**Site en ligne : https://liskode.github.io/foxbox/**
+**Site en ligne : https://foxbox.physifox.fr/**
 
 Cartes de révision (boîte de Leitner) pilotées par le professeur : le professeur crée et publie les cartes
 séquence par séquence, les élèves révisent chaque jour, et le professeur suit la progression.
