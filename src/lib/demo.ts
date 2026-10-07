@@ -3,6 +3,7 @@ import { db, uid, DEMO_TEACHER, type Group, type Review, type StudentCard, type 
 import { addDays, today } from './dates';
 import { applyAnswer, buildQueue, DEFAULT_GOAL, type Available } from './leitner';
 import { randomPassword, normalize } from './students';
+import { demoAvatar } from './photos';
 
 const FIRST = ['Emma', 'Lucas', 'Jade', 'Hugo', 'Léa', 'Louis', 'Chloé', 'Gabriel', 'Inès', 'Arthur', 'Manon', 'Jules',
   'Lina', 'Adam', 'Zoé', 'Nathan', 'Camille', 'Raphaël', 'Sarah', 'Tom', 'Alice', 'Noah', 'Lola', 'Ethan', 'Rose',
@@ -91,7 +92,9 @@ export async function generateDemo() {
         password: randomPassword(),
         rule: 'strict',
         goals: { [SUBJECT]: pick([10, 15, 15, 20, 25]) },
+        photoId: uid(),
       };
+      await db.media.put({ id: s.photoId!, name: 'avatar.svg', blob: demoAvatar(gi * 100 + i + 1) });
       await db.students.put(s);
       await db.memberships.put({ id: `${g.id}|${s.id}`, groupId: g.id, studentId: s.id });
 

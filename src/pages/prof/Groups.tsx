@@ -11,6 +11,8 @@ import { CardDetail } from '../../components/CardDetail';
 import { Heatmap, Pct, RateBar } from '../../components/widgets';
 import { heatmapCounts } from '../../lib/stats';
 import { DEFAULT_GOAL } from '../../lib/leitner';
+import { Avatar, StudentName } from '../../components/Avatar';
+import { importPhotos } from '../../lib/photos';
 
 function schoolYear() {
   const d = new Date();
@@ -110,8 +112,8 @@ function StatsTab({ groupId }: { groupId: string }) {
           {dropped.length ? (
             <div className="row" style={{ gap: 6 }}>
               {dropped.map((r) => (
-                <Link key={r.student.id} to={`/prof/eleves/${r.student.id}`} className="chip" style={{ textDecoration: 'none' }}>
-                  {r.student.firstName} {r.student.lastName[0]}. · {r.inactiveDays === null ? 'jamais' : `${r.inactiveDays} j`}
+                <Link key={r.student.id} to={`/prof/eleves/${r.student.id}`} className="chip" style={{ textDecoration: 'none', padding: '2px 10px 2px 2px', background: 'var(--paper)' }}>
+                  <StudentName student={r.student} size={26} short /> · {r.inactiveDays === null ? 'jamais' : `${r.inactiveDays} j`}
                 </Link>
               ))}
             </div>
@@ -166,7 +168,7 @@ function StatsTab({ groupId }: { groupId: string }) {
                   <td>{i + 1}</td>
                   <td>
                     <b>
-                      {r.student.lastName} {r.student.firstName}
+                      <StudentName student={r.student} />
                     </b>
                   </td>
                   <td>
@@ -214,6 +216,15 @@ function StudentsTab({ group }: { group: Group }) {
     setPreview(null);
   }
 
+  async function onPhotos(list: FileList | null) {
+    if (!list?.length) return;
+    const r = await importPhotos([...list], students);
+    setMsg(
+      `${r.matched} photo(s) associée(s).` +
+        (r.unmatched.length ? ` Non reconnue(s) : ${r.unmatched.join(', ')} — ajoutez-les à la main en cliquant sur l'avatar.` : ''),
+    );
+  }
+
   async function addOne() {
     const full = prompt('Prénom et nom de l’élève (ex. « Léa Martin »)');
     if (!full) return;
@@ -232,6 +243,10 @@ function StudentsTab({ group }: { group: Group }) {
               Importer un CSV
               <input type="file" accept=".csv,.txt" hidden onChange={(e) => onCsv(e.target.files?.[0])} />
             </label>
+            <label className="btn">
+              📷 Importer des photos
+              <input type="file" accept="image/*" multiple hidden onChange={(e) => onPhotos(e.target.files)} />
+            </label>
             <button className="btn ghost" onClick={addOne}>
               + Élève
             </button>
@@ -243,6 +258,9 @@ function StudentsTab({ group }: { group: Group }) {
         <span className="small muted">
           CSV accepté : colonnes « Nom ; Prénom » (avec ou sans en-tête), ou export ENT/Pronote avec une colonne « Élève ».
           Un élève déjà connu de FoxBox est réutilisé (pas de doublon, il garde ses cartes).
+          <br />
+          Photos : sélectionnez plusieurs fichiers nommés avec le nom et le prénom (ex. « DUPONT Marie.jpg »,
+          « marie.dupont.png ») ; ils sont associés automatiquement. Un clic sur l'avatar change une photo.
         </span>
         {msg && <div className="notice">{msg}</div>}
         {preview && (
@@ -276,11 +294,14 @@ function StudentsTab({ group }: { group: Group }) {
             {students.map((s) => (
               <tr key={s.id}>
                 <td>
-                  <Link to={`/prof/eleves/${s.id}`}>
-                    <b>
-                      {s.lastName} {s.firstName}
-                    </b>
-                  </Link>
+                  <span className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+                    <Avatar student={s} size={40} editable />
+                    <Link to={`/prof/eleves/${s.id}`}>
+                      <b>
+                        {s.lastName} {s.firstName}
+                      </b>
+                    </Link>
+                  </span>
                 </td>
                 <td className="code">{s.login}</td>
                 <td className="code">{s.password}</td>

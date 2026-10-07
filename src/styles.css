@@ -182,6 +182,10 @@ table.list tr.click:hover td { background: #faf7ef; }
   border-left: var(--border); z-index: 31; overflow-y: auto; padding: 20px;
 }
 
+/* Trombi */
+.trombi-cell.hidden-name .trombi-name { visibility: hidden; }
+.trombi-cell.hidden-name:hover .trombi-name { visibility: visible; }
+
 /* Fiches identifiants */
 .tickets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
 .ticket { border: 1px dashed #999; padding: 12px 14px; display: flex; gap: 10px; align-items: center; break-inside: avoid; }

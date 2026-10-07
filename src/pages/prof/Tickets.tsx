@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
+import { Avatar } from '../../components/Avatar';
 
 export function Tickets() {
   const { id } = useParams();
@@ -25,7 +26,7 @@ export function Tickets() {
       <div className="tickets">
         {students.map((s) => (
           <div key={s.id} className="ticket">
-            <img src="./logo.png" alt="" />
+            {s.photoId ? <Avatar student={s} size={48} /> : <img src="./logo.png" alt="" />}
             <div>
               <div className="who">
                 {s.firstName} {s.lastName} <span className="muted small">· {group?.name}</span>

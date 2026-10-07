@@ -54,6 +54,16 @@ export interface Student {
   password: string;
   rule: Rule;
   goals: Record<string, number>; // objectif quotidien par matière
+  photoId?: string; // media
+}
+
+// Espace Trombi : progression du professeur dans la mémorisation des élèves
+export interface TrombiCard {
+  id: string; // teacherId|studentId
+  teacherId: string;
+  studentId: string;
+  box: number;
+  due: string;
 }
 
 export interface Membership {
@@ -126,6 +136,7 @@ class FoxBoxDB extends Dexie {
   studentCards!: Table<StudentCard, string>;
   reviews!: Table<Review, number>;
   meta!: Table<Meta, string>;
+  trombi!: Table<TrombiCard, string>;
 
   constructor() {
     super('foxbox');
@@ -144,6 +155,7 @@ class FoxBoxDB extends Dexie {
       meta: 'key',
     });
     this.version(2).stores({ media: 'id, name' });
+    this.version(3).stores({ trombi: 'id, teacherId' });
   }
 }
 

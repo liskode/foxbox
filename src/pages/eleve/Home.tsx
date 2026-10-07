@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/auth';
 import { db } from '../../lib/db';
 import { studentSubjects, todaySession } from '../../lib/leitner';
 import { Ring } from '../../components/widgets';
+import { Avatar } from '../../components/Avatar';
 
 export function StudentHome() {
   const { session } = useAuth();
@@ -23,7 +24,7 @@ export function StudentHome() {
   return (
     <div className="page narrow stack">
       <div className="row" style={{ gap: 14 }}>
-        <img src="./logo.png" alt="" style={{ width: 70 }} />
+        <Avatar student={student} size={70} />
         <h1 className="title" style={{ margin: 0 }}>Salut {student.firstName} !</h1>
       </div>
       {!subjects.length && <div className="notice">Tu n'es inscrit(e) dans aucune classe pour l'instant.</div>}

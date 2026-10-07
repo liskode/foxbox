@@ -38,6 +38,18 @@ Changer de navigateur = repartir de zéro. Le bouton « Tout effacer » (onglet 
   moins 3 fois, triée par taux de réussite.
 - Les élèves restent en base d'une année sur l'autre (pas de doublon à l'import CSV) et gardent leurs cartes ; une classe peut être archivée.
 
+## Photos et Trombi
+
+- Photo de l'élève affichée partout où apparaît son nom (classement, liste, fiche, accueil élève, fiches identifiants).
+- Import groupé : sélectionner plusieurs photos nommées « DUPONT Marie.jpg », « marie.dupont.png »… ; association
+  automatique (un nom ambigu n'est pas associé et est signalé). Clic sur un avatar pour ajouter/changer une photo.
+  Les photos sont réduites à 400 px.
+- Onglet **Trombi** (professeur) : galerie par classe (noms masquables) et entraînement Leitner pour mémoriser les
+  prénoms (séances de 20, un visage oublié revient en fin de séance). Progression propre à chaque professeur.
+- Données de démo : avatars dessinés (pas de vraies photos).
+- RGPD / droit à l'image : photos d'élèves mineurs = données personnelles ; usage interne au professeur, avec
+  l'accord de l'établissement. En ligne, elles seront dans un espace de stockage privé, visibles des seuls professeurs de l'élève (et de l'élève).
+
 ## Prochaines étapes
 
 - Mise en ligne : base Supabase (comptes, données partagées entre ordinateurs et téléphones) + hébergement GitHub Pages.

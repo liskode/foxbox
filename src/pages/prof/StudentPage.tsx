@@ -3,6 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Rule } from '../../lib/db';
 import { StudentReport } from '../../components/StudentReport';
 import { DEFAULT_GOAL } from '../../lib/leitner';
+import { Avatar } from '../../components/Avatar';
+import { removePhoto } from '../../lib/photos';
 
 export function StudentPage() {
   const { id } = useParams();
@@ -18,7 +20,16 @@ export function StudentPage() {
   return (
     <div className="page stack">
       <div className="spread">
-        <div>
+        <div className="row" style={{ gap: 16 }}>
+          <div className="stack" style={{ gap: 4, alignItems: 'center' }}>
+            <Avatar student={student} size={96} editable />
+            {student.photoId && (
+              <a href="#" className="small muted" onClick={(e) => (e.preventDefault(), removePhoto(student.id))}>
+                retirer
+              </a>
+            )}
+          </div>
+          <div>
           <a href="#" className="small muted" onClick={(e) => (e.preventDefault(), history.back())}>
             ← Retour
           </a>
@@ -27,6 +38,7 @@ export function StudentPage() {
           </h1>
           <div className="muted">
             {groups.map((g) => `${g.name} (${g.subject})`).join(' · ')} · identifiant <span className="code">{student.login}</span>
+          </div>
           </div>
         </div>
         <div className="panel row" style={{ padding: '10px 14px' }}>
