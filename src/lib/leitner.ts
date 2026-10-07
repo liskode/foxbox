@@ -1,5 +1,5 @@
 // Moteur de révision : boîte de Leitner à 7 boîtes.
-import { db, type Rating, type Rule, type StudentCard, type Review } from './db';
+import { db, uid, type Rating, type Rule, type StudentCard, type Review } from './db';
 import { addDays, today } from './dates';
 
 // Intervalle (en jours) avant la prochaine révision, selon la boîte atteinte.
@@ -35,7 +35,7 @@ export function applyAnswer(
     lapses: (prev?.lapses ?? 0) + (rating === 'forgot' ? 1 : 0),
     lastReview: day,
   };
-  return { sc, review: { studentId, cardId, subject, date: day, ts, rating, boxBefore, boxAfter } };
+  return { sc, review: { id: uid(), studentId, cardId, subject, date: day, ts, rating, boxBefore, boxAfter } };
 }
 
 export interface Available {

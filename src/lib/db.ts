@@ -1,6 +1,7 @@
 // Base de données locale (navigateur). Les tables reprennent le futur schéma Supabase
 // pour que la migration se limite à remplacer ce fichier et les fonctions d'accès.
 import Dexie, { type Table } from 'dexie';
+import { ONLINE, supabase } from './supabase';
 
 export type Rating = 'easy' | 'hard' | 'forgot';
 export type Rule = 'strict' | 'douce';
@@ -107,7 +108,7 @@ export interface StudentCard {
 }
 
 export interface Review {
-  id?: number;
+  id: string;
   studentId: string;
   cardId: string;
   subject: string;
@@ -123,6 +124,13 @@ export interface Meta {
   value: unknown;
 }
 
+// Modifications locales en attente d'envoi vers la base en ligne
+export interface Outbox {
+  key: string; // table|id
+  table: string;
+  id: string;
+}
+
 class FoxBoxDB extends Dexie {
   cards!: Table<Card, string>;
   media!: Table<Media, string>;
@@ -134,12 +142,13 @@ class FoxBoxDB extends Dexie {
   unitCards!: Table<UnitCard, string>;
   publications!: Table<Publication, string>;
   studentCards!: Table<StudentCard, string>;
-  reviews!: Table<Review, number>;
+  reviews!: Table<Review, string>;
+  outbox!: Table<Outbox, string>;
   meta!: Table<Meta, string>;
   trombi!: Table<TrombiCard, string>;
 
   constructor() {
-    super('foxbox');
+    super(ONLINE ? 'foxbox-online' : 'foxbox-v2');
     this.version(1).stores({
       cards: 'id, code, sourceRef, ankiGuid, subject, *tags',
       media: 'id',
@@ -151,11 +160,12 @@ class FoxBoxDB extends Dexie {
       unitCards: 'id, unitId, cardId',
       publications: 'id, groupId, unitId',
       studentCards: 'id, studentId, cardId',
-      reviews: '++id, studentId, cardId, date, [studentId+date]',
+      reviews: 'id, studentId, cardId, date, [studentId+date]',
       meta: 'key',
+      trombi: 'id, teacherId',
+      outbox: 'key',
     });
     this.version(2).stores({ media: 'id, name' });
-    this.version(3).stores({ trombi: 'id, teacherId' });
   }
 }
 
@@ -169,10 +179,15 @@ export const SUBJECTS = ['Physique-Chimie', 'SVT', 'Technologie', 'Mathématique
 export const DEMO_TEACHER = { id: 'prof-demo', name: 'E. Renard', login: 'prof', password: 'foxbox' };
 
 export async function ensureSeed() {
-  if (!(await db.teachers.get(DEMO_TEACHER.id))) await db.teachers.put(DEMO_TEACHER);
+  if (!ONLINE && !(await db.teachers.get(DEMO_TEACHER.id))) await db.teachers.put(DEMO_TEACHER);
 }
 
 export async function nextCardCode(): Promise<string> {
+  if (ONLINE) {
+    const { data, error } = await supabase.rpc('next_card_code');
+    if (error) throw error;
+    return data as string;
+  }
   const m = await db.meta.get('cardCounter');
   const n = ((m?.value as number) ?? 0) + 1;
   await db.meta.put({ key: 'cardCounter', value: n });

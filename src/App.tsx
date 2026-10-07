@@ -3,6 +3,9 @@ import { HashRouter, Navigate, NavLink, Route, Routes, Link } from 'react-router
 import { AuthProvider, useAuth } from './lib/auth';
 import { runOcr, subscribeOcr, type OcrState } from './lib/ocr';
 import { Login } from './pages/Login';
+import { Signup } from './pages/Signup';
+import { subscribeSync, type SyncState } from './lib/sync';
+import { ONLINE } from './lib/supabase';
 import { Dashboard } from './pages/prof/Dashboard';
 import { Cards } from './pages/prof/Cards';
 import { Sequences } from './pages/prof/Sequences';
@@ -31,12 +34,37 @@ function OcrBadge() {
   );
 }
 
+function SyncBadge() {
+  const [s, setS] = useState<SyncState | null>(null);
+  useEffect(() => {
+    const off = subscribeSync(setS);
+    return () => {
+      off();
+    };
+  }, []);
+  if (!s) return null;
+  if (s.error)
+    return (
+      <span className="chip" style={{ background: '#f6c9c3' }} title={s.error}>
+        ⚠ Hors ligne
+      </span>
+    );
+  if (s.syncing || s.pending)
+    return <span className="chip" title="Enregistrement en ligne">⟳ {s.pending || ''}</span>;
+  return (
+    <span className="chip" style={{ background: 'var(--paper)' }} title="Tout est enregistré en ligne">
+      ✓
+    </span>
+  );
+}
+
 function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode }) {
-  const { session, logout } = useAuth();
+  const { session, ready, logout } = useAuth();
   useEffect(() => {
     // Reprend la lecture des images interrompue (fermeture de l'onglet…)
     if (session?.role === 'prof') runOcr();
   }, [session]);
+  if (!ready) return null;
   if (!session) return <Navigate to="/" replace />;
   if (session.role !== role) return <Navigate to={session.role === 'prof' ? '/prof' : '/eleve'} replace />;
   const links =
@@ -68,6 +96,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           ))}
         </nav>
         <OcrBadge />
+        {ONLINE && <SyncBadge />}
         <button className="btn small ghost" onClick={logout}>
           Déconnexion
         </button>
@@ -83,6 +112,7 @@ export function App() {
       <HashRouter>
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/inscription" element={<Signup />} />
           <Route path="/prof" element={<Shell role="prof"><Dashboard /></Shell>} />
           <Route path="/prof/cartes" element={<Shell role="prof"><Cards /></Shell>} />
           <Route path="/prof/sequences" element={<Shell role="prof"><Sequences /></Shell>} />

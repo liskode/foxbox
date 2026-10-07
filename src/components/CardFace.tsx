@@ -3,14 +3,15 @@ import DOMPurify from 'dompurify';
 import renderMathInElement from 'katex/contrib/auto-render';
 import 'katex/dist/katex.min.css';
 import { db } from '../lib/db';
+import { fetchMedia } from '../lib/sync';
 
 const urlCache = new Map<string, string>();
 
 export async function mediaUrl(id: string): Promise<string | null> {
   if (urlCache.has(id)) return urlCache.get(id)!;
-  const m = await db.media.get(id);
-  if (!m) return null;
-  const u = URL.createObjectURL(m.blob);
+  const blob = (await db.media.get(id))?.blob ?? (await fetchMedia(id));
+  if (!blob) return null;
+  const u = URL.createObjectURL(blob);
   urlCache.set(id, u);
   return u;
 }

@@ -1,23 +1,29 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../lib/auth';
 import { db, DEMO_TEACHER } from '../lib/db';
+import { ONLINE } from '../lib/supabase';
 
 export function Login() {
-  const { session, login } = useAuth();
+  const { session, ready, login } = useAuth();
   const nav = useNavigate();
   const [l, setL] = useState('');
   const [p, setP] = useState('');
   const [err, setErr] = useState('');
-  const sample = useLiveQuery(() => db.students.limit(1).first());
+  const [busy, setBusy] = useState(false);
+  const sample = useLiveQuery(() => (ONLINE ? undefined : db.students.limit(1).first()));
 
+  if (!ready) return null;
   if (session) return <Navigate to={session.role === 'prof' ? '/prof' : '/eleve'} replace />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    setBusy(true);
+    setErr('');
     const s = await login(l, p);
-    if (!s) setErr('Identifiant ou mot de passe incorrect.');
+    setBusy(false);
+    if ('error' in s) setErr(s.error);
     else nav(s.role === 'prof' ? '/prof' : '/eleve');
   }
 
@@ -38,10 +44,17 @@ export function Login() {
           <input type="password" value={p} onChange={(e) => setP(e.target.value)} autoComplete="current-password" />
         </label>
         {err && <div style={{ color: 'var(--forgot)', fontWeight: 700 }}>{err}</div>}
-        <button className="btn primary big" type="submit">
-          Se connecter
+        <button className="btn primary big" type="submit" disabled={busy}>
+          {busy ? 'Connexion…' : 'Se connecter'}
         </button>
       </form>
+      {ONLINE ? (
+        <p className="small muted" style={{ textAlign: 'center', marginTop: 16 }}>
+          Élève : utilise l'identifiant et le mot de passe donnés par ton professeur.
+          <br />
+          Professeur : <Link to="/inscription">créer mon compte</Link>
+        </p>
+      ) : (
       <div className="notice small" style={{ marginTop: 20 }}>
         <b>Version de démonstration</b> — les données restent dans ce navigateur.
         <br />
@@ -53,6 +66,7 @@ export function Login() {
           </>
         )}
       </div>
+      )}
     </div>
   );
 }

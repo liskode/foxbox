@@ -92,7 +92,7 @@ export async function generateDemo() {
         password: randomPassword(),
         rule: 'strict',
         goals: { [SUBJECT]: pick([10, 15, 15, 20, 25]) },
-        photoId: uid(),
+        photoId: 'demo/' + uid(),
       };
       await db.media.put({ id: s.photoId!, name: 'avatar.svg', blob: demoAvatar(gi * 100 + i + 1) });
       await db.students.put(s);

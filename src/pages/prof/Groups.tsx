@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, SUBJECTS, type Group, type Rule } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { groupOverview } from '../../lib/stats';
-import { parseCsv, importStudents, createStudent, addToGroup, randomPassword, type ParsedRow } from '../../lib/students';
+import { parseCsv, importStudents, resetPassword, type ParsedRow } from '../../lib/students';
 import { frDate } from '../../lib/dates';
 import { CardFace } from '../../components/CardFace';
 import { CardDetail } from '../../components/CardDetail';
@@ -211,7 +211,13 @@ function StudentsTab({ group }: { group: Group }) {
 
   async function confirmImport() {
     if (!preview) return;
-    const r = await importStudents(preview, group.id, group.subject);
+    setMsg('Création des comptes…');
+    let r;
+    try {
+      r = await importStudents(preview, group.id, group.subject);
+    } catch (e) {
+      return setMsg('Erreur : ' + (e as Error).message);
+    }
     setMsg(`${r.created} élève(s) créé(s), ${r.reused} déjà connu(s) ajouté(s) à la classe.`);
     setPreview(null);
   }
@@ -229,8 +235,11 @@ function StudentsTab({ group }: { group: Group }) {
     const full = prompt('Prénom et nom de l’élève (ex. « Léa Martin »)');
     if (!full) return;
     const [first, ...rest] = full.trim().split(/\s+/);
-    const s = await createStudent(first, rest.join(' ') || '-');
-    await addToGroup(s.id, group.id, group.subject);
+    try {
+      await importStudents([{ firstName: first, lastName: rest.join(' ') || '-' }], group.id, group.subject);
+    } catch (e) {
+      setMsg('Erreur : ' + (e as Error).message);
+    }
   }
 
   return (
@@ -326,7 +335,7 @@ function StudentsTab({ group }: { group: Group }) {
                 <td style={{ whiteSpace: 'nowrap' }}>
                   <button
                     className="btn small ghost"
-                    onClick={() => confirm(`Nouveau mot de passe pour ${s.firstName} ?`) && db.students.update(s.id, { password: randomPassword() })}
+                    onClick={() => confirm(`Nouveau mot de passe pour ${s.firstName} ?`) && resetPassword(s.id).catch((e) => alert(e.message))}
                   >
                     Nouveau mdp
                   </button>{' '}

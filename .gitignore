@@ -2,3 +2,6 @@ node_modules
 dist
 .DS_Store
 *.apkg
+.secrets
+.env.local
+supabase/.temp

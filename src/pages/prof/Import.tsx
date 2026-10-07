@@ -5,6 +5,7 @@ import { importApkg, type ImportReport } from '../../lib/apkg';
 import { db, SUBJECTS, resetAll } from '../../lib/db';
 import { runOcr, subscribeOcr, type OcrState } from '../../lib/ocr';
 import { generateDemo } from '../../lib/demo';
+import { ONLINE } from '../../lib/supabase';
 
 export function ImportPage() {
   const [subject, setSubject] = useState(SUBJECTS[0]);
@@ -122,6 +123,7 @@ export function ImportPage() {
         </div>
       </div>
 
+      {!ONLINE && (
       <div className="panel stack">
         <h2>3. Données de démonstration</h2>
         <p className="muted" style={{ margin: 0 }}>
@@ -140,6 +142,7 @@ export function ImportPage() {
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }

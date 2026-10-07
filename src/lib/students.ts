@@ -1,10 +1,12 @@
 // Comptes élèves : génération des identifiants et import CSV.
 import { db, uid, type Student } from './db';
 import { DEFAULT_GOAL } from './leitner';
+import { ONLINE, callStudents } from './supabase';
+import { syncNow } from './sync';
 
 const WORDS = [
-  'atome', 'photon', 'neutron', 'proton', 'renard', 'comete', 'orbite', 'quartz', 'cristal', 'volt',
-  'ohm', 'newton', 'joule', 'plasma', 'nuage', 'galaxie', 'meteore', 'aimant', 'prisme', 'laser',
+  'atome', 'photon', 'neutron', 'proton', 'renard', 'comete', 'orbite', 'quartz', 'cristal', 'dipole',
+  'ampere', 'newton', 'joule', 'plasma', 'nuage', 'galaxie', 'meteore', 'aimant', 'prisme', 'laser',
 ];
 
 export function normalize(s: string) {
@@ -98,6 +100,16 @@ export function parseCsv(text: string): ParsedRow[] {
 
 // Un élève déjà connu (même prénom et nom) est réutilisé : pas de doublon d'une année sur l'autre.
 export async function importStudents(rows: ParsedRow[], groupId: string, subject: string) {
+  if (ONLINE) {
+    // Comptes créés par la fonction serveur (seule autorisée à créer des identifiants)
+    const r = await callStudents<{ created: number; reused: number }>({
+      action: 'create',
+      groupId,
+      students: rows.map(({ firstName, lastName }) => ({ firstName, lastName })),
+    });
+    await syncNow();
+    return r;
+  }
   let created = 0;
   let reused = 0;
   const all = await db.students.toArray();
@@ -114,4 +126,11 @@ export async function importStudents(rows: ParsedRow[], groupId: string, subject
     await addToGroup(s.id, groupId, subject);
   }
   return { created, reused };
+}
+
+export async function resetPassword(studentId: string) {
+  if (ONLINE) {
+    await callStudents({ action: 'reset', studentId });
+    await syncNow();
+  } else await db.students.update(studentId, { password: randomPassword() });
 }

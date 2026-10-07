@@ -15,7 +15,7 @@ export async function resizeImage(file: Blob, max = 400): Promise<Blob> {
 
 export async function setPhoto(studentId: string, file: Blob, name = 'photo.jpg') {
   const student = await db.students.get(studentId);
-  const id = uid();
+  const id = `${studentId}/${uid()}`; // rangée sous le dossier de l'élève (règles d'accès aux photos)
   await db.media.put({ id, name, blob: await resizeImage(file) });
   await db.students.update(studentId, { photoId: id });
   if (student?.photoId) await db.media.delete(student.photoId);
