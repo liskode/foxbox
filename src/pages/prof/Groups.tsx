@@ -324,7 +324,7 @@ function StudentsTab({ group }: { group: Group }) {
               <tr key={s.id}>
                 <td>
                   <span className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
-                    <Avatar student={s} size={40} editable />
+                    <Avatar student={s} size={40} editable zoom />
                     <Link to={`/prof/eleves/${s.id}?classe=${group.id}`}>
                       <b>
                         {s.lastName} {s.firstName}

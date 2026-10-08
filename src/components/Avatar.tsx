@@ -17,8 +17,48 @@ export function usePhoto(photoId?: string) {
 }
 
 // Photo de l'élève (ou ses initiales). Avec `editable`, un clic permet de choisir une photo.
-export function Avatar({ student, size = 36, editable = false }: { student: Student; size?: number; editable?: boolean }) {
+export function Avatar({
+  student,
+  size = 36,
+  editable = false,
+  zoom = false,
+}: {
+  student: Student;
+  size?: number;
+  editable?: boolean;
+  zoom?: boolean; // agrandit la photo au survol de la souris
+}) {
   const url = usePhoto(student.photoId);
+  const [hover, setHover] = useState<DOMRect | null>(null);
+  const zoomProps =
+    zoom && url
+      ? {
+          onMouseEnter: (e: React.MouseEvent) => setHover((e.currentTarget as HTMLElement).getBoundingClientRect()),
+          onMouseLeave: () => setHover(null),
+        }
+      : {};
+  // Aperçu en position fixe : il n'est pas coupé par le défilement du tableau
+  const preview =
+    hover && url ? (
+      <img
+        src={url}
+        alt=""
+        style={{
+          position: 'fixed',
+          left: hover.right + 10,
+          top: Math.max(8, Math.min(window.innerHeight - 248, hover.top + hover.height / 2 - 120)),
+          width: 180,
+          height: 240,
+          objectFit: 'cover',
+          borderRadius: 16,
+          border: 'var(--border)',
+          boxShadow: 'var(--shadow)',
+          background: 'var(--paper)',
+          zIndex: 40,
+          pointerEvents: 'none',
+        }}
+      />
+    ) : null;
   const initials = (student.firstName[0] ?? '') + (student.lastName[0] ?? '');
   const style = {
     width: size,
@@ -41,10 +81,17 @@ export function Avatar({ student, size = 36, editable = false }: { student: Stud
   ) : (
     <span>{initials.toUpperCase()}</span>
   );
-  if (!editable) return <span style={style}>{content}</span>;
+  if (!editable)
+    return (
+      <span style={style} {...zoomProps}>
+        {content}
+        {preview}
+      </span>
+    );
   return (
-    <label style={style} title={url ? 'Changer la photo' : 'Ajouter une photo'} onClick={(e) => e.stopPropagation()}>
+    <label style={style} title={url ? 'Changer la photo' : 'Ajouter une photo'} onClick={(e) => e.stopPropagation()} {...zoomProps}>
       {content}
+      {preview}
       <input
         type="file"
         accept="image/*"
