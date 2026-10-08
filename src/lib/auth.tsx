@@ -74,6 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               : `Identifiant ou mot de passe incorrect. L'identifiant est de la forme prenom.nom (ici : « ${normalizeLogin(login)} »).`,
         };
       }
+      // Nouvelle connexion : rien d'une session précédente ne doit être envoyé au nom de ce compte
+      await db.outbox.clear();
       const s = await roleOf(data.user.id);
       if (!s) {
         await supabase.auth.signOut();
