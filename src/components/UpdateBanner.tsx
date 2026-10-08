@@ -14,18 +14,22 @@ export function UpdateBanner() {
     if (!mine) return; // version de développement
     const check = async () => {
       try {
-        const html = await (await fetch('./index.html', { cache: 'no-store' })).text();
+        // Paramètre unique : contourne aussi le cache du serveur de GitHub (jusqu'à 10 min)
+        const html = await (await fetch(`./index.html?v=${Date.now()}`, { cache: 'no-store' })).text();
         const latest = html.match(/assets\/index-[^"']+\.js/)?.[0];
         if (latest && !mine.endsWith(latest)) setStale(true);
       } catch {
         /* hors ligne */
       }
     };
-    const timer = setInterval(check, 5 * 60_000);
+    const timer = setInterval(check, 2 * 60_000);
+    const onVisible = () => document.visibilityState === 'visible' && check();
     window.addEventListener('focus', check);
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       clearInterval(timer);
       window.removeEventListener('focus', check);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
   if (!stale) return null;
