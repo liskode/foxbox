@@ -15,6 +15,9 @@ const json = (body: unknown, status = 200) =>
 
 const normalize = (s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+// Identifiant prenom.nom ; si le prénom manque (nom coupé dans un trombinoscope), seulement le nom
+const baseLogin = (firstName: string, lastName: string) =>
+  [normalize(firstName), normalize(lastName)].filter(Boolean).join('.') || 'eleve';
 const password = () =>
   WORDS[Math.floor(Math.random() * WORDS.length)] + String(Math.floor(Math.random() * 90) + 10);
 
@@ -56,7 +59,7 @@ Deno.serve(async (req) => {
             await admin.from('students').update({ data: row.data }).eq('id', row.id);
           }
         } else {
-          const base = `${normalize(firstName)}.${normalize(lastName)}`;
+          const base = baseLogin(firstName, lastName);
           let login = base;
           for (let n = 2; logins.has(login); n++) login = base + n;
           logins.add(login);
@@ -82,6 +85,25 @@ Deno.serve(async (req) => {
         });
       }
       return json({ created, reused });
+    }
+
+    if (body.action === 'rename') {
+      const { studentId, firstName, lastName } = body as { studentId: string; firstName: string; lastName: string };
+      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      if (!(mine as string[] | null)?.includes(studentId)) return json({ error: 'Élève introuvable' }, 403);
+      const { data: s } = await admin.from('students').select('data, school_id').eq('id', studentId).single();
+      const { data: others } = await admin.from('students').select('id, data').eq('school_id', s!.school_id).neq('id', studentId);
+      const taken = new Set((others ?? []).map((o) => o.data.login as string));
+      const base = baseLogin(firstName, lastName);
+      let login = base;
+      for (let n = 2; taken.has(login); n++) login = base + n;
+      if (login !== s!.data.login) {
+        const { error } = await admin.auth.admin.updateUserById(studentId, { email: `${login}@${STUDENT_DOMAIN}`, email_confirm: true });
+        if (error) throw error;
+      }
+      const data = { ...s!.data, firstName: firstName.trim(), lastName: lastName.trim(), login };
+      await admin.from('students').update({ data }).eq('id', studentId);
+      return json({ login });
     }
 
     if (body.action === 'reset') {

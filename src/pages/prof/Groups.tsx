@@ -13,6 +13,7 @@ import { heatmapCounts } from '../../lib/stats';
 import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar, StudentName } from '../../components/Avatar';
 import { importPhotos } from '../../lib/photos';
+import { TrombiImport } from '../../components/TrombiImport';
 
 function schoolYear() {
   const d = new Date();
@@ -199,6 +200,7 @@ function StudentsTab({ group }: { group: Group }) {
     return s.filter(Boolean).map((x) => x!).sort((a, b) => a.lastName.localeCompare(b.lastName));
   }, [group.id], []);
   const [preview, setPreview] = useState<ParsedRow[] | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
   const [msg, setMsg] = useState('');
 
   async function onCsv(f?: File) {
@@ -252,8 +254,11 @@ function StudentsTab({ group }: { group: Group }) {
               Importer un CSV
               <input type="file" accept=".csv,.txt" hidden onChange={(e) => onCsv(e.target.files?.[0])} />
             </label>
+            <button className="btn" onClick={() => setPdfOpen(true)}>
+              📄 Trombinoscope PDF
+            </button>
             <label className="btn">
-              📷 Importer des photos
+              📷 Photos (fichiers)
               <input type="file" accept="image/*" multiple hidden onChange={(e) => onPhotos(e.target.files)} />
             </label>
             <button className="btn ghost" onClick={addOne}>
@@ -272,6 +277,7 @@ function StudentsTab({ group }: { group: Group }) {
           « marie.dupont.png ») ; ils sont associés automatiquement. Un clic sur l'avatar change une photo.
         </span>
         {msg && <div className="notice">{msg}</div>}
+        {pdfOpen && <TrombiImport group={group} students={students} onClose={() => setPdfOpen(false)} />}
         {preview && (
           <div className="notice stack">
             <b>{preview.length} élève(s) trouvé(s) dans le fichier :</b>
@@ -310,6 +316,11 @@ function StudentsTab({ group }: { group: Group }) {
                         {s.lastName} {s.firstName}
                       </b>
                     </Link>
+                    {!s.firstName && (
+                      <Link to={`/prof/eleves/${s.id}`} className="chip" style={{ background: '#f6c9c3', textDecoration: 'none' }}>
+                        prénom à compléter
+                      </Link>
+                    )}
                   </span>
                 </td>
                 <td className="code">{s.login}</td>

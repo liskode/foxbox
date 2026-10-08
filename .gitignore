@@ -5,3 +5,5 @@ dist
 .secrets
 .env.local
 supabase/.temp
+public/_test.*
+*.pdf

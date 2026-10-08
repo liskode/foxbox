@@ -23,7 +23,7 @@ export function randomPassword() {
 }
 
 async function uniqueLogin(first: string, last: string) {
-  const base = `${normalize(first)}.${normalize(last)}`;
+  const base = [normalize(first), normalize(last)].filter(Boolean).join('.') || 'eleve';
   let login = base;
   for (let n = 2; await db.students.where('login').equals(login).count(); n++) login = base + n;
   return login;
@@ -126,6 +126,24 @@ export async function importStudents(rows: ParsedRow[], groupId: string, subject
     await addToGroup(s.id, groupId, subject);
   }
   return { created, reused };
+}
+
+// Correction du nom : l'identifiant de connexion est recalculé (prenom.nom)
+export async function renameStudent(studentId: string, firstName: string, lastName: string) {
+  if (ONLINE) {
+    const r = await callStudents<{ login: string }>({ action: 'rename', studentId, firstName, lastName });
+    await syncNow();
+    return r.login;
+  }
+  const base = [normalize(firstName), normalize(lastName)].filter(Boolean).join('.') || 'eleve';
+  let login = base;
+  for (let n = 2; ; n++) {
+    const other = await db.students.where('login').equals(login).first();
+    if (!other || other.id === studentId) break;
+    login = base + n;
+  }
+  await db.students.update(studentId, { firstName: firstName.trim(), lastName: lastName.trim(), login });
+  return login;
 }
 
 export async function resetPassword(studentId: string) {
