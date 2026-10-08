@@ -155,7 +155,8 @@ export async function resetPassword(studentId: string) {
 
 async function forgetStudentLocally(studentId: string) {
   const student = await db.students.get(studentId);
-  await localOnly(['students', 'memberships', 'studentCards', 'reviews', 'trombi', 'media'], async () => {
+  await localOnly(['students', 'memberships', 'studentCards', 'reviews', 'trombi', 'media', 'notes'], async () => {
+    await db.notes.where('studentId').equals(studentId).delete();
     await db.memberships.where('studentId').equals(studentId).delete();
     await db.studentCards.where('studentId').equals(studentId).delete();
     await db.reviews.where('studentId').equals(studentId).delete();

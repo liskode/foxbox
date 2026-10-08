@@ -7,6 +7,7 @@ import { StudentReport } from '../../components/StudentReport';
 import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar } from '../../components/Avatar';
 import { removePhoto } from '../../lib/photos';
+import { NoteEditor } from '../../components/StudentNote';
 
 export function StudentPage() {
   const { id } = useParams();
@@ -144,6 +145,10 @@ export function StudentPage() {
             </select>
           </label>
         </div>
+      </div>
+      <div className="panel stack">
+        <h3 style={{ margin: 0 }}>📝 Note</h3>
+        <NoteEditor key={student.id} studentId={student.id} />
       </div>
       <StudentReport studentId={student.id} teacherView />
       <div>

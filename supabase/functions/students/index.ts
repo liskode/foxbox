@@ -112,6 +112,7 @@ Deno.serve(async (req) => {
       if (files?.length) await admin.storage.from('photos').remove(files.map((f) => `${studentId}/${f.name}`));
       await admin.from('reviews').delete().eq('student_id', studentId);
       await admin.from('student_cards').delete().eq('student_id', studentId);
+      await admin.from('notes').update({ deleted: true, data: {} }).eq('student_id', studentId);
       // Les inscriptions sont marquées supprimées (et non effacées) pour que les autres appareils l'apprennent
       await admin.from('memberships').update({ deleted: true }).eq('student_id', studentId);
       await admin.from('trombi').update({ deleted: true }).like('id', `%|${studentId}`);

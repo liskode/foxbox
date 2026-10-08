@@ -14,6 +14,7 @@ import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar, StudentName } from '../../components/Avatar';
 import { importPhotos } from '../../lib/photos';
 import { TrombiImport } from '../../components/TrombiImport';
+import { NoteButton } from '../../components/StudentNote';
 
 function schoolYear() {
   const d = new Date();
@@ -306,6 +307,7 @@ function StudentsTab({ group }: { group: Group }) {
           <thead>
             <tr>
               <th>Élève</th>
+              <th>Note</th>
               <th>Identifiant</th>
               <th>Mot de passe</th>
               <th>Objectif / jour</th>
@@ -330,6 +332,9 @@ function StudentsTab({ group }: { group: Group }) {
                       </Link>
                     )}
                   </span>
+                </td>
+                <td>
+                  <NoteButton student={s} />
                 </td>
                 <td className="code">{s.login}</td>
                 <td className="code">{s.password}</td>

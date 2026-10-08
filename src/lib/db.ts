@@ -140,6 +140,15 @@ export interface Meta {
   value: unknown;
 }
 
+// Note privée d'un professeur sur un élève
+export interface Note {
+  id: string; // teacherId|studentId
+  teacherId: string;
+  studentId: string;
+  text: string;
+  updatedAt: number;
+}
+
 // Historique des imports Anki, pour pouvoir annuler un import
 export interface CardSnapshot {
   id: string;
@@ -185,6 +194,7 @@ class FoxBoxDB extends Dexie {
   reviews!: Table<Review, string>;
   outbox!: Table<Outbox, string>;
   imports!: Table<ImportRecord, string>;
+  notes!: Table<Note, string>;
   meta!: Table<Meta, string>;
   trombi!: Table<TrombiCard, string>;
 
@@ -208,6 +218,7 @@ class FoxBoxDB extends Dexie {
     });
     this.version(2).stores({ media: 'id, name' });
     this.version(3).stores({ imports: 'id, date' });
+    this.version(4).stores({ notes: 'id, studentId' });
   }
 }
 
