@@ -106,6 +106,49 @@ Deno.serve(async (req) => {
       return json({ login });
     }
 
+    // Suppression définitive d'un élève : compte, photo, progression, historique
+    const deleteStudent = async (studentId: string) => {
+      const { data: files } = await admin.storage.from('photos').list(studentId);
+      if (files?.length) await admin.storage.from('photos').remove(files.map((f) => `${studentId}/${f.name}`));
+      await admin.from('reviews').delete().eq('student_id', studentId);
+      await admin.from('student_cards').delete().eq('student_id', studentId);
+      // Les inscriptions sont marquées supprimées (et non effacées) pour que les autres appareils l'apprennent
+      await admin.from('memberships').update({ deleted: true }).eq('student_id', studentId);
+      await admin.from('trombi').update({ deleted: true }).like('id', `%|${studentId}`);
+      const { error } = await admin.auth.admin.deleteUser(studentId); // efface aussi la fiche élève
+      if (error) throw error;
+    };
+
+    if (body.action === 'delete') {
+      const { studentId } = body as { studentId: string };
+      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      if (!(mine as string[] | null)?.includes(studentId)) return json({ error: 'Élève introuvable' }, 403);
+      await deleteStudent(studentId);
+      return json({ deleted: 1 });
+    }
+
+    if (body.action === 'deleteGroup') {
+      const { groupId, deleteOrphans } = body as { groupId: string; deleteOrphans: boolean };
+      const { data: group } = await admin.from('groups').select('teacher_ids').eq('id', groupId).maybeSingle();
+      if (!group || !group.teacher_ids.includes(uid)) return json({ error: 'Classe introuvable' }, 403);
+      const { data: ms } = await admin.from('memberships').select('student_id').eq('group_id', groupId).eq('deleted', false);
+      let removed = 0;
+      if (deleteOrphans) {
+        for (const m of ms ?? []) {
+          const { count } = await admin.from('memberships').select('id', { count: 'exact', head: true })
+            .eq('student_id', m.student_id).eq('deleted', false).neq('group_id', groupId);
+          if (!count) {
+            await deleteStudent(m.student_id);
+            removed++;
+          }
+        }
+      }
+      await admin.from('memberships').update({ deleted: true }).eq('group_id', groupId);
+      await admin.from('publications').update({ deleted: true }).eq('group_id', groupId);
+      await admin.from('groups').update({ deleted: true }).eq('id', groupId);
+      return json({ studentsDeleted: removed });
+    }
+
     if (body.action === 'reset') {
       const { studentId } = body as { studentId: string };
       const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });

@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, SUBJECTS, type Group, type Rule } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { groupOverview } from '../../lib/stats';
-import { parseCsv, importStudents, resetPassword, type ParsedRow } from '../../lib/students';
+import { parseCsv, importStudents, resetPassword, deleteStudent, deleteGroup, type ParsedRow } from '../../lib/students';
 import { frDate } from '../../lib/dates';
 import { CardFace } from '../../components/CardFace';
 import { CardDetail } from '../../components/CardDetail';
@@ -358,6 +358,17 @@ function StudentsTab({ group }: { group: Group }) {
                     }
                   >
                     Retirer
+                  </button>{' '}
+                  <button
+                    className="btn small danger"
+                    title="Supprimer définitivement l'élève"
+                    onClick={() =>
+                      confirm(
+                        `Supprimer définitivement ${s.firstName} ${s.lastName} ?\n\nSon compte, sa photo, sa progression et son historique seront effacés, dans toutes ses classes. Cette action est irréversible.`,
+                      ) && deleteStudent(s.id).catch((e) => alert(e.message))
+                    }
+                  >
+                    🗑
                   </button>
                 </td>
               </tr>
@@ -410,6 +421,53 @@ function PublicationsTab({ group }: { group: Group }) {
   );
 }
 
+function DeleteGroup({ group }: { group: Group }) {
+  const nav = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [orphans, setOrphans] = useState(true);
+  const [busy, setBusy] = useState('');
+  async function go() {
+    if (!confirm(`Supprimer définitivement la classe « ${group.name} » ?`)) return;
+    setBusy('Suppression…');
+    try {
+      const n = await deleteGroup(group.id, orphans);
+      alert(`Classe supprimée${n ? `, ainsi que ${n} élève(s)` : ''}.`);
+      nav('/prof/classes');
+    } catch (e) {
+      setBusy('Erreur : ' + (e as Error).message);
+    }
+  }
+  return (
+    <div className="stack" style={{ borderTop: '2px dashed var(--muted-line)', paddingTop: 12 }}>
+      {!open ? (
+        <div>
+          <button className="btn danger" onClick={() => setOpen(true)}>
+            Supprimer la classe…
+          </button>
+        </div>
+      ) : (
+        <div className="notice stack" style={{ borderColor: 'var(--forgot)' }}>
+          <b>Supprimer la classe « {group.name} »</b>
+          <span className="small">Les publications de cette classe sont supprimées. Les cartes et les séquences sont conservées.</span>
+          <label className="row small" style={{ gap: 8, fontWeight: 700 }}>
+            <input type="checkbox" checked={orphans} onChange={(e) => setOrphans(e.target.checked)} />
+            Supprimer aussi les élèves qui ne sont dans aucune autre classe (comptes, photos, progression)
+          </label>
+          <div className="row">
+            <button className="btn danger" onClick={go} disabled={!!busy}>
+              Supprimer définitivement
+            </button>
+            <button className="btn ghost" onClick={() => setOpen(false)}>
+              Annuler
+            </button>
+          </div>
+          {busy && <span>{busy}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TeachersTab({ group }: { group: Group }) {
   const teachers = useLiveQuery(() => db.teachers.toArray(), [], []);
   return (
@@ -444,6 +502,7 @@ function TeachersTab({ group }: { group: Group }) {
           {group.archived ? 'Réactiver la classe' : 'Archiver la classe (fin d’année)'}
         </button>
       </div>
+      <DeleteGroup group={group} />
     </div>
   );
 }

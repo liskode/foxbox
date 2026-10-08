@@ -244,3 +244,11 @@ export async function stopSync() {
   });
   await db.outbox.clear();
 }
+
+// Modifications locales qui reflètent une action déjà faite côté serveur : à ne pas renvoyer
+export async function localOnly(tables: string[], fn: () => Promise<void>) {
+  await db.transaction('rw', tables.map((t) => db.table(t)), async () => {
+    (Dexie.currentTransaction as unknown as { __remote: boolean }).__remote = true;
+    await fn();
+  });
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { renameStudent } from '../../lib/students';
+import { useNavigate, useParams } from 'react-router-dom';
+import { renameStudent, deleteStudent } from '../../lib/students';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Rule } from '../../lib/db';
 import { StudentReport } from '../../components/StudentReport';
@@ -17,6 +17,7 @@ export function StudentPage() {
   }, [id], []);
   const [edit, setEdit] = useState<{ first: string; last: string } | null>(null);
   const [msg, setMsg] = useState('');
+  const nav = useNavigate();
   if (student === undefined) return null;
   if (!student) return <div className="page muted">Élève introuvable.</div>;
   const subjects = [...new Set(groups.map((g) => g.subject))];
@@ -99,6 +100,27 @@ export function StudentPage() {
         </div>
       </div>
       <StudentReport studentId={student.id} teacherView />
+      <div>
+        <button
+          className="btn danger"
+          onClick={async () => {
+            if (
+              !confirm(
+                `Supprimer définitivement ${student.firstName} ${student.lastName} ?\n\nSon compte, sa photo, sa progression et son historique seront effacés, dans toutes ses classes. Cette action est irréversible.`,
+              )
+            )
+              return;
+            try {
+              await deleteStudent(student.id);
+              nav(-1);
+            } catch (e) {
+              alert((e as Error).message);
+            }
+          }}
+        >
+          Supprimer l'élève
+        </button>
+      </div>
     </div>
   );
 }

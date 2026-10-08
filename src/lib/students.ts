@@ -2,7 +2,7 @@
 import { db, uid, type Student } from './db';
 import { DEFAULT_GOAL } from './leitner';
 import { ONLINE, callStudents } from './supabase';
-import { syncNow } from './sync';
+import { syncNow, localOnly } from './sync';
 
 const WORDS = [
   'atome', 'photon', 'neutron', 'proton', 'renard', 'comete', 'orbite', 'quartz', 'cristal', 'dipole',
@@ -151,4 +151,42 @@ export async function resetPassword(studentId: string) {
     await callStudents({ action: 'reset', studentId });
     await syncNow();
   } else await db.students.update(studentId, { password: randomPassword() });
+}
+
+async function forgetStudentLocally(studentId: string) {
+  const student = await db.students.get(studentId);
+  await localOnly(['students', 'memberships', 'studentCards', 'reviews', 'trombi', 'media'], async () => {
+    await db.memberships.where('studentId').equals(studentId).delete();
+    await db.studentCards.where('studentId').equals(studentId).delete();
+    await db.reviews.where('studentId').equals(studentId).delete();
+    await db.trombi.filter((t) => t.studentId === studentId).delete();
+    if (student?.photoId) await db.media.delete(student.photoId);
+    await db.students.delete(studentId);
+  });
+}
+
+// Suppression définitive d'un élève (compte, photo, progression, historique)
+export async function deleteStudent(studentId: string) {
+  if (ONLINE) await callStudents({ action: 'delete', studentId });
+  await forgetStudentLocally(studentId);
+}
+
+// Suppression d'une classe ; avec `deleteOrphans`, les élèves qui ne sont dans aucune autre classe sont supprimés aussi
+export async function deleteGroup(groupId: string, deleteOrphans: boolean) {
+  const ms = await db.memberships.where('groupId').equals(groupId).toArray();
+  const orphans: string[] = [];
+  if (deleteOrphans) {
+    for (const m of ms) {
+      const others = await db.memberships.where('studentId').equals(m.studentId).filter((x) => x.groupId !== groupId).count();
+      if (!others) orphans.push(m.studentId);
+    }
+  }
+  if (ONLINE) await callStudents({ action: 'deleteGroup', groupId, deleteOrphans });
+  for (const id of orphans) await forgetStudentLocally(id);
+  await localOnly(['groups', 'memberships', 'publications'], async () => {
+    await db.memberships.where('groupId').equals(groupId).delete();
+    await db.publications.where('groupId').equals(groupId).delete();
+    await db.groups.delete(groupId);
+  });
+  return orphans.length;
 }
