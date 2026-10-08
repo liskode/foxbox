@@ -14,6 +14,7 @@ import { Tickets } from './pages/prof/Tickets';
 import { StudentPage } from './pages/prof/StudentPage';
 import { ImportPage } from './pages/prof/Import';
 import { Trombi } from './pages/prof/Trombi';
+import { UpdateBanner } from './components/UpdateBanner';
 import { TrombiPrint } from './pages/prof/TrombiPrint';
 import { StudentHome } from './pages/eleve/Home';
 import { ReviewSession } from './pages/eleve/Review';
@@ -111,6 +112,7 @@ export function App() {
   return (
     <AuthProvider>
       <HashRouter>
+        <UpdateBanner />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/inscription" element={<Signup />} />

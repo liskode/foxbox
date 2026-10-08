@@ -5,6 +5,7 @@ import { readTrombiPdf, matchFace, type Face } from '../lib/trombiPdf';
 import { setPhoto } from '../lib/photos';
 import { importStudents } from '../lib/students';
 import { db } from '../lib/db';
+import { isStaleVersionError } from './UpdateBanner';
 
 const CREATE = '__create__';
 const SKIP = '';
@@ -24,7 +25,11 @@ export function TrombiImport({ group, students, onClose }: { group: Group; stude
       setFaces(fs);
       setChoice(fs.map((x) => matchFace(x.caption, students) ?? (students.length ? SKIP : CREATE)));
     } catch (e) {
-      setErr((e as Error).message);
+      setErr(
+        isStaleVersionError(e)
+          ? 'STALE'
+          : (e as Error).message,
+      );
     } finally {
       setBusy('');
     }
@@ -90,7 +95,17 @@ export function TrombiImport({ group, students, onClose }: { group: Group; stude
         </>
       )}
       {busy && <div>{busy}</div>}
-      {err && <div style={{ color: 'var(--forgot)', fontWeight: 700 }}>{err}</div>}
+      {err === 'STALE' ? (
+        <div style={{ fontWeight: 700 }}>
+          FoxBox a été mis à jour depuis l'ouverture de cette page.{' '}
+          <button className="btn small primary" onClick={() => location.reload()}>
+            Recharger la page
+          </button>{' '}
+          puis relancez l'import du PDF.
+        </div>
+      ) : (
+        err && <div style={{ color: 'var(--forgot)', fontWeight: 700 }}>{err}</div>
+      )}
       {faces && (
         <>
           <div className="small">

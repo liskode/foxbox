@@ -24,6 +24,15 @@ const mul = (a: number[], b: number[]) => [
   a[1] * b[4] + a[3] * b[5] + a[5],
 ];
 
+const P = Promise as unknown as { withResolvers?: () => unknown };
+if (!P.withResolvers) {
+  P.withResolvers = () => {
+    let resolve, reject;
+    const promise = new Promise((a, b) => ((resolve = a), (reject = b)));
+    return { promise, resolve, reject };
+  };
+}
+
 export async function readTrombiPdf(file: File, onProgress?: (msg: string) => void): Promise<Face[]> {
   const pdfjs = await import('pdfjs-dist');
   const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
