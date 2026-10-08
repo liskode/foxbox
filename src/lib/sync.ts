@@ -54,6 +54,7 @@ export function subscribeSync(l: Listener) {
 }
 
 function enqueue(table: string, id: string) {
+  if (!me) return; // aucune modification n'est notée hors session (ex. pendant la déconnexion)
   db.outbox.put({ key: `${table}|${id}`, table, id }).then(async () => {
     emit({ pending: await db.outbox.count() });
     schedulePush();
@@ -231,6 +232,11 @@ export async function stopSync() {
     /* hors ligne : les modifications non envoyées sont perdues à la déconnexion */
   }
   setSyncUser(null);
-  // Un autre utilisateur peut se connecter sur cet appareil : on vide la copie locale
-  await Promise.all(db.tables.map((t) => t.clear()));
+  // Un autre utilisateur peut se connecter sur cet appareil : on vide la copie locale.
+  // Cet effacement est purement local : il ne doit surtout pas être envoyé en ligne comme une suppression.
+  await db.transaction('rw', db.tables, async () => {
+    (Dexie.currentTransaction as unknown as { __remote: boolean }).__remote = true;
+    for (const t of db.tables) await t.clear();
+  });
+  await db.outbox.clear();
 }
