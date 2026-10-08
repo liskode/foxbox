@@ -18,7 +18,9 @@ export function useNote(studentId: string) {
 export function NoteEditor({ studentId, onDone, autoFocus = false }: { studentId: string; onDone?: () => void; autoFocus?: boolean }) {
   const { text, updatedAt, save } = useNote(studentId);
   const [draft, setDraft] = useState(text);
-  useEffect(() => setDraft(text), [text]);
+  useEffect(() => {
+    setDraft(text);
+  }, [text]);
   return (
     <div className="stack" style={{ gap: 8 }}>
       <textarea

@@ -16,6 +16,8 @@ import { ImportPage } from './pages/prof/Import';
 import { Trombi } from './pages/prof/Trombi';
 import { UpdateBanner } from './components/UpdateBanner';
 import { TrombiPrint } from './pages/prof/TrombiPrint';
+import { Correction } from './pages/prof/Correction';
+import { EvaluationPage } from './pages/prof/Evaluation';
 import { StudentHome } from './pages/eleve/Home';
 import { ReviewSession } from './pages/eleve/Review';
 import { MyStats } from './pages/eleve/MyStats';
@@ -76,6 +78,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           ['/prof/cartes', 'Cartes'],
           ['/prof/sequences', 'Séquences'],
           ['/prof/classes', 'Classes'],
+          ['/prof/correction', 'Correction'],
           ['/prof/trombi', 'Trombi'],
           ['/prof/import', 'Import'],
         ]
@@ -123,6 +126,8 @@ export function App() {
           <Route path="/prof/classes/:id" element={<Shell role="prof"><GroupPage /></Shell>} />
           <Route path="/prof/classes/:id/fiches" element={<Shell role="prof"><Tickets /></Shell>} />
           <Route path="/prof/eleves/:id" element={<Shell role="prof"><StudentPage /></Shell>} />
+          <Route path="/prof/correction" element={<Shell role="prof"><Correction /></Shell>} />
+          <Route path="/prof/correction/:id" element={<Shell role="prof"><EvaluationPage /></Shell>} />
           <Route path="/prof/trombi" element={<Shell role="prof"><Trombi /></Shell>} />
           <Route path="/prof/trombi/imprimer/:id" element={<Shell role="prof"><TrombiPrint /></Shell>} />
           <Route path="/prof/import" element={<Shell role="prof"><ImportPage /></Shell>} />

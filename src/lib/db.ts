@@ -72,6 +72,7 @@ export interface Student {
   rule: Rule;
   goals: Record<string, number>; // objectif quotidien par matière
   photoId?: string; // media
+  parentEmails?: string[];
 }
 
 // Espace Trombi : progression du professeur dans la mémorisation des élèves
@@ -149,6 +150,61 @@ export interface Note {
   updatedAt: number;
 }
 
+// ----- Correction des évaluations -----
+export interface Criterion {
+  id: string;
+  label: string;
+  points: number;
+  cardIds?: string[]; // cartes FoxBox liées à ce critère
+}
+export interface Evaluation {
+  id: string;
+  ownerId?: string;
+  name: string;
+  date: string; // AAAA-MM-JJ
+  subject: string;
+  groupIds: string[];
+  criteria: Criterion[];
+  // Ce que voit l'élève dans son espace
+  visibility: { note: boolean; appreciation: boolean; detail: boolean };
+  template?: boolean; // modèle réutilisable (sans classe)
+  createdAt: number;
+}
+export interface Result {
+  id: string; // evaluationId|studentId
+  evaluationId: string;
+  studentId: string;
+  levels: Record<string, number | null>; // critère -> niveau 0..1 (null = non noté)
+  absent?: boolean;
+  appreciation?: string;
+  cardsResetAt?: number;
+  updatedAt: number;
+}
+// Version visible par l'élève (générée selon les réglages de l'évaluation)
+export interface ResultShare {
+  id: string;
+  evaluationId: string;
+  studentId: string;
+  name: string;
+  date: string;
+  absent?: boolean;
+  note?: number;
+  total?: number;
+  note20?: number;
+  appreciation?: string;
+  detail?: { label: string; points: number; level: number | null }[];
+}
+export interface ParentMessage {
+  id: string;
+  teacherId: string;
+  studentId: string;
+  evaluationId?: string;
+  date: string;
+  to: string;
+  subject: string;
+  message: string;
+}
+
 // Historique des imports Anki, pour pouvoir annuler un import
 export interface CardSnapshot {
   id: string;
@@ -195,6 +251,10 @@ class FoxBoxDB extends Dexie {
   outbox!: Table<Outbox, string>;
   imports!: Table<ImportRecord, string>;
   notes!: Table<Note, string>;
+  evaluations!: Table<Evaluation, string>;
+  results!: Table<Result, string>;
+  resultShares!: Table<ResultShare, string>;
+  parentMessages!: Table<ParentMessage, string>;
   meta!: Table<Meta, string>;
   trombi!: Table<TrombiCard, string>;
 
@@ -219,6 +279,12 @@ class FoxBoxDB extends Dexie {
     this.version(2).stores({ media: 'id, name' });
     this.version(3).stores({ imports: 'id, date' });
     this.version(4).stores({ notes: 'id, studentId' });
+    this.version(5).stores({
+      evaluations: 'id, date',
+      results: 'id, evaluationId, studentId',
+      resultShares: 'id, studentId',
+      parentMessages: 'id, studentId',
+    });
   }
 }
 
