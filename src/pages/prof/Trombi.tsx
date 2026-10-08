@@ -223,7 +223,7 @@ export function Trombi() {
         <h1 className="title" style={{ margin: 0 }}>Trombi</h1>
         <div className="row">
           {groups.map((g) => (
-            <button key={g.id} className={'chip' + (sel.has(g.id) ? '' : ' off')} style={{ background: 'var(--matiere)' }} onClick={() => toggle(g.id)}>
+            <button key={g.id} className={'chip' + (sel.has(g.id) ? '' : ' off')} style={{ background: g.color ?? 'var(--matiere)' }} onClick={() => toggle(g.id)}>
               {g.name}
             </button>
           ))}
@@ -267,7 +267,7 @@ export function Trombi() {
       <div className="panel row">
         <b>🖨 Imprimer le trombi (1 page A4) :</b>
         {groups.map((g) => (
-          <Link key={g.id} to={`/prof/trombi/imprimer/${g.id}`} className="btn small">
+          <Link key={g.id} to={`/prof/trombi/imprimer/${g.id}`} className="btn small" style={{ background: g.color }}>
             {g.name}
           </Link>
         ))}

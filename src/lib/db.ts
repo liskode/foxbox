@@ -45,7 +45,22 @@ export interface Group {
   subject: string;
   teacherIds: string[];
   archived?: boolean;
+  color?: string; // couleur de repérage (palette CLASS_COLORS)
 }
+
+// Couleurs de classe : déclinaisons claires de la charte physifox, lisibles avec du texte noir
+export const CLASS_COLORS = [
+  { name: 'Moutarde', value: '#fbe7b0' },
+  { name: 'Kaki', value: '#e6e2bd' },
+  { name: 'Saumon', value: '#f9d3cd' },
+  { name: 'Rose', value: '#f4d8e2' },
+  { name: 'Ciel', value: '#d3eaf5' },
+  { name: 'Turquoise', value: '#cfece4' },
+  { name: 'Orange', value: '#fcdcc0' },
+  { name: 'Lavande', value: '#e0dbf1' },
+  { name: 'Pistache', value: '#dcedcf' },
+  { name: 'Sable', value: '#ece6d8' },
+];
 
 export interface Student {
   id: string;

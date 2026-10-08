@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, SUBJECTS, type Group, type Rule } from '../../lib/db';
+import { db, uid, SUBJECTS, CLASS_COLORS, type Group, type Rule } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { groupOverview } from '../../lib/stats';
 import { parseCsv, importStudents, resetPassword, deleteStudent, deleteGroup, type ParsedRow } from '../../lib/students';
@@ -36,7 +36,10 @@ export function Groups() {
 
   async function create() {
     if (!name.trim()) return;
-    const g: Group = { id: uid(), name: name.trim(), schoolYear: schoolYear(), subject, teacherIds: [session!.id] };
+    // Couleur par défaut : la première de la palette pas encore utilisée
+    const usedColors = new Set(groups.filter((x) => !x.archived).map((x) => x.color));
+    const color = (CLASS_COLORS.find((c) => !usedColors.has(c.value)) ?? CLASS_COLORS[groups.length % CLASS_COLORS.length]).value;
+    const g: Group = { id: uid(), name: name.trim(), schoolYear: schoolYear(), subject, teacherIds: [session!.id], color };
     await db.groups.put(g);
     nav(`/prof/classes/${g.id}`);
   }
@@ -48,17 +51,40 @@ export function Groups() {
     <div className="page stack">
       <h1 className="title">Classes</h1>
       <div className="grid3">
-        {active.map((g) => (
-          <Link key={g.id} to={`/prof/classes/${g.id}`} className="panel stack" style={{ textDecoration: 'none' }}>
-            <h2 style={{ margin: 0 }}>{g.name}</h2>
-            <div className="muted">
-              {g.subject} · {g.schoolYear}
+        {active
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }))
+          .map((g) => (
+            <div key={g.id} className="panel stack" style={{ background: g.color ?? 'var(--paper)', gap: 8 }}>
+              <Link to={`/prof/classes/${g.id}`} className="stack" style={{ textDecoration: 'none', gap: 8 }}>
+                <h2 style={{ margin: 0 }}>{g.name}</h2>
+                <div className="muted">
+                  {g.subject} · {g.schoolYear}
+                </div>
+                <div>
+                  <b>{counts.get(g.id) ?? 0}</b> élève(s)
+                </div>
+              </Link>
+              <div className="row" style={{ gap: 4 }} title="Couleur de la classe">
+                {CLASS_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    title={c.name}
+                    onClick={() => db.groups.update(g.id, { color: c.value })}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      background: c.value,
+                      cursor: 'pointer',
+                      border: g.color === c.value ? '2.5px solid var(--ink)' : '1.5px solid #00000033',
+                      padding: 0,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-            <div>
-              <b>{counts.get(g.id) ?? 0}</b> élève(s)
-            </div>
-          </Link>
-        ))}
+          ))}
       </div>
       <div className="panel stack">
         <h3 style={{ margin: 0 }}>Nouvelle classe</h3>
@@ -530,7 +556,9 @@ export function GroupPage() {
           <Link to="/prof/classes" className="small muted">
             ← Classes
           </Link>
-          <h1 className="title" style={{ margin: 0 }}>{group.name}</h1>
+          <h1 className="title" style={{ margin: 0 }}>
+            <span style={{ background: group.color, borderRadius: 12, padding: '0 10px' }}>{group.name}</span>
+          </h1>
           <div className="muted">
             {group.subject} · {group.schoolYear} {group.archived && '· archivée'}
           </div>

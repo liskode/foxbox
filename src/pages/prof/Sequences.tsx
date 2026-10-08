@@ -32,7 +32,7 @@ function Publish({ unit }: { unit: Unit }) {
             return (
               <tr key={g.id}>
                 <td style={{ width: 110 }}>
-                  <b>{g.name}</b>
+                  <b style={{ background: g.color, borderRadius: 8, padding: '1px 8px' }}>{g.name}</b>
                 </td>
                 <td>
                   {p ? (

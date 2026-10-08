@@ -60,7 +60,7 @@ export function Dashboard() {
         {overviews?.map(
           (o) =>
             o && (
-              <Link key={o.group.id} to={`/prof/classes/${o.group.id}`} className="panel stack" style={{ textDecoration: 'none' }}>
+              <Link key={o.group.id} to={`/prof/classes/${o.group.id}`} className="panel stack" style={{ textDecoration: 'none', background: o.group.color ?? 'var(--paper)' }}>
                 <h2 style={{ margin: 0 }}>{o.group.name}</h2>
                 <div className="muted small">{o.group.subject}</div>
                 <div>
