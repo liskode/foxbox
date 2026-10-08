@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Student } from '../lib/db';
 import { setPhoto } from '../lib/photos';
 import { mediaUrl } from './CardFace';
@@ -37,9 +38,9 @@ export function Avatar({
           onMouseLeave: () => setHover(null),
         }
       : {};
-  // Aperçu en position fixe : il n'est pas coupé par le défilement du tableau
+  // Aperçu rendu directement dans la page (portail) : Safari le couperait sinon à l'intérieur du cadre rond
   const preview =
-    hover && url ? (
+    hover && url ? createPortal(
       <img
         src={url}
         alt=""
@@ -57,7 +58,8 @@ export function Avatar({
           zIndex: 40,
           pointerEvents: 'none',
         }}
-      />
+      />,
+      document.body,
     ) : null;
   const initials = (student.firstName[0] ?? '') + (student.lastName[0] ?? '');
   const style = {
