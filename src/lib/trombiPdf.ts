@@ -67,10 +67,11 @@ export async function readTrombiPdf(file: File, onProgress?: (msg: string) => vo
     // 2. Texte de la page, en coordonnées d'affichage
     const text = await page.getTextContent();
     const words = text.items
-      .filter((it): it is typeof it & { str: string; transform: number[]; height: number } => 'str' in it && !!it.str.trim())
+      .filter((it): it is typeof it & { str: string; transform: number[]; width: number } => 'str' in it && !!it.str.trim())
       .map((it) => {
         const [x, y] = vp.convertToViewportPoint(it.transform[4], it.transform[5]);
-        return { str: it.str, x, y }; // y = ligne de base du texte
+        const [xEnd] = vp.convertToViewportPoint(it.transform[4] + it.width, it.transform[5]);
+        return { str: it.str, x, xEnd, y }; // y = ligne de base du texte
       });
 
     // 3. Rendu de la page pour découper les photos
@@ -91,9 +92,14 @@ export async function readTrombiPdf(file: File, onProgress?: (msg: string) => vo
       const lines = words
         .filter((w) => w.x >= b.x0 - 4 * scale && w.x < nextCol - 2 * scale && w.y > b.y1 - 10 * scale && w.y < Math.min(nextRow, b.y1 + 32 * scale))
         .sort((a, c) => a.y - c.y || a.x - c.x);
+      // Les morceaux collés (ligature « fi » de « Sofiane ») ne sont pas séparés par une espace
       const caption = lines
-        .map((w) => w.str)
-        .join(' ')
+        .map((w, i) => {
+          const prev = lines[i - 1];
+          const glued = prev && Math.abs(prev.y - w.y) < 2 * scale && w.x - prev.xEnd < 1.2 * scale;
+          return (i === 0 ? '' : glued ? '' : ' ') + w.str;
+        })
+        .join('')
         .replace(/\s+/g, ' ')
         .replace(/(…|\.\.\.)\s+\p{Ll}$/u, '$1') // reste d'une 3e ligne coupée (« GARCI… i »)
         .trim();
