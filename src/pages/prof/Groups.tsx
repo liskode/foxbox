@@ -170,6 +170,7 @@ function StatsTab({ groupId }: { groupId: string }) {
                 <th>Réussite</th>
                 <th>Cartes</th>
                 <th>Dernière révision</th>
+                <th>Note</th>
               </tr>
             </thead>
             <tbody>
@@ -190,6 +191,9 @@ function StatsTab({ groupId }: { groupId: string }) {
                   <td>
                     {r.summary.lastDay ? frDate(r.summary.lastDay) : 'jamais'}
                     {r.inactiveDays !== null && r.inactiveDays >= 5 && ' ⚠️'}
+                  </td>
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <NoteButton student={r.student} />
                   </td>
                 </tr>
               ))}
@@ -307,12 +311,12 @@ function StudentsTab({ group }: { group: Group }) {
           <thead>
             <tr>
               <th>Élève</th>
-              <th>Note</th>
               <th>Identifiant</th>
               <th>Mot de passe</th>
               <th>Objectif / jour</th>
               <th>Règle d'erreur</th>
               <th></th>
+              <th>Note</th>
             </tr>
           </thead>
           <tbody>
@@ -332,9 +336,6 @@ function StudentsTab({ group }: { group: Group }) {
                       </Link>
                     )}
                   </span>
-                </td>
-                <td>
-                  <NoteButton student={s} />
                 </td>
                 <td className="code">{s.login}</td>
                 <td className="code">{s.password}</td>
@@ -383,6 +384,9 @@ function StudentsTab({ group }: { group: Group }) {
                   >
                     🗑
                   </button>
+                </td>
+                <td>
+                  <NoteButton student={s} />
                 </td>
               </tr>
             ))}
