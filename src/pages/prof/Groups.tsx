@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, SUBJECTS, type Group, type Rule } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
@@ -113,7 +113,7 @@ function StatsTab({ groupId }: { groupId: string }) {
           {dropped.length ? (
             <div className="row" style={{ gap: 6 }}>
               {dropped.map((r) => (
-                <Link key={r.student.id} to={`/prof/eleves/${r.student.id}`} className="chip" style={{ textDecoration: 'none', padding: '2px 10px 2px 2px', background: 'var(--paper)' }}>
+                <Link key={r.student.id} to={`/prof/eleves/${r.student.id}?classe=${data.group.id}`} className="chip" style={{ textDecoration: 'none', padding: '2px 10px 2px 2px', background: 'var(--paper)' }}>
                   <StudentName student={r.student} size={26} short /> · {r.inactiveDays === null ? 'jamais' : `${r.inactiveDays} j`}
                 </Link>
               ))}
@@ -165,7 +165,7 @@ function StatsTab({ groupId }: { groupId: string }) {
             </thead>
             <tbody>
               {data.rows.map((r, i) => (
-                <tr key={r.student.id} className="click" onClick={() => nav(`/prof/eleves/${r.student.id}`)}>
+                <tr key={r.student.id} className="click" onClick={() => nav(`/prof/eleves/${r.student.id}?classe=${data.group.id}`)}>
                   <td>{i + 1}</td>
                   <td>
                     <b>
@@ -311,13 +311,13 @@ function StudentsTab({ group }: { group: Group }) {
                 <td>
                   <span className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
                     <Avatar student={s} size={40} editable />
-                    <Link to={`/prof/eleves/${s.id}`}>
+                    <Link to={`/prof/eleves/${s.id}?classe=${group.id}`}>
                       <b>
                         {s.lastName} {s.firstName}
                       </b>
                     </Link>
                     {!s.firstName && (
-                      <Link to={`/prof/eleves/${s.id}`} className="chip" style={{ background: '#f6c9c3', textDecoration: 'none' }}>
+                      <Link to={`/prof/eleves/${s.id}?classe=${group.id}`} className="chip" style={{ background: '#f6c9c3', textDecoration: 'none' }}>
                         prénom à compléter
                       </Link>
                     )}
@@ -510,7 +510,11 @@ function TeachersTab({ group }: { group: Group }) {
 export function GroupPage() {
   const { id } = useParams();
   const group = useLiveQuery(async () => (await db.groups.get(id!)) ?? null, [id]);
-  const [tab, setTab] = useState<'stats' | 'eleves' | 'pubs' | 'profs'>('stats');
+  // Onglet gardé dans l'adresse : le retour depuis une fiche élève revient au même onglet
+  const [params, setParams] = useSearchParams();
+  type Tab = 'stats' | 'eleves' | 'pubs' | 'profs';
+  const tab = (params.get('onglet') as Tab) || 'stats';
+  const setTab = (t: Tab) => setParams({ onglet: t }, { replace: true });
   if (group === undefined) return null;
   if (!group) return <div className="page muted">Classe introuvable.</div>;
   const tabs = [

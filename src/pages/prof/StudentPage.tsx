@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { renameStudent, deleteStudent } from '../../lib/students';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Rule } from '../../lib/db';
@@ -18,6 +18,36 @@ export function StudentPage() {
   const [edit, setEdit] = useState<{ first: string; last: string } | null>(null);
   const [msg, setMsg] = useState('');
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const classe = params.get('classe');
+  // Élèves de la classe d'où l'on vient, dans l'ordre de la liste (nom, prénom)
+  const order = useLiveQuery(async () => {
+    if (!classe) return [];
+    const ms = await db.memberships.where('groupId').equals(classe).toArray();
+    const list = (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean).map((x) => x!);
+    return list.sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName)).map((x) => x.id);
+  }, [classe], [] as string[]);
+  const pos = order.indexOf(id!);
+  const go = (delta: number) => {
+    const next = order[pos + delta];
+    // replace : le bouton Retour ramène directement à la liste, sans repasser par chaque élève
+    if (next) nav(`/prof/eleves/${next}?classe=${classe}`, { replace: true });
+  };
+  useEffect(() => {
+    // Changement d'élève : on ferme l'édition en cours
+    setEdit(null);
+    setMsg('');
+  }, [id]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (edit || /INPUT|SELECT|TEXTAREA/.test(t.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'ArrowLeft') go(-1);
+      else if (e.key === 'ArrowRight') go(1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
   if (student === undefined) return null;
   if (!student) return <div className="page muted">Élève introuvable.</div>;
   const subjects = [...new Set(groups.map((g) => g.subject))];
@@ -35,9 +65,25 @@ export function StudentPage() {
             )}
           </div>
           <div>
-          <a href="#" className="small muted" onClick={(e) => (e.preventDefault(), history.back())}>
-            ← Retour
-          </a>
+          <div className="row small" style={{ gap: 10 }}>
+            <a href="#" className="muted" onClick={(e) => (e.preventDefault(), history.back())}>
+              ← Retour
+            </a>
+            {pos >= 0 && order.length > 1 && (
+              <span className="row" style={{ gap: 6 }}>
+                <button className="btn small ghost" disabled={pos === 0} onClick={() => go(-1)} title="Élève précédent (flèche gauche)">
+                  ◀
+                </button>
+                <span className="muted">
+                  {pos + 1} / {order.length}
+                </span>
+                <button className="btn small ghost" disabled={pos === order.length - 1} onClick={() => go(1)} title="Élève suivant (flèche droite)">
+                  ▶
+                </button>
+                <span className="muted">(flèches ← → du clavier)</span>
+              </span>
+            )}
+          </div>
           {edit ? (
             <form
               className="row"
