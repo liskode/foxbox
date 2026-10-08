@@ -46,8 +46,10 @@ export function Avatar({
         alt=""
         style={{
           position: 'fixed',
-          left: hover.right + 10,
-          top: Math.max(8, Math.min(window.innerHeight - 248, hover.top + hover.height / 2 - 120)),
+          // À gauche de la photo pour ne jamais cacher le nom ; au-dessus si la place manque à gauche
+          ...(hover.left - 190 >= 8
+            ? { left: hover.left - 190, top: Math.max(8, Math.min(window.innerHeight - 248, hover.top + hover.height / 2 - 120)) }
+            : { left: Math.max(8, hover.left), top: hover.top - 250 >= 8 ? hover.top - 250 : hover.bottom + 10 }),
           width: 180,
           height: 240,
           objectFit: 'cover',
