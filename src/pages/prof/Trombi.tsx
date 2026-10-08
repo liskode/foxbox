@@ -5,7 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
 import { db, type Rating, type Student, type TrombiCard } from '../../lib/db';
 import { INTERVALS, nextBox } from '../../lib/leitner';
-import { addDays, today } from '../../lib/dates';
+import { addDays, frDate, today } from '../../lib/dates';
 import { usePhoto } from '../../components/Avatar';
 import { Boxes } from '../../components/widgets';
 
@@ -188,12 +188,14 @@ export function Trombi() {
     const cards = new Map((await db.trombi.where('teacherId').equals(teacherId).toArray()).map((c) => [c.studentId, c]));
     const dist = [0, 0, 0, 0, 0, 0, 0, 0];
     let due = 0;
+    let nextDue: string | undefined;
     for (const e of withPhoto) {
       const c = cards.get(e.student.id);
       dist[c?.box ?? 0]++;
       if (!c || c.due <= today()) due++;
+      else if (!nextDue || c.due < nextDue) nextDue = c.due;
     }
-    return { dist, due };
+    return { dist, due, nextDue };
   }, [withPhoto, teacherId, mode]);
 
   const toggle = (id: string) => {
@@ -210,7 +212,10 @@ export function Trombi() {
       </div>
     );
 
-  const known = progress ? progress.dist.slice(4).reduce((a, b) => a + b, 0) : 0;
+  const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+  const fresh = progress?.dist[0] ?? 0;
+  const learning = progress ? sum(progress.dist.slice(1, 4)) : 0;
+  const known = progress ? sum(progress.dist.slice(4)) : 0;
 
   return (
     <div className="page stack">
@@ -229,7 +234,12 @@ export function Trombi() {
         <div className="panel stack">
           <h3 style={{ margin: 0 }}>Mémoriser les prénoms</h3>
           <div>
-            <b>{known}</b> élève(s) bien reconnu(s) sur {withPhoto.length} · <b>{progress?.due ?? 0}</b> à revoir aujourd'hui
+            Sur {withPhoto.length} élève(s) : <b>{fresh}</b> jamais vu(s) · <b>{learning}</b> en cours d'apprentissage (boîtes 1 à 3) ·{' '}
+            <b>{known}</b> bien retenu(s) (boîtes 4 à 7)
+          </div>
+          <div>
+            <b>{progress?.due ?? 0}</b> à revoir aujourd'hui
+            {!progress?.due && progress?.nextDue && <> · prochaine révision le {frDate(progress.nextDue)}</>}
           </div>
           <div className="row">
             <button className="btn primary big" disabled={!progress?.due} onClick={() => setMode('session')}>
