@@ -8,7 +8,8 @@ function Cell({ s }: { s: Student }) {
   const url = usePhoto(s.photoId);
   return (
     <div className="tp-cell">
-      <div className="tp-photo">{url ? <img src={url} alt="" /> : <span>{(s.firstName[0] ?? '') + (s.lastName[0] ?? '')}</span>}</div>
+      {/* Photo manquante : on laisse simplement un blanc */}
+      <div className={'tp-photo' + (url ? '' : ' empty')}>{url && <img src={url} alt="" />}</div>
       <div className="tp-first">{s.firstName}</div>
       <div className="tp-last">{s.lastName}</div>
     </div>
@@ -30,7 +31,8 @@ export function TrombiPrint() {
   const cols = n <= 20 ? 5 : n <= 36 ? 6 : 7;
   const rows = Math.ceil(n / cols);
   const rowH = Math.min(62, 248 / rows); // mm (marge de sécurité pour rester sur une page)
-  const photoH = rowH - 10;
+  const colW = (190 - 3 * (cols - 1)) / cols;
+  const photoH = Math.min(rowH - 12, colW); // diamètre du cercle
 
   return (
     <div className="page stack">
