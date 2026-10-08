@@ -96,13 +96,17 @@ export function Sequences() {
       .sort((a, b) => a.card.code.localeCompare(b.card.code));
   }, [sel, units]);
 
-  const seqs = units.filter((u) => u.kind === 'sequence').sort((a, b) => a.order - b.order);
+  const [lvl, setLvl] = useState('');
+  const levels = [...new Set(units.filter((u) => u.kind === 'sequence' && u.level).map((u) => u.level!))].sort((a, b) => b.localeCompare(a));
+  const seqs = units.filter((u) => u.kind === 'sequence' && (!lvl || u.level === lvl)).sort((a, b) => a.order - b.order);
+  // On ne déplie que la séquence en cours (sinon la liste devient très longue)
+  const openSeq = unit?.kind === 'sequence' ? unit.id : unit?.parentId;
 
   async function addSequence() {
     const name = prompt('Nom de la séquence (ex. « Séquence 3 – La masse volumique »)');
     if (!name) return;
     const subject = SUBJECTS[0];
-    const u: Unit = { id: uid(), kind: 'sequence', subject, level: '4e', name, order: seqs.length };
+    const u: Unit = { id: uid(), kind: 'sequence', subject, level: lvl || undefined, name, order: units.filter((x) => x.kind === 'sequence').length + 1 };
     await db.units.put(u);
     setSel(u.id);
   }
@@ -147,13 +151,22 @@ export function Sequences() {
   return (
     <div className="page">
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 300px) 1fr', gap: 20, alignItems: 'start' }}>
-        <div className="panel stack" style={{ position: 'sticky', top: 80 }}>
+        <div className="panel stack" style={{ position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
           <div className="spread">
             <h2 style={{ margin: 0 }}>Séquences</h2>
             <button className="btn small primary" onClick={addSequence}>
               + Séquence
             </button>
           </div>
+          {levels.length > 1 && (
+            <div className="row" style={{ gap: 4 }}>
+              {['', ...levels].map((l) => (
+                <button key={l} className={'chip' + (lvl === l ? '' : ' off')} style={{ background: 'var(--matiere)' }} onClick={() => setLvl(l)}>
+                  {l || 'Tous'}
+                </button>
+              ))}
+            </div>
+          )}
           {!seqs.length && <span className="muted small">Créez votre première séquence.</span>}
           {seqs.map((s) => (
             <div key={s.id} className="stack" style={{ gap: 4 }}>
@@ -168,7 +181,7 @@ export function Sequences() {
                 {s.name}
               </button>
               {units
-                .filter((u) => u.parentId === s.id)
+                .filter((u) => u.parentId === s.id && openSeq === s.id)
                 .sort((a, b) => a.order - b.order)
                 .map((se) => (
                   <button
