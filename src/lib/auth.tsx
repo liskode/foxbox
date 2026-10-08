@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { db } from './db';
-import { ONLINE, supabase, loginToEmail } from './supabase';
+import { ONLINE, supabase, loginToEmail, normalizeLogin } from './supabase';
 import { startSync, stopSync } from './sync';
 
 export interface Session {
@@ -69,7 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return {
           error: /confirm/i.test(error.message)
             ? 'Adresse e-mail pas encore confirmée : cliquez sur le lien reçu par e-mail.'
-            : 'Identifiant ou mot de passe incorrect.',
+            : login.includes('@')
+              ? 'Adresse e-mail ou mot de passe incorrect.'
+              : `Identifiant ou mot de passe incorrect. L'identifiant est de la forme prenom.nom (ici : « ${normalizeLogin(login)} »).`,
         };
       }
       const s = await roleOf(data.user.id);

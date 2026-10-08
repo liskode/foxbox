@@ -36,7 +36,7 @@ export function Login() {
       </div>
       <form className="panel stack" onSubmit={submit} style={{ marginTop: 20 }}>
         <label className="field">
-          Identifiant
+          Identifiant <span className="muted small" style={{ fontWeight: 600 }}>(élève : prenom.nom — professeur : adresse e-mail)</span>
           <input value={l} onChange={(e) => setL(e.target.value)} autoCapitalize="none" autoComplete="username" autoFocus />
         </label>
         <label className="field">
