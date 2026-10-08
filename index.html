@@ -13,7 +13,22 @@
     <title>FoxBox</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><p style="font-family: sans-serif; text-align: center; margin-top: 30vh; color: #55534e">Chargement de FoxBox…</p></div>
+    <script>
+      // Après une mise à jour du site, une ancienne page gardée en mémoire peut réclamer des fichiers
+      // qui n'existent plus : on recharge alors une seule fois la version à jour.
+      window.addEventListener('error', function (e) {
+        var t = e.target;
+        if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {
+          try {
+            if (!sessionStorage.getItem('foxbox-reloaded')) {
+              sessionStorage.setItem('foxbox-reloaded', '1');
+              location.reload();
+            }
+          } catch (_) {}
+        }
+      }, true);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
