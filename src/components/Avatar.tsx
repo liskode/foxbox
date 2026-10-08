@@ -110,7 +110,7 @@ export function Avatar({
 export function StudentName({ student, size = 32, short = false }: { student: Student; size?: number; short?: boolean }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-      <Avatar student={student} size={size} />
+      <Avatar student={student} size={size} zoom />
       <span>{short ? `${student.firstName} ${student.lastName[0]}.` : `${student.lastName} ${student.firstName}`}</span>
     </span>
   );
