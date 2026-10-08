@@ -65,24 +65,6 @@ export function Groups() {
                   <b>{counts.get(g.id) ?? 0}</b> élève(s)
                 </div>
               </Link>
-              <div className="row" style={{ gap: 4 }} title="Couleur de la classe">
-                {CLASS_COLORS.map((c) => (
-                  <button
-                    key={c.value}
-                    title={c.name}
-                    onClick={() => db.groups.update(g.id, { color: c.value })}
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: '50%',
-                      background: c.value,
-                      cursor: 'pointer',
-                      border: g.color === c.value ? '2.5px solid var(--ink)' : '1.5px solid #00000033',
-                      padding: 0,
-                    }}
-                  />
-                ))}
-              </div>
             </div>
           ))}
       </div>
@@ -498,7 +480,26 @@ function TeachersTab({ group }: { group: Group }) {
   const teachers = useLiveQuery(() => db.teachers.toArray(), [], []);
   return (
     <div className="panel stack">
-      <h3 style={{ margin: 0 }}>Co-enseignants</h3>
+      <h3 style={{ margin: 0 }}>Couleur de la classe</h3>
+      <div className="row" style={{ gap: 8 }}>
+        {CLASS_COLORS.map((c) => (
+          <button
+            key={c.value}
+            title={c.name}
+            onClick={() => db.groups.update(group.id, { color: c.value })}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: '50%',
+              background: c.value,
+              cursor: 'pointer',
+              border: group.color === c.value ? '3px solid var(--ink)' : '1.5px solid #00000033',
+              padding: 0,
+            }}
+          />
+        ))}
+      </div>
+      <h3 style={{ margin: '8px 0 0' }}>Co-enseignants</h3>
       <span className="small muted">
         Plusieurs professeurs peuvent gérer la même classe (mêmes élèves, sans doublon). L'invitation de collègues se fera
         avec la version en ligne.
