@@ -152,6 +152,7 @@ export interface Outbox {
   key: string; // table|id
   table: string;
   id: string;
+  del?: boolean; // suppression explicite demandée par l'utilisateur
 }
 
 class FoxBoxDB extends Dexie {

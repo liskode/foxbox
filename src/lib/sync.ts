@@ -53,9 +53,9 @@ export function subscribeSync(l: Listener) {
   return () => listeners.delete(l);
 }
 
-function enqueue(table: string, id: string) {
+function enqueue(table: string, id: string, del: boolean) {
   if (!me) return; // aucune modification n'est notée hors session (ex. pendant la déconnexion)
-  db.outbox.put({ key: `${table}|${id}`, table, id }).then(async () => {
+  db.outbox.put({ key: `${table}|${id}`, table, id, del }).then(async () => {
     emit({ pending: await db.outbox.count() });
     schedulePush();
   });
@@ -67,18 +67,18 @@ function installHooks() {
   hooksInstalled = true;
   const watch = (name: string) => {
     const t = db.table(name);
-    const note = (key: unknown, tx: Transaction) => {
+    const note = (key: unknown, tx: Transaction, del: boolean) => {
       if ((tx as unknown as { __remote?: boolean }).__remote) return;
-      tx.on('complete', () => enqueue(name, String(key)));
+      tx.on('complete', () => enqueue(name, String(key), del));
     };
     t.hook('creating', function (key, obj, tx) {
-      note(key ?? (obj as Obj).id, tx);
+      note(key ?? (obj as Obj).id, tx, false);
     });
     t.hook('updating', function (_mods, key, _obj, tx) {
-      note(key, tx);
+      note(key, tx, false);
     });
     t.hook('deleting', function (key, _obj, tx) {
-      note(key, tx);
+      note(key, tx, true);
     });
   };
   [...Object.keys(SPECS), 'media'].forEach(watch);
@@ -104,12 +104,14 @@ export async function push() {
       const batch = await db.outbox.limit(200).toArray();
       if (!batch.length) break;
       const byTable = new Map<string, string[]>();
+      const explicitDelete = new Set(batch.filter((b) => b.del).map((b) => b.key));
       batch.forEach((b) => byTable.set(b.table, [...(byTable.get(b.table) ?? []), b.id]));
       for (const [table, ids] of byTable) {
         if (table === 'media') {
           for (const id of ids) {
             const m = await db.media.get(id);
             const bucket = supabase.storage.from(bucketOf(id));
+            if (!m && !explicitDelete.has(`media|${id}`)) continue;
             const { error } = m
               ? await bucket.upload(id, m.blob, { upsert: true, contentType: m.blob.type })
               : await bucket.remove([id]);
@@ -120,8 +122,10 @@ export async function push() {
           const objs = await db.table(table).bulkGet(ids);
           const rows = ids.map((id, i) => {
             const o = objs[i] as Obj | undefined;
-            return o ? { id, data: o, deleted: false, ...spec.cols(o) } : { id, deleted: true };
-          });
+            if (o) return { id, data: o, deleted: false, ...spec.cols(o) };
+            // Absent de la copie locale : on ne supprime en ligne que sur demande explicite
+            return explicitDelete.has(`${table}|${id}`) ? { id, deleted: true } : null;
+          }).filter((r): r is NonNullable<typeof r> => r !== null);
           if (spec.updateOnly) {
             for (const r of rows) {
               const { error } = await supabase.from(spec.remote).update({ data: (r as Obj).data, deleted: r.deleted }).eq('id', r.id);
