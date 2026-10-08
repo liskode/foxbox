@@ -19,7 +19,9 @@ import {
   stats,
   studentsOf,
   syncAllShares,
+  dateFor,
 } from '../../lib/grading';
+import { frDate } from '../../lib/dates';
 import { Avatar } from '../../components/Avatar';
 import { CardBrowser } from '../../components/CardBrowser';
 import { NoteButton } from '../../components/StudentNote';
@@ -105,10 +107,12 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
             Nom de l'évaluation
             <input value={ev.name} onChange={(e) => update({ name: e.target.value })} />
           </label>
-          <label className="field">
-            Date
-            <input type="date" value={ev.date} onChange={(e) => update({ date: e.target.value })} />
-          </label>
+          {ev.template && (
+            <label className="field">
+              Date
+              <input type="date" value={ev.date} onChange={(e) => update({ date: e.target.value })} />
+            </label>
+          )}
           <label className="field">
             Matière
             <select value={ev.subject} onChange={(e) => update({ subject: e.target.value })}>
@@ -140,6 +144,29 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
                   );
                 })}
             </div>
+            {ev.groupIds.length > 0 && (
+              <div className="row" style={{ gap: 12 }}>
+                {groups
+                  .filter((g) => ev.groupIds.includes(g.id))
+                  .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }))
+                  .map((g) => (
+                    <label key={g.id} className="field" style={{ fontSize: '0.85rem' }}>
+                      <span>
+                        Date en <span style={{ background: g.color, borderRadius: 6, padding: '0 6px' }}>{g.name}</span>
+                      </span>
+                      <input
+                        type="date"
+                        value={dateFor(ev, g.id)}
+                        onChange={async (e) => {
+                          const next = { ...ev, groupDates: { ...(ev.groupDates ?? {}), [g.id]: e.target.value } };
+                          await update({ groupDates: next.groupDates });
+                          await syncAllShares(next);
+                        }}
+                      />
+                    </label>
+                  ))}
+              </div>
+            )}
           </div>
         )}
         <div className="stack" style={{ gap: 6 }}>
@@ -568,7 +595,7 @@ function GrilleTab({ ev }: { ev: Evaluation }) {
         Même clavier que la correction copie par copie : <span className="code">/ 1 2 3 4</span>, <span className="code">0</span> pour une
         valeur libre, flèches pour se déplacer (↑ ↓ question, ← → élève).
       </span>
-      <div style={{ overflow: 'auto', maxHeight: '72vh' }}>
+      <div style={{ overflow: 'auto', maxHeight: '75vh' }}>
         <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem' }}>
           <thead>
             <tr>
@@ -718,7 +745,10 @@ function ResultatsTab({ ev }: { ev: Evaluation }) {
         return (
           <div key={gid} className="panel stack">
             <h2 style={{ margin: 0 }}>
-              <span style={{ background: g?.color, borderRadius: 10, padding: '0 8px' }}>{g?.name}</span>
+              <span style={{ background: g?.color, borderRadius: 10, padding: '0 8px' }}>{g?.name}</span>{' '}
+              <span className="small muted" style={{ fontWeight: 600 }}>
+                {frDate(dateFor(ev, gid))}
+              </span>
             </h2>
             <div className="grid3">
               <div>
@@ -830,7 +860,7 @@ export function EvaluationPage() {
   const current = ev.template ? 'bareme' : tab;
 
   return (
-    <div className="page stack">
+    <div className={'page stack' + (current === 'grille' ? ' wide' : '')}>
       <div className="spread">
         <div>
           <Link to="/prof/correction" className="small muted">

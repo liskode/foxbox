@@ -2,7 +2,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, SUBJECTS, type Evaluation } from '../../lib/db';
-import { newEvaluation, duplicate, score, stats } from '../../lib/grading';
+import { newEvaluation, duplicate, score, stats, dateFor } from '../../lib/grading';
 import { frDate } from '../../lib/dates';
 
 function useGroups() {
@@ -23,14 +23,14 @@ function EvalCard({ ev }: { ev: Evaluation }) {
     <Link to={`/prof/correction/${ev.id}`} className="panel stack" style={{ textDecoration: 'none', gap: 6 }}>
       <h3 style={{ margin: 0 }}>{ev.name}</h3>
       <div className="muted small">
-        {frDate(ev.date)} · {ev.criteria.length} critère(s)
+        {ev.criteria.length} critère(s)
       </div>
       <div className="row" style={{ gap: 4 }}>
         {ev.groupIds.map((id) => {
           const g = groups.find((x) => x.id === id);
           return g ? (
             <span key={id} className="chip" style={{ background: g.color ?? 'var(--paper)' }}>
-              {g.name}
+              {g.name} · {frDate(dateFor(ev, id))}
             </span>
           ) : null;
         })}
@@ -51,7 +51,8 @@ export function Correction() {
   const nav = useNavigate();
   const evs = useLiveQuery(() => db.evaluations.toArray(), [], []);
   const groups = useGroups();
-  const list = evs.filter((e) => !e.template).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  const last = (e: Evaluation) => [e.date, ...e.groupIds.map((g) => dateFor(e, g))].sort().pop()!;
+  const list = evs.filter((e) => !e.template).sort((a, b) => last(b).localeCompare(last(a)) || b.createdAt - a.createdAt);
   const templates = evs.filter((e) => e.template).sort((a, b) => a.name.localeCompare(b.name));
 
   async function create() {

@@ -3,6 +3,14 @@ import { db, uid, type Evaluation, type Result, type ResultShare, type Student }
 import { today } from './dates';
 
 export const round1 = (x: number) => Math.round(x * 10) / 10;
+
+// Date de l'évaluation pour une classe (chaque classe peut passer l'évaluation un jour différent)
+export const dateFor = (ev: Evaluation, groupId?: string) => (groupId && ev.groupDates?.[groupId]) || ev.date;
+
+async function groupOfStudent(ev: Evaluation, studentId: string) {
+  const ms = await db.memberships.where('studentId').equals(studentId).toArray();
+  return ms.find((m) => ev.groupIds.includes(m.groupId))?.groupId;
+}
 export const FAIL_LEVEL = 0.25; // critère raté : niveau ≤ 25 %
 
 // Raccourcis clavier (rangée du haut d'un clavier canadien) : / 1 2 3 4
@@ -62,12 +70,12 @@ export async function studentsOf(ev: Evaluation): Promise<{ student: Student; gr
 }
 
 // ----- Partage avec l'élève, selon les réglages de visibilité -----
-function shareOf(ev: Evaluation, r: Result): ResultShare | null {
+function shareOf(ev: Evaluation, r: Result, date: string): ResultShare | null {
   const v = ev.visibility;
   if (!v.note && !v.appreciation && !v.detail) return null;
   const s = score(ev, r);
   if (!s && !r.absent && !r.appreciation) return null; // pas encore corrigé
-  const share: ResultShare = { id: r.id, evaluationId: ev.id, studentId: r.studentId, name: ev.name, date: ev.date, absent: r.absent };
+  const share: ResultShare = { id: r.id, evaluationId: ev.id, studentId: r.studentId, name: ev.name, date, absent: r.absent };
   if (v.note && s) Object.assign(share, { note: s.note, total: s.total, note20: s.note20 });
   if (v.appreciation && r.appreciation?.trim()) share.appreciation = r.appreciation.trim();
   if (v.detail && !r.absent) share.detail = ev.criteria.map((c) => ({ label: c.label, points: c.points, level: r.levels[c.id] ?? null }));
@@ -75,7 +83,7 @@ function shareOf(ev: Evaluation, r: Result): ResultShare | null {
 }
 
 export async function syncShare(ev: Evaluation, r: Result) {
-  const share = ev.template ? null : shareOf(ev, r);
+  const share = ev.template ? null : shareOf(ev, r, dateFor(ev, await groupOfStudent(ev, r.studentId)));
   if (share) await db.resultShares.put(share);
   else if (await db.resultShares.get(r.id)) await db.resultShares.delete(r.id);
 }

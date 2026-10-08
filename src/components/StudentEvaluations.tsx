@@ -4,17 +4,18 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, type Student } from '../lib/db';
 import { useAuth } from '../lib/auth';
-import { score } from '../lib/grading';
+import { score, dateFor } from '../lib/grading';
 import { frDate, today } from '../lib/dates';
 
 function useStudentEvals(studentId: string) {
   return useLiveQuery(async () => {
     const rs = await db.results.where('studentId').equals(studentId).toArray();
     const evs = await db.evaluations.bulkGet(rs.map((r) => r.evaluationId));
+    const myGroups = new Set((await db.memberships.where('studentId').equals(studentId).toArray()).map((m) => m.groupId));
     return rs
-      .map((r, i) => ({ r, ev: evs[i] }))
+      .map((r, i) => ({ r, ev: evs[i], date: evs[i] ? dateFor(evs[i]!, evs[i]!.groupIds.find((g) => myGroups.has(g))) : '' }))
       .filter((x) => x.ev && !x.ev.template)
-      .sort((a, b) => b.ev!.date.localeCompare(a.ev!.date));
+      .sort((a, b) => b.date.localeCompare(a.date));
   }, [studentId], []);
 }
 
@@ -26,7 +27,7 @@ export function StudentEvaluations({ student }: { student: Student }) {
       {!list.length && <span className="muted small">Aucune évaluation corrigée pour l'instant.</span>}
       <table className="list">
         <tbody>
-          {list.map(({ r, ev }) => {
+          {list.map(({ r, ev, date }) => {
             const s = score(ev!, r);
             const failed = ev!.criteria.filter((c) => {
               const l = r.levels[c.id];
@@ -35,7 +36,7 @@ export function StudentEvaluations({ student }: { student: Student }) {
             return (
               <tr key={r.id}>
                 <td style={{ whiteSpace: 'nowrap' }} className="small muted">
-                  {frDate(ev!.date)}
+                  {frDate(date)}
                 </td>
                 <td>
                   <Link to={`/prof/correction/${ev!.id}?onglet=copies&eleve=${student.id}`}>
@@ -79,7 +80,7 @@ export function ParentMessages({ student }: { student: Student }) {
     setSubject(x ? `${student.firstName} ${student.lastName} – ${x.ev!.name}` : `${student.firstName} ${student.lastName} – Physique-Chimie`);
     setBody(
       x
-        ? `Bonjour,\n\nJe me permets de vous contacter au sujet de l'évaluation « ${x.ev!.name} » du ${frDate(x.ev!.date)}${
+        ? `Bonjour,\n\nJe me permets de vous contacter au sujet de l'évaluation « ${x.ev!.name} » du ${frDate(x.date)}${
             s ? `, pour laquelle ${student.firstName} a obtenu ${s.note20}/20` : ''
           }.\n\n\n\nCordialement,\n`
         : `Bonjour,\n\n\n\nCordialement,\n`,
@@ -127,9 +128,9 @@ export function ParentMessages({ student }: { student: Student }) {
             À propos de
             <select value={evalId} onChange={(e) => prefill(e.target.value)}>
               <option value="">— message général —</option>
-              {evals.map(({ ev }) => (
+              {evals.map(({ ev, date }) => (
                 <option key={ev!.id} value={ev!.id}>
-                  {ev!.name} ({frDate(ev!.date)})
+                  {ev!.name} ({frDate(date)})
                 </option>
               ))}
             </select>

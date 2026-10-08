@@ -75,12 +75,14 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
     role === 'prof'
       ? [
           ['/prof', 'Accueil'],
-          ['/prof/cartes', 'Cartes'],
-          ['/prof/sequences', 'Séquences'],
           ['/prof/classes', 'Classes'],
-          ['/prof/correction', 'Correction'],
           ['/prof/trombi', 'Trombi'],
+          ['/prof/sequences', 'Séquences'],
+          ['|', ''],
+          ['/prof/cartes', 'Cartes'],
           ['/prof/import', 'Import'],
+          ['|', ''],
+          ['/prof/correction', 'Correction'],
         ]
       : [
           ['/eleve', 'Réviser'],
@@ -94,11 +96,15 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           <span>FoxBox</span>
         </Link>
         <nav className="nav">
-          {links.map(([to, label]) => (
-            <NavLink key={to} to={to} end={to === '/prof' || to === '/eleve'}>
-              {label}
-            </NavLink>
-          ))}
+          {links.map(([to, label], i) =>
+            to === '|' ? (
+              <span key={i} className="nav-sep" />
+            ) : (
+              <NavLink key={to} to={to} end={to === '/prof' || to === '/eleve'}>
+                {label}
+              </NavLink>
+            ),
+          )}
         </nav>
         <OcrBadge />
         {ONLINE && <SyncBadge />}

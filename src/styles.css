@@ -57,10 +57,12 @@ h3 { font-weight: 800; font-size: 1.05rem; }
 .nav a {
   text-decoration: none; font-weight: 800; padding: 6px 14px; border-radius: 999px; border: 2px solid transparent;
 }
+.nav-sep { width: 2px; align-self: stretch; margin: 4px 6px; background: var(--muted-line); border-radius: 2px; }
 .nav a.active { border-color: var(--line); background: var(--matiere); }
 .nav a:hover:not(.active) { border-color: var(--muted-line); }
 .page { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
 .page.narrow { max-width: 560px; }
+.page.wide { max-width: none; }
 
 /* Blocs */
 .panel {

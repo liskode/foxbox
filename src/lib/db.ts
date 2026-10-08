@@ -161,7 +161,8 @@ export interface Evaluation {
   id: string;
   ownerId?: string;
   name: string;
-  date: string; // AAAA-MM-JJ
+  date: string; // AAAA-MM-JJ (date par défaut)
+  groupDates?: Record<string, string>; // date propre à chaque classe
   subject: string;
   groupIds: string[];
   criteria: Criterion[];
