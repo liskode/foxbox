@@ -74,15 +74,14 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
   const links =
     role === 'prof'
       ? [
-          ['/prof', 'Accueil'],
+          ['/prof', 'Tableau de bord'],
           ['/prof/classes', 'Classes'],
-          ['/prof/trombi', 'Trombi'],
-          ['/prof/sequences', 'Séquences'],
+          ['/prof/correction', 'Correction'],
           ['|', ''],
+          ['#', 'Bibliothèque :'],
+          ['/prof/sequences', 'Séquences'],
           ['/prof/cartes', 'Cartes'],
           ['/prof/import', 'Import'],
-          ['|', ''],
-          ['/prof/correction', 'Correction'],
         ]
       : [
           ['/eleve', 'Réviser'],
@@ -99,6 +98,10 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           {links.map(([to, label], i) =>
             to === '|' ? (
               <span key={i} className="nav-sep" />
+            ) : to === '#' ? (
+              <span key={i} className="small muted" style={{ alignSelf: 'center', fontWeight: 700 }}>
+                {label}
+              </span>
             ) : (
               <NavLink key={to} to={to} end={to === '/prof' || to === '/eleve'}>
                 {label}

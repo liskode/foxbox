@@ -1,46 +1,73 @@
+// Tableau de bord : to-do list, classes (avec leur avancement), évaluations à corriger.
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../lib/db';
+import { db, type Group } from '../../lib/db';
 import { groupOverview } from '../../lib/stats';
+import { TodoList } from '../../components/TodoList';
+import { useProgressSummary } from '../../components/Progression';
+import { useClassEvaluations } from '../../components/ClassOverview';
+
+function ClassCard({ g }: { g: Group }) {
+  const summary = useProgressSummary(g);
+  const evals = useClassEvaluations(g);
+  const ov = useLiveQuery(() => groupOverview(g.id), [g.id]);
+  const dropped = ov?.rows.filter((r) => r.inactiveDays === null || r.inactiveDays >= 5).length ?? 0;
+  const toCorrect = evals.filter((e) => e.corrected < e.total).length;
+  return (
+    <Link to={`/prof/classes/${g.id}`} className="panel stack" style={{ textDecoration: 'none', background: g.color ?? 'var(--paper)', gap: 6 }}>
+      <div className="spread">
+        <h2 style={{ margin: 0 }}>{g.name}</h2>
+        <span className="small">{ov?.rows.length ?? 0} élèves</span>
+      </div>
+      {summary && summary.total > 0 && (
+        <>
+          <div className="progress" style={{ background: '#ffffffaa' }}>
+            <div style={{ width: `${(summary.done / summary.total) * 100}%` }} />
+          </div>
+          <div className="small">
+            {summary.next ? (
+              <>
+                → <b>{summary.next}</b>
+              </>
+            ) : (
+              '✓ Progression terminée'
+            )}
+          </div>
+        </>
+      )}
+      <div className="row small" style={{ gap: 10 }}>
+        {toCorrect > 0 && <span>✏️ {toCorrect} évaluation(s) à corriger</span>}
+        {dropped > 0 && <span>⚠️ {dropped} à relancer</span>}
+        {!toCorrect && !dropped && <span className="muted">Rien à signaler</span>}
+      </div>
+    </Link>
+  );
+}
 
 export function Dashboard() {
-  const counts = useLiveQuery(
-    async () => ({
-      cards: await db.cards.filter((c) => !c.deleted).count(),
-      seqs: await db.units.filter((u) => u.kind === 'sequence').count(),
-      groups: await db.groups.filter((g) => !g.archived).count(),
-      students: await db.students.count(),
-      pubs: await db.publications.count(),
-    }),
+  const groups = useLiveQuery(
+    async () => (await db.groups.filter((g) => !g.archived).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
+    [],
     [],
   );
-  const overviews = useLiveQuery(async () => {
-    const gs = await db.groups.filter((g) => !g.archived).toArray();
-    return Promise.all(gs.map((g) => groupOverview(g.id)));
-  }, []);
+  const counts = useLiveQuery(async () => ({ cards: await db.cards.filter((c) => !c.deleted).count(), seqs: await db.units.filter((u) => u.kind === 'sequence').count() }), []);
 
   const steps = [
-    { done: !!counts?.cards, label: 'Importer votre paquet Anki', to: '/prof/import' },
-    { done: !!counts?.seqs, label: 'Créer vos séquences et y ranger les cartes', to: '/prof/sequences' },
-    { done: !!counts?.groups, label: 'Créer vos classes et importer les élèves', to: '/prof/classes' },
-    { done: !!counts?.pubs, label: 'Publier une séquence pour une classe', to: '/prof/sequences' },
+    { done: !!counts?.cards, label: 'Importer vos cartes (Bibliothèque › Import)', to: '/prof/import' },
+    { done: !!counts?.seqs, label: 'Préparer vos séquences et séances (Bibliothèque › Séquences)', to: '/prof/sequences' },
+    { done: groups.length > 0, label: 'Créer vos classes et importer les élèves', to: '/prof/classes' },
   ];
 
   return (
     <div className="page stack">
-      <div className="row" style={{ gap: 20 }}>
-        <img src="./logo.png" alt="" style={{ width: 90 }} />
-        <div>
-          <h1 className="title" style={{ margin: 0 }}>Bonjour !</h1>
-          <div className="muted">
-            {counts?.cards ?? 0} cartes · {counts?.seqs ?? 0} séquences · {counts?.groups ?? 0} classes · {counts?.students ?? 0} élèves
-          </div>
-        </div>
+      <div className="row" style={{ gap: 16 }}>
+        <img src="./logo.png" alt="" style={{ width: 70 }} />
+        <h1 className="title" style={{ margin: 0 }}>Tableau de bord</h1>
       </div>
 
       {steps.some((s) => !s.done) && (
         <div className="panel stack">
-          <h2 style={{ margin: 0 }}>Pour commencer</h2>
+          <h3 style={{ margin: 0 }}>Pour commencer</h3>
           {steps.map((s, i) => (
             <Link key={i} to={s.to} className="row" style={{ textDecoration: 'none', gap: 10 }}>
               <span className="chip" style={{ background: s.done ? 'var(--easy)' : 'var(--paper)', color: s.done ? '#fff' : undefined }}>
@@ -49,30 +76,29 @@ export function Dashboard() {
               <span style={{ textDecoration: s.done ? 'line-through' : 'none', fontWeight: 700 }}>{s.label}</span>
             </Link>
           ))}
-          <span className="small muted">
-            Astuce : après l'import, le bouton « Générer les données de démo » (onglet Import) crée deux classes fictives avec
-            30 jours de révisions pour explorer les statistiques.
-          </span>
         </div>
       )}
 
-      <div className="grid3">
-        {overviews?.map(
-          (o) =>
-            o && (
-              <Link key={o.group.id} to={`/prof/classes/${o.group.id}`} className="panel stack" style={{ textDecoration: 'none', background: o.group.color ?? 'var(--paper)' }}>
-                <h2 style={{ margin: 0 }}>{o.group.name}</h2>
-                <div className="muted small">{o.group.subject}</div>
-                <div>
-                  Score moyen :{' '}
-                  <b>{o.rows.length ? Math.round(o.rows.reduce((a, r) => a + r.summary.score, 0) / o.rows.length) : '—'}</b>
-                </div>
-                <div>
-                  À relancer : <b>{o.rows.filter((r) => r.inactiveDays === null || r.inactiveDays >= 5).length}</b>
-                </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 18, alignItems: 'start' }}>
+        <div className="stack">
+          <div className="spread">
+            <h2 style={{ margin: 0 }}>Mes classes</h2>
+            <div className="row">
+              <Link to="/prof/trombi" className="btn small ghost">
+                Trombi toutes classes
               </Link>
-            ),
-        )}
+              <Link to="/prof/classes" className="btn small ghost">
+                Gérer les classes
+              </Link>
+            </div>
+          </div>
+          <div className="grid2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}>
+            {groups.map((g) => (
+              <ClassCard key={g.id} g={g} />
+            ))}
+          </div>
+        </div>
+        <TodoList />
       </div>
     </div>
   );

@@ -15,6 +15,9 @@ import { Avatar, StudentName } from '../../components/Avatar';
 import { importPhotos } from '../../lib/photos';
 import { TrombiImport } from '../../components/TrombiImport';
 import { NoteButton } from '../../components/StudentNote';
+import { ClassOverview, ClassEvaluations } from '../../components/ClassOverview';
+import { Progression } from '../../components/Progression';
+import { Trombi } from './Trombi';
 
 function schoolYear() {
   const d = new Date();
@@ -548,23 +551,27 @@ export function GroupPage() {
   const group = useLiveQuery(async () => (await db.groups.get(id!)) ?? null, [id]);
   // Onglet gardé dans l'adresse : le retour depuis une fiche élève revient au même onglet
   const [params, setParams] = useSearchParams();
-  type Tab = 'stats' | 'eleves' | 'pubs' | 'profs';
-  const tab = (params.get('onglet') as Tab) || 'stats';
-  const setTab = (t: Tab) => setParams({ onglet: t }, { replace: true });
+  type Tab = 'apercu' | 'progression' | 'eleves' | 'suivi' | 'trombi' | 'evaluations' | 'profs';
+  const raw = params.get('onglet');
+  const tab = ((raw === 'stats' ? 'suivi' : raw) as Tab) || 'apercu';
+  const setTab = (t: string) => setParams({ onglet: t }, { replace: true });
   if (group === undefined) return null;
   if (!group) return <div className="page muted">Classe introuvable.</div>;
   const tabs = [
-    ['stats', 'Statistiques'],
+    ['apercu', "Vue d'ensemble"],
+    ['progression', 'Progression'],
     ['eleves', 'Élèves'],
-    ['pubs', 'Publications'],
+    ['suivi', 'Suivi'],
+    ['trombi', 'Trombi'],
+    ['evaluations', 'Évaluations'],
     ['profs', 'Réglages'],
   ] as const;
   return (
     <div className="page stack">
       <div className="spread">
         <div>
-          <Link to="/prof/classes" className="small muted">
-            ← Classes
+          <Link to="/prof" className="small muted">
+            ← Tableau de bord
           </Link>
           <h1 className="title" style={{ margin: 0 }}>
             <span style={{ background: group.color, borderRadius: 12, padding: '0 10px' }}>{group.name}</span>
@@ -581,9 +588,22 @@ export function GroupPage() {
           ))}
         </nav>
       </div>
-      {tab === 'stats' && <StatsTab groupId={group.id} />}
+      {tab === 'apercu' && <ClassOverview group={group} goTab={setTab} />}
+      {tab === 'progression' && (
+        <div className="stack">
+          <Progression group={group} />
+          <details>
+            <summary className="small muted" style={{ cursor: 'pointer' }}>
+              Historique des publications
+            </summary>
+            <PublicationsTab group={group} />
+          </details>
+        </div>
+      )}
+      {tab === 'suivi' && <StatsTab groupId={group.id} />}
       {tab === 'eleves' && <StudentsTab group={group} />}
-      {tab === 'pubs' && <PublicationsTab group={group} />}
+      {tab === 'trombi' && <Trombi groupId={group.id} />}
+      {tab === 'evaluations' && <ClassEvaluations group={group} />}
       {tab === 'profs' && <TeachersTab group={group} />}
     </div>
   );

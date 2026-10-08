@@ -46,6 +46,7 @@ export interface Group {
   teacherIds: string[];
   archived?: boolean;
   color?: string; // couleur de repérage (palette CLASS_COLORS)
+  sequenceIds?: string[]; // séquences suivies par la classe (Progression), dans l'ordre
 }
 
 // Couleurs de classe : déclinaisons claires de la charte physifox, lisibles avec du texte noir
@@ -206,6 +207,18 @@ export interface ParentMessage {
   message: string;
 }
 
+// To-do list personnelle du professeur
+export interface Todo {
+  id: string;
+  teacherId: string;
+  text: string;
+  groupId?: string; // tâche liée à une classe
+  due?: string; // échéance AAAA-MM-JJ
+  done: boolean;
+  doneAt?: number;
+  createdAt: number;
+}
+
 // Historique des imports Anki, pour pouvoir annuler un import
 export interface CardSnapshot {
   id: string;
@@ -256,6 +269,7 @@ class FoxBoxDB extends Dexie {
   results!: Table<Result, string>;
   resultShares!: Table<ResultShare, string>;
   parentMessages!: Table<ParentMessage, string>;
+  todos!: Table<Todo, string>;
   meta!: Table<Meta, string>;
   trombi!: Table<TrombiCard, string>;
 
@@ -286,6 +300,7 @@ class FoxBoxDB extends Dexie {
       resultShares: 'id, studentId',
       parentMessages: 'id, studentId',
     });
+    this.version(6).stores({ todos: 'id, groupId' });
   }
 }
 

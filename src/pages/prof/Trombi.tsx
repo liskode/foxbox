@@ -151,7 +151,8 @@ function Session({ entries, teacherId, onEnd }: { entries: Entry[]; teacherId: s
   );
 }
 
-export function Trombi() {
+// `groupId` : Trombi intégré au tableau de bord d'une classe (classe fixée)
+export function Trombi({ groupId }: { groupId?: string } = {}) {
   const { session } = useAuth();
   const teacherId = session!.id;
   const groups = useLiveQuery(
@@ -163,7 +164,7 @@ export function Trombi() {
     [],
   );
   const [selected, setSelected] = useState<Set<string> | null>(null);
-  const sel = selected ?? new Set(groups.map((g) => g.id));
+  const sel = groupId ? new Set([groupId]) : (selected ?? new Set(groups.map((g) => g.id)));
   const [mode, setMode] = useState<'galerie' | 'session'>('galerie');
   const [hideNames, setHideNames] = useState(false);
 
@@ -207,7 +208,7 @@ export function Trombi() {
 
   if (mode === 'session')
     return (
-      <div className="page">
+      <div className={groupId ? '' : 'page'}>
         <Session entries={withPhoto} teacherId={teacherId} onEnd={() => setMode('galerie')} />
       </div>
     );
@@ -218,7 +219,8 @@ export function Trombi() {
   const known = progress ? sum(progress.dist.slice(4)) : 0;
 
   return (
-    <div className="page stack">
+    <div className={'stack' + (groupId ? '' : ' page')}>
+      {!groupId && (
       <div className="spread">
         <h1 className="title" style={{ margin: 0 }}>Trombi</h1>
         <div className="row">
@@ -229,6 +231,7 @@ export function Trombi() {
           ))}
         </div>
       </div>
+      )}
 
       <div className="grid2">
         <div className="panel stack">
@@ -266,7 +269,7 @@ export function Trombi() {
 
       <div className="panel row">
         <b>🖨 Imprimer le trombi (1 page A4) :</b>
-        {groups.map((g) => (
+        {groups.filter((g) => !groupId || g.id === groupId).map((g) => (
           <Link key={g.id} to={`/prof/trombi/imprimer/${g.id}`} className="btn small" style={{ background: g.color }}>
             {g.name}
           </Link>
