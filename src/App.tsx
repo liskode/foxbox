@@ -14,6 +14,7 @@ import { Tickets } from './pages/prof/Tickets';
 import { StudentPage } from './pages/prof/StudentPage';
 import { ImportPage } from './pages/prof/Import';
 import { Trombi } from './pages/prof/Trombi';
+import { TrombiPrint } from './pages/prof/TrombiPrint';
 import { StudentHome } from './pages/eleve/Home';
 import { ReviewSession } from './pages/eleve/Review';
 import { MyStats } from './pages/eleve/MyStats';
@@ -121,6 +122,7 @@ export function App() {
           <Route path="/prof/classes/:id/fiches" element={<Shell role="prof"><Tickets /></Shell>} />
           <Route path="/prof/eleves/:id" element={<Shell role="prof"><StudentPage /></Shell>} />
           <Route path="/prof/trombi" element={<Shell role="prof"><Trombi /></Shell>} />
+          <Route path="/prof/trombi/imprimer/:id" element={<Shell role="prof"><TrombiPrint /></Shell>} />
           <Route path="/prof/import" element={<Shell role="prof"><ImportPage /></Shell>} />
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />
           <Route path="/eleve/revision/:subject" element={<Shell role="eleve"><ReviewSession /></Shell>} />

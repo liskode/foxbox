@@ -186,6 +186,23 @@ table.list tr.click:hover td { background: #faf7ef; }
 .trombi-cell.hidden-name .trombi-name { visibility: hidden; }
 .trombi-cell.hidden-name:hover .trombi-name { visibility: visible; }
 
+/* Trombinoscope imprimable (une page A4) */
+.tp-sheet { background: #fff; width: 190mm; margin: 0 auto; padding: 6mm; color: #1d1d1b; border: 1px solid var(--muted-line); }
+.tp-head { display: flex; align-items: center; gap: 4mm; height: 14mm; margin-bottom: 3mm; border-bottom: 1.5px solid #1d1d1b; }
+.tp-head img { height: 12mm; }
+.tp-title { font-weight: 900; font-size: 16pt; }
+.tp-sub { font-size: 9pt; color: #55534e; }
+.tp-grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); grid-auto-rows: var(--row-h); gap: 0 3mm; }
+.tp-cell { display: flex; flex-direction: column; align-items: center; text-align: center; overflow: hidden; break-inside: avoid; }
+.tp-photo { height: var(--photo-h); aspect-ratio: 3 / 4; max-width: 100%; border-radius: 2mm; overflow: hidden; background: #e9e5dc; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+.tp-photo img { width: 100%; height: 100%; object-fit: cover; }
+.tp-first { font-weight: 800; font-size: 8.5pt; line-height: 1.1; margin-top: 1mm; }
+.tp-last { font-size: 7.5pt; line-height: 1.1; color: #55534e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+@media print {
+  @page { size: A4 portrait; margin: 8mm 10mm; }
+  .tp-sheet { border: none; padding: 0; width: auto; }
+}
+
 /* Fiches identifiants */
 .tickets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
 .ticket { border: 1px dashed #999; padding: 12px 14px; display: flex; gap: 10px; align-items: center; break-inside: avoid; }

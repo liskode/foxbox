@@ -264,6 +264,15 @@ export function Trombi() {
         </div>
       )}
 
+      <div className="panel row">
+        <b>🖨 Imprimer le trombi (1 page A4) :</b>
+        {groups.map((g) => (
+          <Link key={g.id} to={`/prof/trombi/imprimer/${g.id}`} className="btn small">
+            {g.name}
+          </Link>
+        ))}
+      </div>
+
       <div className="panel stack">
         <div className="spread">
           <h3 style={{ margin: 0 }}>Galerie ({entries.length})</h3>
