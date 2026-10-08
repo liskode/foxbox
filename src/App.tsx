@@ -21,6 +21,7 @@ import { EvaluationPage } from './pages/prof/Evaluation';
 import { StudentHome } from './pages/eleve/Home';
 import { ReviewSession } from './pages/eleve/Review';
 import { MyStats } from './pages/eleve/MyStats';
+import { StudentDocuments } from './pages/eleve/Documents';
 
 function OcrBadge() {
   const [s, setS] = useState<OcrState | null>(null);
@@ -86,6 +87,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
       : [
           ['/eleve', 'Réviser'],
           ['/eleve/stats', 'Mes progrès'],
+          ['/eleve/documents', 'Documents'],
         ];
   return (
     <>
@@ -143,6 +145,7 @@ export function App() {
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />
           <Route path="/eleve/revision/:subject" element={<Shell role="eleve"><ReviewSession /></Shell>} />
           <Route path="/eleve/stats" element={<Shell role="eleve"><MyStats /></Shell>} />
+          <Route path="/eleve/documents" element={<Shell role="eleve"><StudentDocuments /></Shell>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>

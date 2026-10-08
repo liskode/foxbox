@@ -4,6 +4,7 @@ import { db, uid, type Card } from '../lib/db';
 import { THEMES } from '../lib/apkg';
 import { cardByGroup } from '../lib/stats';
 import { CardFace } from './CardFace';
+import { unitLabel } from '../lib/units';
 import { RateBar, ThemeChip } from './widgets';
 
 const THEME_LIST = Object.values(THEMES);
@@ -52,7 +53,7 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
     for (const u of us) {
       if (!u) continue;
       const parent = u.parentId ? await db.units.get(u.parentId) : undefined;
-      out.push(parent ? `${parent.name} › ${u.name}` : u.name);
+      out.push(parent ? `${unitLabel(parent)} › ${unitLabel(u)}` : unitLabel(u));
     }
     return out;
   }, [cardId]);

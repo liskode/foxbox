@@ -36,6 +36,7 @@ export interface Teacher {
   name: string;
   login: string;
   password: string;
+  levelColors?: Record<string, string>; // couleur de chaque niveau (6e, 5e, 4e, 3e)
 }
 
 export interface Group {
@@ -99,6 +100,9 @@ export interface Unit {
   level?: string;
   name: string;
   order: number;
+  code?: string; // 41, 42… (séquences de 4e) ; 411, 412… (séances de la séquence 41)
+  description?: string; // descriptif de la séance (professeur)
+  documents?: { mediaId: string; name: string; size: number }[]; // PDF téléchargeables par les élèves
 }
 
 export interface UnitCard {

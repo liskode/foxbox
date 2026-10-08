@@ -90,7 +90,8 @@ function installHooks() {
   [...Object.keys(SPECS), 'media'].forEach(watch);
 }
 
-const bucketOf = (mediaId: string) => (mediaId.includes('/') ? 'photos' : 'cards');
+// photos d'élèves : « élève/fichier » ; documents de séance : « doc-… » ; le reste : images des cartes
+const bucketOf = (mediaId: string) => (mediaId.includes('/') ? 'photos' : mediaId.startsWith('doc-') ? 'docs' : 'cards');
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 function schedulePush() {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, SUBJECTS, CLASS_COLORS, type Group, type Rule } from '../../lib/db';
@@ -18,6 +18,7 @@ import { NoteButton } from '../../components/StudentNote';
 import { ClassOverview, ClassEvaluations } from '../../components/ClassOverview';
 import { Progression } from '../../components/Progression';
 import { Trombi } from './Trombi';
+import { unitLabel, levelOfName, levelColors, applyLevelColors, setLevelColor, LEVELS } from '../../lib/units';
 
 function schoolYear() {
   const d = new Date();
@@ -40,15 +41,20 @@ export function Groups() {
 
   async function create() {
     if (!name.trim()) return;
-    // Couleur par défaut : la première de la palette pas encore utilisée
-    const usedColors = new Set(groups.filter((x) => !x.archived).map((x) => x.color));
-    const color = (CLASS_COLORS.find((c) => !usedColors.has(c.value)) ?? CLASS_COLORS[groups.length % CLASS_COLORS.length]).value;
+    // Couleur : celle du niveau de la classe (déduit du nom, ex. « 4A » → 4e)
+    const lvl = levelOfName(name);
+    const color = lvl ? (await levelColors(session!.id))[lvl] : undefined;
     const g: Group = { id: uid(), name: name.trim(), schoolYear: schoolYear(), subject, teacherIds: [session!.id], color };
     await db.groups.put(g);
     nav(`/prof/classes/${g.id}`);
   }
 
   const active = groups.filter((g) => !g.archived);
+  const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
+  // Les classes prennent la couleur de leur niveau
+  useEffect(() => {
+    applyLevelColors(session!.id);
+  }, [session, groups.length]);
   const archived = groups.filter((g) => g.archived);
 
   return (
@@ -71,6 +77,31 @@ export function Groups() {
               </Link>
             </div>
           ))}
+      </div>
+      <div className="panel stack">
+        <h3 style={{ margin: 0 }}>Couleurs des niveaux</h3>
+        <span className="small muted">Toutes les classes d'un même niveau (déduit du début du nom : « 4A… » → 4e) prennent sa couleur.</span>
+        {LEVELS.map((l) => (
+          <div key={l} className="row" style={{ gap: 8 }}>
+            <b style={{ width: 34 }}>{l}</b>
+            {CLASS_COLORS.map((c) => (
+              <button
+                key={c.value}
+                title={c.name}
+                onClick={() => setLevelColor(session!.id, l, c.value)}
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: '50%',
+                  background: c.value,
+                  cursor: 'pointer',
+                  border: colors[l] === c.value ? '3px solid var(--ink)' : '1.5px solid #00000033',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
+        ))}
       </div>
       <div className="panel stack">
         <h3 style={{ margin: 0 }}>Nouvelle classe</h3>
@@ -407,7 +438,7 @@ function PublicationsTab({ group }: { group: Group }) {
     for (const p of ps) {
       const u = await db.units.get(p.unitId);
       const parent = u?.parentId ? await db.units.get(u.parentId) : undefined;
-      out.push({ p, label: u ? (parent ? `${parent.name} › ${u.name}` : u.name) : '(supprimée)' });
+      out.push({ p, label: u ? (parent ? `${unitLabel(parent)} › ${unitLabel(u)}` : unitLabel(u)) : '(supprimée)' });
     }
     return out.sort((a, b) => b.p.date.localeCompare(a.p.date));
   }, [group.id], []);
@@ -492,24 +523,12 @@ function TeachersTab({ group }: { group: Group }) {
   const teachers = useLiveQuery(() => db.teachers.toArray(), [], []);
   return (
     <div className="panel stack">
-      <h3 style={{ margin: 0 }}>Couleur de la classe</h3>
-      <div className="row" style={{ gap: 8 }}>
-        {CLASS_COLORS.map((c) => (
-          <button
-            key={c.value}
-            title={c.name}
-            onClick={() => db.groups.update(group.id, { color: c.value })}
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: '50%',
-              background: c.value,
-              cursor: 'pointer',
-              border: group.color === c.value ? '3px solid var(--ink)' : '1.5px solid #00000033',
-              padding: 0,
-            }}
-          />
-        ))}
+      <div className="small">
+        Couleur : celle du niveau{' '}
+        <span className="chip" style={{ background: group.color ?? 'var(--paper)' }}>
+          {levelOfName(group.name) ?? 'niveau inconnu'}
+        </span>{' '}
+        — modifiable dans <Link to="/prof/classes">Classes › Couleurs des niveaux</Link>.
       </div>
       <h3 style={{ margin: '8px 0 0' }}>Co-enseignants</h3>
       <span className="small muted">

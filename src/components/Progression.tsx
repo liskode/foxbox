@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, type Group, type Unit } from '../lib/db';
 import { frDate, today } from '../lib/dates';
+import { unitLabel } from '../lib/units';
 
 // Niveau déduit du nom de la classe (« 4A_2627 » → 4e)
 export const levelOf = (g: Group) => {
@@ -17,7 +18,9 @@ export function useClassSequences(group: Group) {
     const all = (await db.units.toArray()).filter((u) => u.kind === 'sequence');
     if (group.sequenceIds) return group.sequenceIds.map((id) => all.find((u) => u.id === id)).filter(Boolean) as Unit[];
     const lvl = levelOf(group);
-    return all.filter((u) => u.subject === group.subject && (!lvl || !u.level || u.level === lvl)).sort((a, b) => a.order - b.order);
+    return all
+      .filter((u) => u.subject === group.subject && (!lvl || !u.level || u.level === lvl))
+      .sort((a, b) => (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }) || a.order - b.order);
   }, [group.id, group.sequenceIds?.join(), group.subject, group.name]);
 }
 
@@ -61,7 +64,8 @@ function SequenceBlock({ group, seq, done }: { group: Group; seq: Unit; done: Ma
       <div className="spread">
         <label className="row" style={{ gap: 10, fontWeight: 900, fontSize: '1.05rem' }}>
           {!seances.length && <input type="checkbox" checked={!!wholeSeq} onChange={(e) => toggle(seq, e.target.checked)} style={{ width: 20, height: 20 }} />}
-          {seq.name}
+          {unitLabel(seq)}
+          {seq.documents?.length ? <span className="small muted">📄{seq.documents.length}</span> : null}
         </label>
         <span className="row small" style={{ gap: 10 }}>
           <CardCount unitIds={[seq.id, ...seances.map((s) => s.id)]} />
@@ -79,7 +83,10 @@ function SequenceBlock({ group, seq, done }: { group: Group; seq: Unit; done: Ma
         return (
           <label key={s.id} className="row" style={{ gap: 10, paddingLeft: 12, flexWrap: 'nowrap' }}>
             <input type="checkbox" checked={!!d || viaSeq} disabled={viaSeq} onChange={(e) => toggle(s, e.target.checked)} style={{ width: 18, height: 18 }} />
-            <span style={{ flex: 1, textDecoration: d || viaSeq ? 'none' : 'none', fontWeight: d || viaSeq ? 700 : 500 }}>{s.name}</span>
+            <span style={{ flex: 1, fontWeight: d || viaSeq ? 700 : 500 }} title={s.description || undefined}>
+              {unitLabel(s)}
+              {s.documents?.length ? <span className="small muted"> · 📄{s.documents.length}</span> : null}
+            </span>
             <CardCount unitIds={[s.id]} />
             <span className="small muted" style={{ whiteSpace: 'nowrap', minWidth: 110, textAlign: 'right' }}>
               {d ? `faite le ${frDate(d)}` : viaSeq ? 'avec la séquence' : ''}
@@ -127,7 +134,7 @@ export function Progression({ group }: { group: Group }) {
               <div key={u.id} className="row" style={{ gap: 8 }}>
                 <input type="checkbox" checked={i >= 0} onChange={(e) => setList(e.target.checked ? [...ids, u.id] : ids.filter((x) => x !== u.id))} />
                 <span style={{ flex: 1 }}>
-                  {u.name} {u.level && <span className="small muted">({u.level})</span>}
+                  {unitLabel(u)} {u.level && <span className="small muted">({u.level})</span>}
                 </span>
                 {i >= 0 && (
                   <>
@@ -176,8 +183,8 @@ export function useProgressSummary(group: Group) {
         const d = done.get(u.id) ?? done.get(seq.id);
         if (d) {
           n++;
-          if (!last || d >= last.date) last = { name: seances.length ? `${seq.name} › ${u.name}` : u.name, date: d };
-        } else if (!next) next = seances.length ? `${seq.name} › ${u.name}` : u.name;
+          if (!last || d >= last.date) last = { name: unitLabel(u), date: d };
+        } else if (!next) next = seances.length ? `${unitLabel(u)} (${seq.name})` : unitLabel(u);
       }
     }
     return { last, next, total, done: n };

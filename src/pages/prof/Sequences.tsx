@@ -6,6 +6,8 @@ import { CardDetail } from '../../components/CardDetail';
 import { CardFace } from '../../components/CardFace';
 import { themeColor } from '../../components/widgets';
 import { frDate, today } from '../../lib/dates';
+import { unitLabel, nextSequenceCode, nextSeanceCode, LEVELS } from '../../lib/units';
+import { UnitDetails } from '../../components/UnitDetails';
 
 function Publish({ unit }: { unit: Unit }) {
   const groups = useLiveQuery(() => db.groups.filter((g) => g.subject === unit.subject && !g.archived).toArray(), [unit.subject], []);
@@ -98,24 +100,31 @@ export function Sequences() {
 
   const [lvl, setLvl] = useState('');
   const levels = [...new Set(units.filter((u) => u.kind === 'sequence' && u.level).map((u) => u.level!))].sort((a, b) => b.localeCompare(a));
-  const seqs = units.filter((u) => u.kind === 'sequence' && (!lvl || u.level === lvl)).sort((a, b) => a.order - b.order);
+  const seqs = units
+    .filter((u) => u.kind === 'sequence' && (!lvl || u.level === lvl))
+    .sort((a, b) => LEVELS.indexOf(a.level ?? '') - LEVELS.indexOf(b.level ?? '') || a.order - b.order);
   // On ne déplie que la séquence en cours (sinon la liste devient très longue)
   const openSeq = unit?.kind === 'sequence' ? unit.id : unit?.parentId;
 
   async function addSequence() {
-    const name = prompt('Nom de la séquence (ex. « Séquence 3 – La masse volumique »)');
+    const level = lvl || prompt(`Niveau de la séquence (${LEVELS.join(', ')})`, '4e')?.trim();
+    if (!level) return;
+    const name = prompt('Titre de la séquence (ex. « La masse volumique »)');
     if (!name) return;
     const subject = SUBJECTS[0];
-    const u: Unit = { id: uid(), kind: 'sequence', subject, level: lvl || undefined, name, order: units.filter((x) => x.kind === 'sequence').length + 1 };
+    const code = await nextSequenceCode(level);
+    const order = units.filter((x) => x.kind === 'sequence' && x.level === level).length + 1;
+    const u: Unit = { id: uid(), kind: 'sequence', subject, level, name, order, code };
     await db.units.put(u);
     setSel(u.id);
   }
 
   async function addSeance(parent: Unit) {
     const n = units.filter((u) => u.parentId === parent.id).length + 1;
-    const name = prompt('Nom de la séance', `Séance ${n}`);
+    const name = prompt('Titre de la séance');
     if (!name) return;
-    const u: Unit = { id: uid(), kind: 'seance', parentId: parent.id, subject: parent.subject, level: parent.level, name, order: n };
+    const code = await nextSeanceCode(parent);
+    const u: Unit = { id: uid(), kind: 'seance', parentId: parent.id, subject: parent.subject, level: parent.level, name, order: n, code };
     await db.units.put(u);
     setSel(u.id);
   }
@@ -178,7 +187,7 @@ export function Sequences() {
                   setPicking(false);
                 }}
               >
-                {s.name}
+                {unitLabel(s)}
               </button>
               {units
                 .filter((u) => u.parentId === s.id && openSeq === s.id)
@@ -193,7 +202,7 @@ export function Sequences() {
                       setPicking(false);
                     }}
                   >
-                    {se.name}
+                    {unitLabel(se)}
                   </button>
                 ))}
             </div>
@@ -215,9 +224,9 @@ export function Sequences() {
               <div className="spread">
                 <div>
                   <div className="muted small" style={{ fontWeight: 800 }}>
-                    {unit.kind === 'sequence' ? 'SÉQUENCE' : 'SÉANCE · ' + units.find((u) => u.id === unit.parentId)?.name}
+                    {unit.kind === 'sequence' ? 'SÉQUENCE' : 'SÉANCE · ' + unitLabel(units.find((u) => u.id === unit.parentId) ?? { name: '' })}
                   </div>
-                  <h1 className="title" style={{ margin: 0 }}>{unit.name}</h1>
+                  <h1 className="title" style={{ margin: 0 }}>{unitLabel(unit)}</h1>
                 </div>
                 <div className="row">
                   {unit.kind === 'sequence' && (
@@ -234,6 +243,7 @@ export function Sequences() {
                 </div>
               </div>
 
+              <UnitDetails unit={unit} />
               <Publish unit={unit} />
 
               {picking ? (
