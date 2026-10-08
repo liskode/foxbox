@@ -421,9 +421,9 @@ function PublicationsTab({ group }: { group: Group }) {
   );
 }
 
-function DeleteGroup({ group, startOpen = false }: { group: Group; startOpen?: boolean }) {
+function DeleteGroup({ group }: { group: Group }) {
   const nav = useNavigate();
-  const [open, setOpen] = useState(startOpen);
+  const [open, setOpen] = useState(false);
   const [orphans, setOrphans] = useState(true);
   const [busy, setBusy] = useState('');
   async function go() {
@@ -468,7 +468,7 @@ function DeleteGroup({ group, startOpen = false }: { group: Group; startOpen?: b
   );
 }
 
-function TeachersTab({ group, startDelete = false }: { group: Group; startDelete?: boolean }) {
+function TeachersTab({ group }: { group: Group }) {
   const teachers = useLiveQuery(() => db.teachers.toArray(), [], []);
   return (
     <div className="panel stack">
@@ -502,7 +502,7 @@ function TeachersTab({ group, startDelete = false }: { group: Group; startDelete
           {group.archived ? 'Réactiver la classe' : 'Archiver la classe (fin d’année)'}
         </button>
       </div>
-      <DeleteGroup group={group} startOpen={startDelete} />
+      <DeleteGroup group={group} />
     </div>
   );
 }
@@ -511,14 +511,13 @@ export function GroupPage() {
   const { id } = useParams();
   const group = useLiveQuery(async () => (await db.groups.get(id!)) ?? null, [id]);
   const [tab, setTab] = useState<'stats' | 'eleves' | 'pubs' | 'profs'>('stats');
-  const [wantDelete, setWantDelete] = useState(false);
   if (group === undefined) return null;
   if (!group) return <div className="page muted">Classe introuvable.</div>;
   const tabs = [
     ['stats', 'Statistiques'],
     ['eleves', 'Élèves'],
     ['pubs', 'Publications'],
-    ['profs', 'Réglages / supprimer'],
+    ['profs', 'Réglages'],
   ] as const;
   return (
     <div className="page stack">
@@ -529,18 +528,7 @@ export function GroupPage() {
           </Link>
           <h1 className="title" style={{ margin: 0 }}>{group.name}</h1>
           <div className="muted">
-            {group.subject} · {group.schoolYear} {group.archived && '· archivée'} ·{' '}
-            <a
-              href="#"
-              style={{ color: 'var(--forgot)' }}
-              onClick={(e) => {
-                e.preventDefault();
-                setWantDelete(true);
-                setTab('profs');
-              }}
-            >
-              🗑 supprimer la classe
-            </a>
+            {group.subject} · {group.schoolYear} {group.archived && '· archivée'}
           </div>
         </div>
         <nav className="nav" style={{ flex: 'none' }}>
@@ -554,7 +542,7 @@ export function GroupPage() {
       {tab === 'stats' && <StatsTab groupId={group.id} />}
       {tab === 'eleves' && <StudentsTab group={group} />}
       {tab === 'pubs' && <PublicationsTab group={group} />}
-      {tab === 'profs' && <TeachersTab group={group} startDelete={wantDelete} />}
+      {tab === 'profs' && <TeachersTab group={group} />}
     </div>
   );
 }
