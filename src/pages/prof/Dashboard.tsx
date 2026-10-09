@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Group } from '../../lib/db';
 import { groupOverview } from '../../lib/stats';
 import { TodoList } from '../../components/TodoList';
+import { TimetableWidget } from '../../components/TimetableWidget';
 import { useProgressSummary } from '../../components/Progression';
 import { useClassEvaluations } from '../../components/ClassOverview';
 
@@ -78,6 +79,8 @@ export function Dashboard() {
           ))}
         </div>
       )}
+
+      <TimetableWidget />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 18, alignItems: 'start' }}>
         <div className="stack">

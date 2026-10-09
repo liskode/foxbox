@@ -15,7 +15,7 @@ export interface Face {
 
 type Box = { x0: number; y0: number; x1: number; y1: number };
 
-const mul = (a: number[], b: number[]) => [
+export const mul = (a: number[], b: number[]) => [
   a[0] * b[0] + a[2] * b[1],
   a[1] * b[0] + a[3] * b[1],
   a[0] * b[2] + a[2] * b[3],
@@ -33,11 +33,16 @@ if (!P.withResolvers) {
   };
 }
 
-export async function readTrombiPdf(file: File, onProgress?: (msg: string) => void): Promise<Face[]> {
+// Ouverture d'un PDF avec pdf.js (chargé à la demande)
+export async function openPdf(file: File) {
   const pdfjs = await import('pdfjs-dist');
   const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
   pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-  const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  return { pdfjs, pdf: await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise };
+}
+
+export async function readTrombiPdf(file: File, onProgress?: (msg: string) => void): Promise<Face[]> {
+  const { pdfjs, pdf } = await openPdf(file);
   const faces: Face[] = [];
 
   for (let p = 1; p <= pdf.numPages; p++) {

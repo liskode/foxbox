@@ -37,6 +37,7 @@ export interface Teacher {
   login: string;
   password: string;
   levelColors?: Record<string, string>; // couleur de chaque niveau (6e, 5e, 4e, 3e)
+  timetable?: import('./timetable').Timetable; // emploi du temps et calendrier A/B
 }
 
 export interface Group {
