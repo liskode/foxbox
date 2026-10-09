@@ -7,7 +7,7 @@ import { CardDetail } from '../../components/CardDetail';
 import { CardFace } from '../../components/CardFace';
 import { themeColor } from '../../components/widgets';
 import { frDate, today } from '../../lib/dates';
-import { unitLabel, nextSequenceCode, nextSeanceCode, LEVELS, themesFor, themeLabel, levelColors } from '../../lib/units';
+import { unitLabel, nextSequenceCode, nextSeanceCode, LEVELS, themesFor, themeLabel, levelColors, moveUnit, canMove } from '../../lib/units';
 import { useAuth } from '../../lib/auth';
 import { UnitDetails } from '../../components/UnitDetails';
 
@@ -163,6 +163,7 @@ export function Sequences() {
 
   // Nouvelle carte créée directement dans la séquence / séance, avec le niveau et le thème déjà renseignés
   const [creating, setCreating] = useState<string | null>(null);
+  const movable = useLiveQuery(async () => (unit ? canMove(unit) : undefined), [unit?.id, units]);
   async function newCard(u: Unit) {
     const now = Date.now();
     const id = uid();
@@ -294,6 +295,12 @@ export function Sequences() {
                       + Séance
                     </button>
                   )}
+                  <button className="btn ghost" disabled={!movable?.up} title="Monter (les codes sont renumérotés)" onClick={() => moveUnit(unit, -1)}>
+                    ↑
+                  </button>
+                  <button className="btn ghost" disabled={!movable?.down} title="Descendre (les codes sont renumérotés)" onClick={() => moveUnit(unit, 1)}>
+                    ↓
+                  </button>
                   <button className="btn ghost" onClick={() => rename(unit)}>
                     Renommer
                   </button>

@@ -71,3 +71,49 @@ export async function setLevelColor(teacherId: string, level: string, color: str
   if (t) await db.teachers.update(teacherId, { levelColors: { ...(t.levelColors ?? {}), [level]: color } });
   await applyLevelColors(teacherId);
 }
+
+// ----- Réordonner : déplace une séquence (dans son niveau et son thème) ou une séance (dans sa séquence),
+// puis renumérote les codes pour qu'ils suivent l'ordre (411, 412… ; 4111, 4112…)
+async function siblingsOf(u: Unit) {
+  const all = await db.units.toArray();
+  const sib =
+    u.kind === 'sequence'
+      ? all.filter((x) => x.kind === 'sequence' && x.level === u.level && x.theme === u.theme && x.subject === u.subject)
+      : all.filter((x) => x.kind === 'seance' && x.parentId === u.parentId);
+  return sib.sort((a, b) => a.order - b.order || (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }));
+}
+
+async function renumberSeances(seq: Unit) {
+  const kids = (await db.units.where('parentId').equals(seq.id).toArray()).sort((a, b) => a.order - b.order);
+  for (const [i, k] of kids.entries()) {
+    const code = seq.code ? `${seq.code}${i + 1}` : k.code;
+    if (k.order !== i + 1 || k.code !== code) await db.units.update(k.id, { order: i + 1, code });
+  }
+}
+
+export async function moveUnit(u: Unit, delta: -1 | 1) {
+  const sib = await siblingsOf(u);
+  const i = sib.findIndex((x) => x.id === u.id);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= sib.length) return;
+  [sib[i], sib[j]] = [sib[j], sib[i]];
+  for (const [k, x] of sib.entries()) {
+    if (x.kind === 'sequence') {
+      const code = x.level && x.theme ? `${x.level[0]}${x.theme}${k + 1}` : x.code;
+      if (x.order !== k + 1 || x.code !== code) {
+        await db.units.update(x.id, { order: k + 1, code });
+        await renumberSeances({ ...x, code });
+      }
+    } else {
+      const parent = await db.units.get(x.parentId!);
+      const code = parent?.code ? `${parent.code}${k + 1}` : x.code;
+      if (x.order !== k + 1 || x.code !== code) await db.units.update(x.id, { order: k + 1, code });
+    }
+  }
+}
+
+export async function canMove(u: Unit) {
+  const sib = await siblingsOf(u);
+  const i = sib.findIndex((x) => x.id === u.id);
+  return { up: i > 0, down: i >= 0 && i < sib.length - 1 };
+}
