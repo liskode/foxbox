@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, SUBJECTS, type Unit } from '../../lib/db';
+import { db, uid, nextCardCode, SUBJECTS, type Unit } from '../../lib/db';
+import { THEMES as CARD_THEMES } from '../../lib/apkg';
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
 import { CardFace } from '../../components/CardFace';
@@ -160,6 +161,30 @@ export function Sequences() {
     setSel(null);
   }
 
+  // Nouvelle carte créée directement dans la séquence / séance, avec le niveau et le thème déjà renseignés
+  const [creating, setCreating] = useState<string | null>(null);
+  async function newCard(u: Unit) {
+    const now = Date.now();
+    const id = uid();
+    const theme = u.level !== '6e' && u.theme ? CARD_THEMES[u.theme] : undefined;
+    await db.cards.put({
+      id,
+      code: await nextCardCode(),
+      subject: u.subject,
+      level: u.level,
+      theme,
+      tags: [u.level, theme].filter(Boolean) as string[],
+      front: '',
+      back: '',
+      createdAt: now,
+      updatedAt: now,
+      ocrDone: true,
+    });
+    await db.unitCards.put({ id: `${u.id}|${id}`, unitId: u.id, cardId: id });
+    setCreating(id);
+    setOpen(id);
+  }
+
   async function addPicked() {
     if (!unit) return;
     await db.unitCards.bulkPut([...picked].map((cardId) => ({ id: `${unit.id}|${cardId}`, unitId: unit.id, cardId })));
@@ -310,9 +335,14 @@ export function Sequences() {
                 <div className="panel stack">
                   <div className="spread">
                     <h3 style={{ margin: 0 }}>{cardsInUnit?.length ?? 0} carte(s)</h3>
+                    <div className="row">
+                    <button className="btn" onClick={() => newCard(unit)}>
+                      + Nouvelle carte
+                    </button>
                     <button className="btn primary" onClick={() => setPicking(true)}>
                       + Ajouter des cartes
                     </button>
+                    </div>
                   </div>
                   <div className="cardgrid">
                     {cardsInUnit?.map(({ card, own }) => (
@@ -347,7 +377,7 @@ export function Sequences() {
           )}
         </div>
       </div>
-      {open && <CardDetail cardId={open} onClose={() => setOpen(null)} />}
+      {open && <CardDetail cardId={open} startEditing={creating === open} onClose={() => (setOpen(null), setCreating(null))} />}
     </div>
   );
 }

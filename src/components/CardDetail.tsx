@@ -82,6 +82,15 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
     setEdit(null);
   }
 
+  // Annuler la création d'une carte restée vide : on ne laisse pas de carte blanche (ni de lien vers une séquence)
+  async function cancel() {
+    if (!card!.front.trim() && !card!.back.trim()) {
+      await db.unitCards.where('cardId').equals(card!.id).delete();
+      await db.cards.update(card!.id, { deleted: true, updatedAt: Date.now() });
+      onClose();
+    } else setEdit(null);
+  }
+
   async function remove() {
     if (!confirm(`Supprimer la carte ${card!.code} ? Elle disparaîtra des révisions des élèves (leur historique est conservé).`)) return;
     await db.cards.update(card!.id, { deleted: true, updatedAt: Date.now() });
@@ -218,11 +227,17 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
                 Supprimer la carte
               </button>
               <div className="row">
-                <button className="btn ghost" onClick={() => setEdit(null)}>
+                <button className="btn ghost" onClick={cancel}>
                   Annuler
                 </button>
-                <button className="btn primary" onClick={save}>
-                  Enregistrer
+                <button
+                  className="btn primary"
+                  onClick={async () => {
+                    await save();
+                    onClose();
+                  }}
+                >
+                  Enregistrer et fermer
                 </button>
               </div>
             </div>
