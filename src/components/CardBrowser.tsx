@@ -8,6 +8,21 @@ import { THEMES } from '../lib/apkg';
 
 const strip = (h: string) => h.replace(/<[^>]*>/g, ' ');
 
+// Recherche avec joker : « 41* » = tout ce qui commence par 41, « *FC0? » etc.
+// Le motif s'applique au début du code, de la référence, d'un tag ou d'un mot du texte.
+const fold = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+export function wildcard(token: string): RegExp {
+  const body = fold(token)
+    .replace(/[.+^${}()|[\]\\-]/g, '\\$&')
+    .replace(/\*/g, '.*')
+    .replace(/\?/g, '.');
+  return new RegExp(`^${body}$`);
+}
+function wildcardTargets(c: Card): string[] {
+  const words = [strip(c.front), strip(c.back), c.ocrFront ?? '', c.ocrBack ?? ''].join(' ').split(/[\s,;:.!?()«»"']+/);
+  return [c.code, c.sourceRef ?? '', (c.sourceRef ?? '').replace(/-/g, ''), ...c.tags, ...words].filter(Boolean).map(fold);
+}
+
 export function searchText(c: Card) {
   return normalize(
     [c.code, c.sourceRef, c.tags.join(' '), c.theme, strip(c.front), strip(c.back), c.ocrFront, c.ocrBack].join(' '),
@@ -45,7 +60,9 @@ export function CardBrowser({
     [cards, allThemes, allLevels],
   );
 
-  const words = normalize(q) ? q.split(/\s+/).map(normalize).filter(Boolean) : [];
+  const tokens = q.trim() ? q.trim().split(/\s+/) : [];
+  const words = tokens.filter((w) => !/[*?]/.test(w)).map(normalize).filter(Boolean);
+  const patterns = tokens.filter((w) => /[*?]/.test(w)).map(wildcard);
   const list = cards
     .filter((c) => !exclude?.has(c.id))
     .filter((c) => !themes.size || themes.has(c.theme ?? ''))
@@ -53,9 +70,12 @@ export function CardBrowser({
     .filter((c) => !tag || c.tags.includes(tag))
     .filter((c) => !orphans || !linked.has(c.id))
     .filter((c) => {
-      if (!words.length) return true;
+      if (!words.length && !patterns.length) return true;
       const t = searchText(c);
-      return words.every((w) => t.includes(w));
+      if (!words.every((w) => t.includes(w))) return false;
+      if (!patterns.length) return true;
+      const targets = wildcardTargets(c);
+      return patterns.every((re) => targets.some((x) => re.test(x)));
     })
     .sort((a, b) => a.code.localeCompare(b.code));
 
@@ -72,7 +92,7 @@ export function CardBrowser({
       <div className="panel stack" style={{ padding: '14px 16px' }}>
         <div className="row">
           <input
-            placeholder="Rechercher : mot-clé, code (C0012), référence (410FC03)…"
+            placeholder="Rechercher : mot-clé, code (C0012), référence (410FC03), joker (41*, *FC0?)…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             style={{ flex: 1, minWidth: 220 }}
