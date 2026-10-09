@@ -3,14 +3,24 @@ import { db, type Unit } from './db';
 
 export const LEVELS = ['6e', '5e', '4e', '3e'];
 
+// Thèmes du programme de cycle 4
+export const THEME_NAMES: Record<string, string> = {
+  '1': 'Organisation et transformations de la matière',
+  '2': 'Mouvement et interactions',
+  '3': "L'énergie et ses conversions",
+  '4': 'Des signaux pour observer et communiquer',
+};
+export const themeLabel = (t?: string) => (t ? `Thème ${t} – ${THEME_NAMES[t] ?? ''}` : 'Sans thème');
+
 export const unitLabel = (u: Pick<Unit, 'code' | 'name'>) => (u.code ? `${u.code} · ${u.name}` : u.name);
 
-// Prochain code de séquence pour un niveau : 41, 42… (4e)
-export async function nextSequenceCode(level?: string) {
-  if (!level) return undefined;
-  const seqs = (await db.units.toArray()).filter((u) => u.kind === 'sequence' && u.level === level);
-  const n = Math.max(0, ...seqs.map((u) => parseInt(u.code?.slice(1) ?? '0') || 0));
-  return `${level[0]}${n + 1}`;
+// Prochain code de séquence pour un niveau et un thème : 411, 412… (4e, thème 1) — 9 séquences par thème au plus
+export async function nextSequenceCode(level?: string, theme?: string) {
+  if (!level || !theme) return undefined;
+  const seqs = (await db.units.toArray()).filter((u) => u.kind === 'sequence' && u.level === level && u.theme === theme);
+  const n = Math.max(0, ...seqs.map((u) => parseInt(u.code?.slice(2) ?? '0') || 0));
+  if (n >= 9) throw new Error(`Déjà 9 séquences dans le thème ${theme} en ${level}.`);
+  return `${level[0]}${theme}${n + 1}`;
 }
 
 // Prochain code de séance dans une séquence : 411, 412…

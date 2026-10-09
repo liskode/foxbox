@@ -6,7 +6,8 @@ import { CardDetail } from '../../components/CardDetail';
 import { CardFace } from '../../components/CardFace';
 import { themeColor } from '../../components/widgets';
 import { frDate, today } from '../../lib/dates';
-import { unitLabel, nextSequenceCode, nextSeanceCode, LEVELS } from '../../lib/units';
+import { unitLabel, nextSequenceCode, nextSeanceCode, LEVELS, THEME_NAMES, themeLabel, levelColors } from '../../lib/units';
+import { useAuth } from '../../lib/auth';
 import { UnitDetails } from '../../components/UnitDetails';
 
 function Publish({ unit }: { unit: Unit }) {
@@ -81,6 +82,9 @@ function Publish({ unit }: { unit: Unit }) {
 
 export function Sequences() {
   const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const { session } = useAuth();
+  const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
+  const bgOf = (u: Unit) => (u.level && colors[u.level]) || 'var(--paper)';
   const [sel, setSel] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -102,19 +106,31 @@ export function Sequences() {
   const levels = [...new Set(units.filter((u) => u.kind === 'sequence' && u.level).map((u) => u.level!))].sort((a, b) => b.localeCompare(a));
   const seqs = units
     .filter((u) => u.kind === 'sequence' && (!lvl || u.level === lvl))
-    .sort((a, b) => LEVELS.indexOf(a.level ?? '') - LEVELS.indexOf(b.level ?? '') || a.order - b.order);
+    .sort(
+      (a, b) =>
+        LEVELS.indexOf(a.level ?? '') - LEVELS.indexOf(b.level ?? '') ||
+        (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }) ||
+        a.order - b.order,
+    );
   // On ne déplie que la séquence en cours (sinon la liste devient très longue)
   const openSeq = unit?.kind === 'sequence' ? unit.id : unit?.parentId;
 
   async function addSequence() {
     const level = lvl || prompt(`Niveau de la séquence (${LEVELS.join(', ')})`, '4e')?.trim();
     if (!level) return;
+    const theme = prompt(`Thème (1 à 4) :\n${Object.entries(THEME_NAMES).map(([k, v]) => `${k} – ${v}`).join('\n')}`, '1')?.trim();
+    if (!theme || !THEME_NAMES[theme]) return;
     const name = prompt('Titre de la séquence (ex. « La masse volumique »)');
     if (!name) return;
     const subject = SUBJECTS[0];
-    const code = await nextSequenceCode(level);
-    const order = units.filter((x) => x.kind === 'sequence' && x.level === level).length + 1;
-    const u: Unit = { id: uid(), kind: 'sequence', subject, level, name, order, code };
+    let code;
+    try {
+      code = await nextSequenceCode(level, theme);
+    } catch (e) {
+      return alert((e as Error).message);
+    }
+    const order = units.filter((x) => x.kind === 'sequence' && x.level === level && x.theme === theme).length + 1;
+    const u: Unit = { id: uid(), kind: 'sequence', subject, level, theme, name, order, code };
     await db.units.put(u);
     setSel(u.id);
   }
@@ -124,7 +140,7 @@ export function Sequences() {
     const name = prompt('Titre de la séance');
     if (!name) return;
     const code = await nextSeanceCode(parent);
-    const u: Unit = { id: uid(), kind: 'seance', parentId: parent.id, subject: parent.subject, level: parent.level, name, order: n, code };
+    const u: Unit = { id: uid(), kind: 'seance', parentId: parent.id, subject: parent.subject, level: parent.level, theme: parent.theme, name, order: n, code };
     await db.units.put(u);
     setSel(u.id);
   }
@@ -177,11 +193,23 @@ export function Sequences() {
             </div>
           )}
           {!seqs.length && <span className="muted small">Créez votre première séquence.</span>}
-          {seqs.map((s) => (
+          {seqs.map((s, i) => (
             <div key={s.id} className="stack" style={{ gap: 4 }}>
+              {(i === 0 || seqs[i - 1].theme !== s.theme || seqs[i - 1].level !== s.level) && (
+                <div className="small" style={{ fontWeight: 900, marginTop: i ? 8 : 0, color: 'var(--ink-soft)' }}>
+                  {!lvl && s.level ? `${s.level} · ` : ''}
+                  {themeLabel(s.theme)}
+                </div>
+              )}
               <button
                 className={'btn' + (sel === s.id ? ' primary' : ' ghost')}
-                style={{ justifyContent: 'flex-start', whiteSpace: 'normal', textAlign: 'left' }}
+                style={{
+                  justifyContent: 'flex-start',
+                  whiteSpace: 'normal',
+                  textAlign: 'left',
+                  // couleur du niveau ; la séquence sélectionnée reste jaune
+                  ...(sel === s.id ? {} : { background: bgOf(s) }),
+                }}
                 onClick={() => {
                   setSel(s.id);
                   setPicking(false);
@@ -195,8 +223,14 @@ export function Sequences() {
                 .map((se) => (
                   <button
                     key={se.id}
-                    className={'btn small' + (sel === se.id ? ' blue' : ' ghost')}
-                    style={{ marginLeft: 18, justifyContent: 'flex-start', whiteSpace: 'normal', textAlign: 'left' }}
+                    className={'btn small' + (sel === se.id ? ' primary' : ' ghost')}
+                    style={{
+                      marginLeft: 18,
+                      justifyContent: 'flex-start',
+                      whiteSpace: 'normal',
+                      textAlign: 'left',
+                      ...(sel === se.id ? {} : { background: bgOf(se) }),
+                    }}
                     onClick={() => {
                       setSel(se.id);
                       setPicking(false);

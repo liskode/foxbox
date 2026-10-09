@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, type Group, type Unit } from '../lib/db';
 import { frDate, today } from '../lib/dates';
-import { unitLabel } from '../lib/units';
+import { unitLabel, themeLabel } from '../lib/units';
 
 // Niveau déduit du nom de la classe (« 4A_2627 » → 4e)
 export const levelOf = (g: Group) => {
@@ -158,8 +158,13 @@ export function Progression({ group }: { group: Group }) {
           choisissez celles que suit la classe.
         </div>
       )}
-      {seqs.map((s) => (
-        <SequenceBlock key={s.id} group={group} seq={s} done={done} />
+      {seqs.map((s, i) => (
+        <div key={s.id} className="stack" style={{ gap: 8 }}>
+          {(i === 0 || seqs[i - 1].theme !== s.theme) && (
+            <h3 style={{ margin: i ? '10px 0 0' : 0 }}>{themeLabel(s.theme)}</h3>
+          )}
+          <SequenceBlock group={group} seq={s} done={done} />
+        </div>
       ))}
     </div>
   );

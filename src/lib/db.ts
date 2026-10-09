@@ -100,7 +100,8 @@ export interface Unit {
   level?: string;
   name: string;
   order: number;
-  code?: string; // 41, 42… (séquences de 4e) ; 411, 412… (séances de la séquence 41)
+  code?: string; // niveau + thème + séquence (412) ; séance : code de la séquence + numéro (4121)
+  theme?: string; // thème du programme, 1 à 4
   description?: string; // descriptif de la séance (professeur)
   documents?: { mediaId: string; name: string; size: number }[]; // PDF téléchargeables par les élèves
 }
