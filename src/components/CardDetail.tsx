@@ -58,6 +58,11 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
     return out;
   }, [cardId]);
   const [edit, setEdit] = useState<Card | null>(null);
+  // Texte brut du champ tags : découpé seulement à l'enregistrement (sinon la virgule tapée disparaît aussitôt)
+  const [tagsText, setTagsText] = useState('');
+  useEffect(() => {
+    if (edit) setTagsText(edit.tags.filter((t) => t !== edit.level && t !== edit.theme).join(', '));
+  }, [edit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (startEditing && card && !edit) setEdit({ ...card });
@@ -70,7 +75,7 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
     const contentChanged = edit.front !== card!.front || edit.back !== card!.back;
     await db.cards.put({
       ...edit,
-      tags: [...new Set([edit.level, edit.theme, ...edit.tags].filter(Boolean) as string[])],
+      tags: [...new Set([edit.level, edit.theme, ...tagsText.split(',').map((t) => t.trim())].filter(Boolean) as string[])],
       updatedAt: Date.now(),
       ocrDone: contentChanged && /src="media:/.test(edit.front + edit.back) ? false : edit.ocrDone,
     });
@@ -194,10 +199,8 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
                 <label className="field" style={{ flex: 1, minWidth: 200 }}>
                   Autres tags (séparés par des virgules)
                   <input
-                    value={edit.tags.filter((t) => t !== edit.level && t !== edit.theme).join(', ')}
-                    onChange={(e) =>
-                      setEdit({ ...edit, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) })
-                    }
+                    value={tagsText}
+                    onChange={(e) => setTagsText(e.target.value)}
                   />
                 </label>
               </div>
