@@ -6,7 +6,7 @@ import { CardDetail } from '../../components/CardDetail';
 import { CardFace } from '../../components/CardFace';
 import { themeColor } from '../../components/widgets';
 import { frDate, today } from '../../lib/dates';
-import { unitLabel, nextSequenceCode, nextSeanceCode, LEVELS, THEME_NAMES, themeLabel, levelColors } from '../../lib/units';
+import { unitLabel, nextSequenceCode, nextSeanceCode, LEVELS, themesFor, themeLabel, levelColors } from '../../lib/units';
 import { useAuth } from '../../lib/auth';
 import { UnitDetails } from '../../components/UnitDetails';
 
@@ -118,8 +118,9 @@ export function Sequences() {
   async function addSequence() {
     const level = lvl || prompt(`Niveau de la séquence (${LEVELS.join(', ')})`, '4e')?.trim();
     if (!level) return;
-    const theme = prompt(`Thème (1 à 4) :\n${Object.entries(THEME_NAMES).map(([k, v]) => `${k} – ${v}`).join('\n')}`, '1')?.trim();
-    if (!theme || !THEME_NAMES[theme]) return;
+    const names = themesFor(level);
+    const theme = prompt(`Thème :\n${Object.entries(names).map(([k, v]) => `${k} – ${v}`).join('\n')}`, '1')?.trim();
+    if (!theme || !names[theme]) return;
     const name = prompt('Titre de la séquence (ex. « La masse volumique »)');
     if (!name) return;
     const subject = SUBJECTS[0];
@@ -198,7 +199,7 @@ export function Sequences() {
               {(i === 0 || seqs[i - 1].theme !== s.theme || seqs[i - 1].level !== s.level) && (
                 <div className="small" style={{ fontWeight: 900, marginTop: i ? 8 : 0, color: 'var(--ink-soft)' }}>
                   {!lvl && s.level ? `${s.level} · ` : ''}
-                  {themeLabel(s.theme)}
+                  {themeLabel(s.theme, s.level)}
                 </div>
               )}
               <button

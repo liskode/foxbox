@@ -3,14 +3,21 @@ import { db, type Unit } from './db';
 
 export const LEVELS = ['6e', '5e', '4e', '3e'];
 
-// Thèmes du programme de cycle 4
+// Thèmes du programme de cycle 4 (5e, 4e, 3e)
 export const THEME_NAMES: Record<string, string> = {
   '1': 'Organisation et transformations de la matière',
   '2': 'Mouvement et interactions',
   '3': "L'énergie et ses conversions",
   '4': 'Des signaux pour observer et communiquer',
 };
-export const themeLabel = (t?: string) => (t ? `Thème ${t} – ${THEME_NAMES[t] ?? ''}` : 'Sans thème');
+// Thèmes du cycle 3 (6e, sciences et technologie)
+export const THEME_NAMES_C3: Record<string, string> = {
+  '1': 'Matière, mouvement, énergie, information',
+  '2': 'Le vivant, sa diversité et les fonctions qui le caractérisent',
+  '3': 'La Terre, une planète peuplée par des êtres vivants',
+};
+export const themesFor = (level?: string) => (level === '6e' ? THEME_NAMES_C3 : THEME_NAMES);
+export const themeLabel = (t?: string, level?: string) => (t ? `Thème ${t} – ${themesFor(level)[t] ?? ''}` : 'Sans thème');
 
 export const unitLabel = (u: Pick<Unit, 'code' | 'name'>) => (u.code ? `${u.code} · ${u.name}` : u.name);
 

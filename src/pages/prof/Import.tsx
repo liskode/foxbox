@@ -6,6 +6,7 @@ import { db, SUBJECTS, resetAll } from '../../lib/db';
 import { runOcr, subscribeOcr, type OcrState } from '../../lib/ocr';
 import { generateDemo } from '../../lib/demo';
 import { ONLINE } from '../../lib/supabase';
+import { PlancheImport } from '../../components/PlancheImport';
 
 function History() {
   const imports = useLiveQuery(() => db.imports.orderBy('date').reverse().limit(10).toArray(), [], []);
@@ -160,6 +161,8 @@ export function ImportPage() {
           </div>
         )}
       </div>
+
+      <PlancheImport subject={subject} />
 
       <History />
 

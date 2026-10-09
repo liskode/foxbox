@@ -161,7 +161,7 @@ export function Progression({ group }: { group: Group }) {
       {seqs.map((s, i) => (
         <div key={s.id} className="stack" style={{ gap: 8 }}>
           {(i === 0 || seqs[i - 1].theme !== s.theme) && (
-            <h3 style={{ margin: i ? '10px 0 0' : 0 }}>{themeLabel(s.theme)}</h3>
+            <h3 style={{ margin: i ? '10px 0 0' : 0 }}>{themeLabel(s.theme, s.level)}</h3>
           )}
           <SequenceBlock group={group} seq={s} done={done} />
         </div>
