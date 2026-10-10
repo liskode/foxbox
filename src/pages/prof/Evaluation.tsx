@@ -31,7 +31,8 @@ import { frDate } from '../../lib/dates';
 import { Avatar } from '../../components/Avatar';
 import { CardBrowser } from '../../components/CardBrowser';
 import { NoteButton } from '../../components/StudentNote';
-import { CompetencePicker } from '../../components/CompetencePicker';
+import { CompetencePicker, useCompetences } from '../../components/CompetencePicker';
+import { competenceScores, evalCategories, masteryOf } from '../../lib/competences';
 import { DocumentsEditor } from '../../components/UnitDetails';
 
 const pct = (l: number | null | undefined) => (l === null || l === undefined ? '' : `${Math.round(l * 100)}`);
@@ -393,6 +394,77 @@ function NoteBadge({ ev, r }: { ev: Evaluation; r?: Result }) {
   );
 }
 
+// Répartition par compétence d'une copie, pondérée par le barème (points obtenus / points des critères rattachés)
+function CompetenceBadges({ ev, r, small }: { ev: Evaluation; r?: Result; small?: boolean }) {
+  const list = useCompetences();
+  const scores = competenceScores(list, ev, r);
+  if (!scores.length) return null;
+  return (
+    <span className="row" style={{ gap: 4 }}>
+      {scores.map(({ c, note, total, value }) => {
+        const m = masteryOf(value);
+        return (
+          <span
+            key={c.id}
+            title={`${c.name} : ${String(note).replace('.', ',')}/${String(total).replace('.', ',')} pts (${Math.round(value * 100)} %) · ${m.name}`}
+            style={{ display: 'inline-flex', borderRadius: 6, overflow: 'hidden', border: '1.5px solid #00000033', fontSize: small ? '0.72rem' : '0.8rem', fontWeight: 800 }}
+          >
+            <span style={{ background: c.color, padding: '0 5px' }}>{c.code}</span>
+            <span style={{ background: m.color, padding: '0 5px' }}>
+              {String(note).replace('.', ',')}/{String(total).replace('.', ',')}
+            </span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+// Résultats d'une classe par compétence : moyenne des élèves (chacun pondéré par le barème)
+function ClassCompetences({ ev, rs }: { ev: Evaluation; rs: (Result | undefined)[] }) {
+  const list = useCompetences();
+  const cats = evalCategories(list, ev);
+  if (!cats.length) return null;
+  const all = rs.map((r) => competenceScores(list, ev, r));
+  return (
+    <details open>
+      <summary style={{ fontWeight: 800, cursor: 'pointer' }}>Réussite par compétence</summary>
+      <table className="list" style={{ marginTop: 6 }}>
+        <tbody>
+          {cats.map((c) => {
+            const vals = all.map((x) => x.find((y) => y.c.id === c.id)?.value).filter((v): v is number => v !== undefined);
+            const v = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+            const pts = round1(ev.criteria.filter((cr) => cr.competenceIds?.some((k) => k === c.id || list.find((x) => x.id === k)?.parentId === c.id)).reduce((a, cr) => a + cr.points, 0));
+            return (
+              <tr key={c.id}>
+                <td style={{ width: '60%' }}>
+                  <span style={{ background: c.color, borderRadius: 6, padding: '0 6px', fontWeight: 800 }}>{c.code}</span> {c.name}{' '}
+                  <span className="small muted">({String(pts).replace('.', ',')} pts du barème)</span>
+                </td>
+                <td>
+                  {v === null ? (
+                    <span className="muted small">—</span>
+                  ) : (
+                    <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+                      <div style={{ width: 140, height: 12, border: '2px solid var(--line)', borderRadius: 6, overflow: 'hidden', background: 'var(--paper)' }}>
+                        <div style={{ width: `${v * 100}%`, height: '100%', background: masteryOf(v).color }} />
+                      </div>
+                      <b>{Math.round(v * 100)} %</b>
+                      <span className="small" style={{ background: masteryOf(v).color, borderRadius: 6, padding: '0 5px', fontWeight: 800 }}>
+                        {masteryOf(v).code}
+                      </span>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </details>
+  );
+}
+
 function CopiesTab({ ev }: { ev: Evaluation }) {
   const { list, results } = useResults(ev);
   const [params, setParams] = useSearchParams();
@@ -505,6 +577,7 @@ function CopiesTab({ ev }: { ev: Evaluation }) {
             <div style={{ fontSize: '1.4rem' }}>
               <NoteBadge ev={ev} r={r} />
             </div>
+            <CompetenceBadges ev={ev} r={r} />
             <button className={'btn small' + (r.absent ? ' danger' : ' ghost')} onClick={() => saveResult(ev, { ...r, absent: !r.absent })}>
               {r.absent ? 'Absent ✓' : 'Absent (A)'}
             </button>
@@ -619,6 +692,7 @@ function CopiesTab({ ev }: { ev: Evaluation }) {
 // ---------------------------------------------------------------- Grille (comme le tableur : critères en lignes, élèves en colonnes)
 function GrilleTab({ ev }: { ev: Evaluation }) {
   const { list, results } = useResults(ev);
+  const comps = useCompetences();
   const [cell, setCell] = useState<[number, number]>([0, 0]); // [critère, élève]
   const [manual, setManual] = useState<string | null>(null);
 
@@ -737,6 +811,25 @@ function GrilleTab({ ev }: { ev: Evaluation }) {
                 </td>
               ))}
             </tr>
+            {evalCategories(comps, ev).map((cat) => (
+              <tr key={cat.id}>
+                <td style={{ position: 'sticky', left: 0, background: 'var(--paper)', padding: '4px 6px', fontWeight: 800 }} title={cat.name}>
+                  <span style={{ background: cat.color, borderRadius: 6, padding: '0 6px' }}>{cat.code}</span> %
+                </td>
+                {list.map(({ student }) => {
+                  const sc = competenceScores(comps, ev, results.get(student.id)).find((x) => x.c.id === cat.id);
+                  return (
+                    <td
+                      key={student.id}
+                      title={sc ? `${cat.name} : ${sc.note}/${sc.total} pts · ${masteryOf(sc.value).name}` : undefined}
+                      style={{ textAlign: 'center', fontWeight: 700, fontSize: '0.8rem', background: sc ? masteryOf(sc.value).color : undefined }}
+                    >
+                      {sc ? Math.round(sc.value * 100) : ''}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -849,6 +942,7 @@ function ResultatsTab({ ev }: { ev: Evaluation }) {
                 ))}
               </div>
             </div>
+            <ClassCompetences ev={ev} rs={members.map((m) => results.get(m.student.id))} />
             <details open>
               <summary style={{ fontWeight: 800, cursor: 'pointer' }}>Réussite par critère</summary>
               <table className="list" style={{ marginTop: 6 }}>
@@ -897,6 +991,9 @@ function ResultatsTab({ ev }: { ev: Evaluation }) {
                         </td>
                         <td>
                           <NoteBadge ev={ev} r={r} />
+                        </td>
+                        <td>
+                          <CompetenceBadges ev={ev} r={r} small />
                         </td>
                         <td className="small muted" style={{ maxWidth: 360 }}>
                           {r?.appreciation}

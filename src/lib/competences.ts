@@ -98,3 +98,34 @@ export function levelFor(list: Competence[], obs: Observation[], studentId: stri
   const value = recent.reduce((a, e) => a + e.sum / e.n, 0) / recent.length;
   return { value, n: mine.length, evals: evs.length, mastery: masteryOf(value) };
 }
+
+// Répartition d'une copie par compétence (catégories), pondérée par le barème :
+// points obtenus / points des critères notés rattachés à la catégorie (ou à ses sous-compétences)
+export interface CompetenceScore {
+  c: Competence;
+  note: number;
+  total: number;
+  value: number; // 0..1
+}
+export function evalCategories(list: Competence[], ev: Evaluation) {
+  const used = new Set(ev.criteria.flatMap((cr) => cr.competenceIds ?? []));
+  return categories(list).filter((cat) => used.has(cat.id) || childrenOf(list, cat.id).some((k) => used.has(k.id)));
+}
+export function competenceScores(list: Competence[], ev: Evaluation, r?: Result): CompetenceScore[] {
+  if (!r || r.absent) return [];
+  const out: CompetenceScore[] = [];
+  for (const cat of evalCategories(list, ev)) {
+    const ids = new Set([cat.id, ...childrenOf(list, cat.id).map((k) => k.id)]);
+    let note = 0;
+    let total = 0;
+    for (const cr of ev.criteria) {
+      if (!cr.competenceIds?.some((k) => ids.has(k))) continue;
+      const l = r.levels[cr.id];
+      if (l === null || l === undefined) continue;
+      note += l * cr.points;
+      total += cr.points;
+    }
+    if (total) out.push({ c: cat, note: Math.round(note * 10) / 10, total: Math.round(total * 10) / 10, value: note / total });
+  }
+  return out;
+}
