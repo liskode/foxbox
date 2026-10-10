@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { renameStudent, deleteStudent } from '../../lib/students';
+import { renameStudent, deleteStudent, resetPassword } from '../../lib/students';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Rule } from '../../lib/db';
 import { StudentReport } from '../../components/StudentReport';
@@ -122,7 +122,26 @@ export function StudentPage() {
           )}
           {msg && <div className="notice small">{msg}</div>}
           <div className="muted">
-            {groups.map((g) => `${g.name} (${g.subject})`).join(' · ')} · identifiant <span className="code">{student.login}</span>
+            {groups.map((g) => `${g.name} (${g.subject})`).join(' · ')} · identifiant{' '}
+            <span className="code" title={student.password ? `Mot de passe : ${student.password}` : 'Mot de passe inconnu'} style={{ cursor: 'help', borderBottom: '1px dotted' }}>
+              {student.login}
+            </span>{' '}
+            <button
+              className="btn small ghost"
+              title="Nouveau mot de passe, si l'ancien est oublié ou a été divulgué"
+              onClick={async () => {
+                if (!confirm(`Créer un nouveau mot de passe pour ${student.firstName} ? L'ancien ne fonctionnera plus.`)) return;
+                try {
+                  await resetPassword(student.id);
+                  const s2 = await db.students.get(student.id);
+                  setMsg(`Nouveau mot de passe de ${student.firstName} : ${s2?.password ?? '(voir la fiche de connexion)'}`);
+                } catch (e) {
+                  alert((e as Error).message);
+                }
+              }}
+            >
+              🔑 Réinitialiser le mot de passe
+            </button>
           </div>
           </div>
         </div>
