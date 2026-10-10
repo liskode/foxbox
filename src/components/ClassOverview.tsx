@@ -8,6 +8,63 @@ import { frDate } from '../lib/dates';
 import { TodoList } from './TodoList';
 import { useProgressSummary } from './Progression';
 import { StudentName } from './Avatar';
+import { DoneCell } from './DoneCell';
+import { useAuth } from '../lib/auth';
+import { levelPlans, courseDays, doneDate, dm, yearEnd } from '../lib/forecast';
+import { levelOfName, unitLabel } from '../lib/units';
+import { today, fromISO } from '../lib/dates';
+
+// Prochain cours de la classe et séance prévue : on la coche « faite » sans quitter la page
+function NextSession({ group }: { group: Group }) {
+  const { session } = useAuth();
+  const data = useLiveQuery(() => levelPlans(session!.id), [session?.id]);
+  if (!data) return null;
+  const lp = data.levels.find((l) => l.level === levelOfName(group.name));
+  const plan = lp?.plans.get(group.id);
+  if (!lp || !plan) return null;
+  const all = data.levels.flatMap((l) => l.groups);
+  const next = courseDays(data.tt, group, all, today(), yearEnd(data.tt))[0]?.date;
+  const items = lp.items.filter((it) => !doneDate(plan, it)).slice(0, 2);
+  const lastDone = [...lp.items].reverse().find((it) => doneDate(plan, it));
+  return (
+    <div className="panel stack" style={{ gap: 8, borderColor: 'var(--matiere)' }}>
+      <div className="spread">
+        <h3 style={{ margin: 0 }}>
+          {next ? (next === today() ? "Cours d'aujourd'hui" : `Prochain cours : ${fromISO(next).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}`) : 'Séances'}
+        </h3>
+        {plan.overflowWeeks ? (
+          <b className="small" style={{ color: 'var(--forgot)' }}>⚠️ dépasse de {plan.overflowWeeks} sem.</b>
+        ) : plan.end ? (
+          <span className="small">fin prévue le {dm(plan.end)} ✓</span>
+        ) : null}
+      </div>
+      {lastDone && (
+        <div className="small muted">
+          ✓ Dernière faite : {unitLabel(lastDone.unit)} ({dm(doneDate(plan, lastDone)!)})
+        </div>
+      )}
+      {items.map((it) => (
+        <div key={it.unit.id} className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+          <span style={{ flex: 1 }}>
+            {it.unit.isEval && '📝 '}
+            <b>{unitLabel(it.unit)}</b> <span className="small muted">({it.seq.name})</span>
+          </span>
+          <DoneCell
+            g={group}
+            unitId={it.unit.id}
+            planned={plan.planned.get(it.unit.id)}
+            tt={data.tt}
+            groups={all}
+            showName={false}
+            isEval={it.unit.isEval}
+          />
+        </div>
+      ))}
+      {!items.length && <span className="small muted">{lp.items.length ? 'Toutes les séances sont faites 🎉' : 'Aucune séquence pour ce niveau.'}</span>}
+      <span className="small muted">Cliquez sur la date pour cocher la séance « faite » (ses cartes sont publiées).</span>
+    </div>
+  );
+}
 
 export function useClassEvaluations(group: Group) {
   return useLiveQuery(async () => {
@@ -35,6 +92,7 @@ export function ClassOverview({ group, goTab }: { group: Group; goTab: (t: strin
   return (
     <div className="grid2" style={{ alignItems: 'start' }}>
       <div className="stack">
+        <NextSession group={group} />
         <div className="panel stack">
           <div className="spread">
             <h3 style={{ margin: 0 }}>Progression</h3>

@@ -60,6 +60,16 @@ h3 { font-weight: 800; font-size: 1.05rem; }
 .nav-sep { width: 2px; align-self: stretch; margin: 4px 6px; background: var(--muted-line); border-radius: 2px; }
 .nav a.active { border-color: var(--line); background: var(--matiere); }
 .nav a:hover:not(.active) { border-color: var(--muted-line); }
+.topbar.thin { padding: 4px 16px; gap: 12px; }
+.topbar.thin .brand img { width: 34px; height: 34px; }
+.topbar.thin .nav a { padding: 3px 12px; font-size: 0.92rem; white-space: nowrap; }
+.topbar.thin .nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; scrollbar-width: none; }
+@media (max-width: 600px) { .topbar.thin { padding: 4px 8px; gap: 6px; } .topbar.thin .nav a { padding: 3px 8px; } }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid transparent; background: none; font-size: 1.1rem; cursor: pointer; text-decoration: none; color: var(--ink);
+}
+.icon-btn:hover, .icon-btn.active { border-color: var(--line); background: var(--matiere); }
 .page { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
 .page.narrow { max-width: 560px; }
 .page.wide { max-width: none; }
@@ -231,4 +241,19 @@ table.list tr.click:hover td { background: #faf7ef; }
   .cardgrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .thumb .face { height: 150px; }
   .panel { padding: 14px; }
+}
+
+/* Accueil : 4 tuiles, emploi du temps dessous, À faire à droite */
+.home-grid {
+  display: grid; gap: 16px; align-items: start;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(260px, 320px);
+}
+.home-grid .tile { align-self: stretch; }
+.home-grid .home-edt { grid-column: 1 / span 4; grid-row: 2; }
+.home-grid .home-todo { grid-column: 5; grid-row: 1 / span 2; }
+.home-grid .home-todo { align-self: stretch; display: flex; flex-direction: column; }
+.home-grid .home-todo > * { flex: 1; }
+@media (max-width: 1000px) {
+  .home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-grid .home-edt, .home-grid .home-todo { grid-column: 1 / span 2; grid-row: auto; }
 }

@@ -1,59 +1,62 @@
-// Tableau de bord : emploi du temps (accès aux classes), trombi, to-do list.
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+// Accueil : 4 tuiles (Progression, Évaluations, Flashcards, Élève), emploi du temps (accès aux classes), À faire.
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Group } from '../../lib/db';
+import { db } from '../../lib/db';
+import { useAuth } from '../../lib/auth';
+import { groupOverview } from '../../lib/stats';
+import { levelPlans } from '../../lib/forecast';
 import { TodoList } from '../../components/TodoList';
 import { TimetableWidget } from '../../components/TimetableWidget';
+import { StudentSearch } from '../../components/StudentSearch';
+import { useOverview } from './Correction';
 
-// Bouton « Trombi » : choix de la classe, puis ouverture de l'onglet Trombi de la classe
-function TrombiButton({ groups }: { groups: Group[] }) {
-  const [open, setOpen] = useState(false);
-  const nav = useNavigate();
+function Tile({ to, title, sub, alert, children }: { to: string; title: string; sub: string; alert?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="stack" style={{ gap: 8, alignItems: 'flex-end' }}>
-      <button className="btn" onClick={() => setOpen(!open)}>
-        📷 Trombi
-      </button>
-      {open && (
-        <div className="row" style={{ gap: 6, justifyContent: 'flex-end' }}>
-          <span className="small muted">Quelle classe ?</span>
-          {groups.map((g) => (
-            <button key={g.id} className="btn small" style={{ background: g.color ?? 'var(--paper)' }} onClick={() => nav(`/prof/classes/${g.id}?onglet=trombi`)}>
-              {g.name}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="panel stack tile" style={{ gap: 6 }}>
+      <Link to={to} className="stack" style={{ gap: 2, textDecoration: 'none', color: 'inherit' }}>
+        <h2 style={{ margin: 0 }}>{title}</h2>
+        <span className="small muted">{sub}</span>
+      </Link>
+      {alert && <div className="small">{alert}</div>}
+      {children}
     </div>
   );
 }
 
+function useAlerts() {
+  const { session } = useAuth();
+  return useLiveQuery(async () => {
+    const plans = await levelPlans(session!.id);
+    const late = plans.levels.flatMap((l) => l.groups.filter((g) => l.plans.get(g.id)?.overflowWeeks).map((g) => g.name.replace(/_.*/, '')));
+    let relancer = 0;
+    for (const g of await db.groups.filter((g) => !g.archived).toArray()) {
+      const ov = await groupOverview(g.id);
+      relancer += ov?.rows.filter((r) => r.inactiveDays === null || r.inactiveDays >= 5).length ?? 0;
+    }
+    return { late, relancer };
+  }, [session?.id]);
+}
+
 export function Dashboard() {
-  const groups = useLiveQuery(
-    async () => (await db.groups.filter((g) => !g.archived).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
-    [],
-    [],
-  );
-  const counts = useLiveQuery(async () => ({ cards: await db.cards.filter((c) => !c.deleted).count(), seqs: await db.units.filter((u) => u.kind === 'sequence').count() }), []);
+  const alerts = useAlerts();
+  const evals = useOverview();
+  const toCorrect = evals?.rows.reduce((a, r) => a + r.pills.filter((p) => p.state === 'grading').length, 0) ?? 0;
+  const counts = useLiveQuery(async () => ({
+    cards: await db.cards.filter((c) => !c.deleted).count(),
+    seqs: await db.units.filter((u) => u.kind === 'sequence').count(),
+    groups: await db.groups.filter((g) => !g.archived).count(),
+  }));
 
   const steps = [
-    { done: !!counts?.cards, label: 'Importer vos cartes (Bibliothèque › Import)', to: '/prof/import' },
+    { done: !!counts?.groups, label: 'Créer vos classes et importer les élèves (⚙️ Réglages)', to: '/prof/reglages' },
     { done: !!counts?.seqs, label: 'Préparer vos séquences et séances (Progression)', to: '/prof/progression' },
-    { done: groups.length > 0, label: 'Créer vos classes et importer les élèves', to: '/prof/classes' },
+    { done: !!counts?.cards, label: 'Importer vos cartes (Flashcards › Import)', to: '/prof/flashcards?onglet=import' },
   ];
 
   return (
-    <div className="page stack">
-      <div className="spread" style={{ alignItems: 'flex-start' }}>
-        <div className="row" style={{ gap: 16 }}>
-          <img src="./logo.png" alt="" style={{ width: 70 }} />
-          <h1 className="title" style={{ margin: 0 }}>Tableau de bord</h1>
-        </div>
-        <TrombiButton groups={groups} />
-      </div>
-
-      {steps.some((s) => !s.done) && (
+    <div className="page stack" style={{ maxWidth: 1400 }}>
+      {counts && steps.some((s) => !s.done) && (
         <div className="panel stack">
           <h3 style={{ margin: 0 }}>Pour commencer</h3>
           {steps.map((s, i) => (
@@ -67,9 +70,35 @@ export function Dashboard() {
         </div>
       )}
 
-      <TimetableWidget />
-
-      <TodoList />
+      <div className="home-grid">
+        <Tile
+          to="/prof/progression"
+          title="Progression"
+          sub="Séquences, séances"
+          alert={alerts && (alerts.late.length ? <b style={{ color: 'var(--forgot)' }}>⚠️ En retard : {alerts.late.join(', ')}</b> : <span className="muted">✓ Programme dans les temps</span>)}
+        />
+        <Tile
+          to="/prof/correction"
+          title="Évaluations"
+          sub="Évaluations, corrections, compétences"
+          alert={evals && (toCorrect ? <b>✏️ {toCorrect} copie(s) de classe à corriger</b> : <span className="muted">✓ Rien à corriger</span>)}
+        />
+        <Tile
+          to="/prof/flashcards"
+          title="Flashcards"
+          sub="Cartes, import, statistiques"
+          alert={alerts && (alerts.relancer ? <b>⚠️ {alerts.relancer} élève(s) à relancer</b> : <span className="muted">✓ Tout le monde révise</span>)}
+        />
+        <Tile to="/prof/eleves" title="Élève" sub="Recherche rapide, trombis">
+          <StudentSearch max={5} />
+        </Tile>
+        <div className="home-edt">
+          <TimetableWidget />
+        </div>
+        <div className="home-todo">
+          <TodoList />
+        </div>
+      </div>
     </div>
   );
 }

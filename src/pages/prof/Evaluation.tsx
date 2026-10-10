@@ -32,6 +32,7 @@ import { Avatar } from '../../components/Avatar';
 import { CardBrowser } from '../../components/CardBrowser';
 import { NoteButton } from '../../components/StudentNote';
 import { CompetencePicker } from '../../components/CompetencePicker';
+import { DocumentsEditor } from '../../components/UnitDetails';
 
 const pct = (l: number | null | undefined) => (l === null || l === undefined ? '' : `${Math.round(l * 100)}`);
 const isTyping = (t: EventTarget | null) => /INPUT|TEXTAREA|SELECT/.test((t as HTMLElement)?.tagName ?? '');
@@ -230,6 +231,7 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
             )}
           </div>
         )}
+        <DocumentsEditor label="Sujet, corrigé (PDF, pour vous)" docs={ev.documents ?? []} onChange={(documents) => update({ documents })} />
         <div className="stack" style={{ gap: 6 }}>
           <b className="small">Visible par les élèves dans leur espace</b>
           <div className="row">

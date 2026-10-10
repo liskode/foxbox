@@ -164,7 +164,7 @@ export function WeekGrid({
                 </div>
               );
               return g && !onSlot ? (
-                <Link key={s.id} to={`/prof/classes/${g.id}?onglet=progression`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                <Link key={s.id} to={`/prof/classes/${g.id}?onglet=apercu`} style={{ color: 'inherit', textDecoration: 'none' }}>
                   {box}
                 </Link>
               ) : (
@@ -224,7 +224,7 @@ export function DayList({ tt, groups, date }: { tt: Timetable; groups: Group[]; 
           </div>
         );
         return g ? (
-          <Link key={s.id} to={`/prof/classes/${g.id}?onglet=progression`} style={{ color: 'inherit', textDecoration: 'none' }}>
+          <Link key={s.id} to={`/prof/classes/${g.id}?onglet=apercu`} style={{ color: 'inherit', textDecoration: 'none' }}>
             {body}
           </Link>
         ) : (

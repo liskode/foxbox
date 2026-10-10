@@ -26,7 +26,7 @@ function schoolYear() {
   return `${y}-${y + 1}`;
 }
 
-export function Groups() {
+export function Groups({ embedded = false }: { embedded?: boolean }) {
   const { session } = useAuth();
   const nav = useNavigate();
   const groups = useLiveQuery(() => db.groups.toArray(), [], []);
@@ -58,8 +58,10 @@ export function Groups() {
   const archived = groups.filter((g) => g.archived);
 
   return (
-    <div className="page stack">
-      <h1 className="title">Classes</h1>
+    <div className={embedded ? 'stack' : 'page stack'}>
+      <h1 className={embedded ? '' : 'title'} style={embedded ? { margin: 0 } : undefined}>
+        Classes
+      </h1>
       <div className="grid3">
         {active
           .slice()
@@ -135,7 +137,7 @@ export function Groups() {
   );
 }
 
-function StatsTab({ groupId }: { groupId: string }) {
+export function StatsTab({ groupId }: { groupId: string }) {
   const data = useLiveQuery(() => groupOverview(groupId), [groupId]);
   const cards = useLiveQuery(async () => (data ? db.cards.bulkGet(data.cards.slice(0, 12).map((c) => c.cardId)) : []), [data]);
   const nav = useNavigate();
@@ -483,7 +485,7 @@ function DeleteGroup({ group }: { group: Group }) {
     try {
       const n = await deleteGroup(group.id, orphans);
       alert(`Classe supprimée${n ? `, ainsi que ${n} élève(s)` : ''}.`);
-      nav('/prof/classes');
+      nav('/prof/reglages');
     } catch (e) {
       setBusy('Erreur : ' + (e as Error).message);
     }
@@ -528,7 +530,7 @@ function TeachersTab({ group }: { group: Group }) {
         <span className="chip" style={{ background: group.color ?? 'var(--paper)' }}>
           {levelOfName(group.name) ?? 'niveau inconnu'}
         </span>{' '}
-        — modifiable dans <Link to="/prof/classes">Classes › Couleurs des niveaux</Link>.
+        — modifiable dans <Link to="/prof/reglages">⚙️ Réglages › Couleurs des niveaux</Link>.
       </div>
       <h3 style={{ margin: '8px 0 0' }}>Co-enseignants</h3>
       <span className="small muted">
@@ -580,9 +582,9 @@ export function GroupPage() {
     ['apercu', "Vue d'ensemble"],
     ['progression', 'Progression'],
     ['eleves', 'Élèves'],
-    ['suivi', 'Suivi'],
     ['trombi', 'Trombi'],
     ['evaluations', 'Évaluations'],
+    ['suivi', 'Flashcards'],
     ['profs', 'Réglages'],
   ] as const;
   return (
@@ -590,7 +592,7 @@ export function GroupPage() {
       <div className="spread">
         <div>
           <Link to="/prof" className="small muted">
-            ← Tableau de bord
+            ← Accueil
           </Link>
           <h1 className="title" style={{ margin: 0 }}>
             <span style={{ background: group.color, borderRadius: 12, padding: '0 10px' }}>{group.name}</span>

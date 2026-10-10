@@ -72,7 +72,7 @@ function History() {
   );
 }
 
-export function ImportPage() {
+export function ImportPage({ embedded = false }: { embedded?: boolean }) {
   const [subject, setSubject] = useState(SUBJECTS[0]);
   const [busy, setBusy] = useState('');
   const [report, setReport] = useState<ImportReport | null>(null);
@@ -117,8 +117,8 @@ export function ImportPage() {
   }
 
   return (
-    <div className="page stack">
-      <h1 className="title">Import</h1>
+    <div className={embedded ? 'stack' : 'page stack'}>
+      {!embedded && <h1 className="title">Import</h1>}
 
       <div className="panel stack">
         <h2>1. Importer un paquet Anki (.apkg)</h2>
@@ -157,7 +157,7 @@ export function ImportPage() {
                 </ul>
               </details>
             )}{' '}
-            <Link to="/prof/cartes">Voir les cartes →</Link>
+            <Link to="/prof/flashcards">Voir les cartes →</Link>
           </div>
         )}
       </div>

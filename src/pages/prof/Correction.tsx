@@ -20,7 +20,7 @@ interface Pill {
 }
 
 // Toutes les évaluations, avec l'état de chaque classe : à venir (gris), à corriger (jaune), corrigée (vert)
-function useOverview() {
+export function useOverview() {
   const { session } = useAuth();
   return useLiveQuery(async () => {
     const [evs, groups, results, ms, plans] = await Promise.all([
@@ -77,6 +77,7 @@ function EvalCard({ ev, pills }: { ev: Evaluation; pills: Pill[] }) {
       </div>
       <div className="small muted" style={{ fontWeight: 600 }}>
         {ev.criteria.length} critère(s)
+        {ev.documents?.length ? ` · 📄${ev.documents.length}` : ''}
       </div>
       <div className="row" style={{ gap: 4, marginTop: 4 }}>
         {pills.map((p) => (
@@ -99,7 +100,7 @@ export function Correction() {
   const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
   const templates = evs.filter((e) => e.template).sort((a, b) => a.name.localeCompare(b.name));
   const rows = data?.rows ?? [];
-  const columns = [...LEVELS, ...(rows.some((r) => !r.level) ? [''] : [])];
+  const columns = [...LEVELS, ...(rows.some((r) => !r.level) || templates.some((t) => !t.level) ? [''] : [])];
 
   async function create(level?: string) {
     const ids = groups.filter((g) => !g.archived && level && levelOfName(g.name) === level).map((g) => g.id);
@@ -109,7 +110,9 @@ export function Correction() {
   }
 
   async function fromTemplate(t: Evaluation) {
-    const ev = duplicate(t);
+    // Par défaut, toutes les classes du niveau du modèle
+    const ids = groups.filter((g) => !g.archived && t.level && levelOfName(g.name) === t.level).map((g) => g.id);
+    const ev = { ...duplicate(t), groupIds: ids };
     await db.evaluations.put(ev);
     nav(`/prof/correction/${ev.id}?onglet=bareme`);
   }
@@ -140,6 +143,24 @@ export function Correction() {
                 <EvalCard key={r.ev.id} ev={r.ev} pills={r.pills} />
               ))}
               {!list.length && <span className="small muted">Aucune évaluation.</span>}
+              {templates.some((t) => (t.level ?? '') === level) && (
+                <div className="stack" style={{ gap: 4, borderTop: '2px dashed #00000022', paddingTop: 8 }}>
+                  <b className="small">Modèles</b>
+                  {templates
+                    .filter((t) => (t.level ?? '') === level)
+                    .map((t) => (
+                      <div key={t.id} className="row small" style={{ gap: 4, flexWrap: 'nowrap' }}>
+                        <Link to={`/prof/correction/${t.id}?onglet=bareme`} style={{ flex: 1, fontWeight: 700, color: 'inherit' }} title="Modifier le modèle">
+                          {t.name}
+                        </Link>
+                        <span className="muted">{t.criteria.length} crit.</span>
+                        <button className="btn small" onClick={() => fromTemplate(t)} title="Créer une évaluation à partir de ce modèle">
+                          Utiliser
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -147,35 +168,7 @@ export function Correction() {
       <div className="small muted">
         Gris : date prévue · jaune : copies à corriger · vert : corrigée (moyenne). 📝 : évaluation placée dans une séquence de la Progression.
       </div>
-      {templates.length > 0 && (
-        <div className="panel stack">
-          <h2 style={{ margin: 0 }}>Modèles</h2>
-          <span className="small muted">Une évaluation déjà construite (critères et barème), à réutiliser pour de nouvelles classes.</span>
-          <table className="list">
-            <tbody>
-              {templates.map((t) => (
-                <tr key={t.id}>
-                  <td>
-                    <b>{t.name}</b> {t.level && <span className="chip" style={{ background: colors[t.level] }}>{t.level}</span>}
-                  </td>
-                  <td className="small muted">
-                    {t.criteria.length} critères · {Math.round(t.criteria.reduce((a, c) => a + c.points, 0) * 10) / 10} pts
-                  </td>
-                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <Link className="btn small ghost" to={`/prof/correction/${t.id}?onglet=bareme`}>
-                      Modifier
-                    </Link>{' '}
-                    <button className="btn small primary" onClick={() => fromTemplate(t)}>
-                      Utiliser
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {groups.length === 0 && <div className="small muted">Astuce : créez d'abord vos classes dans l'onglet Classes.</div>}
+      {groups.length === 0 && <div className="small muted">Astuce : créez d'abord vos classes dans ⚙️ Réglages.</div>}
     </div>
   );
 }

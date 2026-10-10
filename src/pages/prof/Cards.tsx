@@ -3,7 +3,7 @@ import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
 import { db, uid, nextCardCode, SUBJECTS } from '../../lib/db';
 
-export function Cards() {
+export function Cards({ embedded = false }: { embedded?: boolean }) {
   const [open, setOpen] = useState<{ id: string; edit: boolean } | null>(null);
 
   async function create() {
@@ -24,9 +24,9 @@ export function Cards() {
   }
 
   return (
-    <div className="page stack">
+    <div className={embedded ? 'stack' : 'page stack'}>
       <div className="spread">
-        <h1 className="title" style={{ margin: 0 }}>Cartes</h1>
+        <h1 className="title" style={{ margin: 0, visibility: embedded ? 'hidden' : undefined }}>Cartes</h1>
         <button className="btn primary" onClick={create}>
           + Nouvelle carte
         </button>

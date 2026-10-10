@@ -8,13 +8,14 @@ import { subscribeSync, type SyncState } from './lib/sync';
 import { ONLINE } from './lib/supabase';
 import { Timetable } from './pages/prof/Timetable';
 import { Competences } from './pages/prof/Competences';
+import { Settings } from './pages/prof/Settings';
+import { Flashcards } from './pages/prof/Flashcards';
+import { Students } from './pages/prof/Students';
 import { Dashboard } from './pages/prof/Dashboard';
-import { Cards } from './pages/prof/Cards';
 import { Sequences } from './pages/prof/Sequences';
-import { Groups, GroupPage } from './pages/prof/Groups';
+import { GroupPage } from './pages/prof/Groups';
 import { Tickets } from './pages/prof/Tickets';
 import { StudentPage } from './pages/prof/StudentPage';
-import { ImportPage } from './pages/prof/Import';
 import { Trombi } from './pages/prof/Trombi';
 import { UpdateBanner } from './components/UpdateBanner';
 import { TrombiPrint } from './pages/prof/TrombiPrint';
@@ -77,14 +78,10 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
   const links =
     role === 'prof'
       ? [
-          ['/prof', 'Tableau de bord'],
-          ['/prof/classes', 'Classes'],
-          ['/prof/correction', 'Évaluations'],
-          ['|', ''],
-          ['#', 'Bibliothèque :'],
           ['/prof/progression', 'Progression'],
-          ['/prof/cartes', 'Cartes'],
-          ['/prof/import', 'Import'],
+          ['/prof/correction', 'Évaluations'],
+          ['/prof/flashcards', 'Flashcards'],
+          ['/prof/eleves', 'Élèves'],
         ]
       : [
           ['/eleve', 'Réviser'],
@@ -93,10 +90,10 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
         ];
   return (
     <>
-      <header className="topbar noprint">
-        <Link to={role === 'prof' ? '/prof' : '/eleve'} className="brand">
-          <img src="./logo.png" alt="" />
-          <span>FoxBox</span>
+      <header className={'topbar noprint' + (role === 'prof' ? ' thin' : '')}>
+        <Link to={role === 'prof' ? '/prof' : '/eleve'} className="brand" title="Accueil">
+          <img src="./logo.png" alt="FoxBox" />
+          {role === 'eleve' && <span>FoxBox</span>}
         </Link>
         <nav className="nav">
           {links.map(([to, label], i) =>
@@ -115,9 +112,20 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
         </nav>
         <OcrBadge />
         {ONLINE && <SyncBadge />}
-        <button className="btn small ghost" onClick={logout}>
-          Déconnexion
-        </button>
+        {role === 'prof' ? (
+          <>
+            <NavLink to="/prof/reglages" className="icon-btn" title="Réglages : emploi du temps, classes, couleurs, compétences">
+              ⚙️
+            </NavLink>
+            <button className="icon-btn" onClick={logout} title="Déconnexion">
+              ⏻
+            </button>
+          </>
+        ) : (
+          <button className="btn small ghost" onClick={logout}>
+            Déconnexion
+          </button>
+        )}
       </header>
       {children}
     </>
@@ -133,11 +141,14 @@ export function App() {
           <Route path="/" element={<Login />} />
           <Route path="/inscription" element={<Signup />} />
           <Route path="/prof" element={<Shell role="prof"><Dashboard /></Shell>} />
-          <Route path="/prof/cartes" element={<Shell role="prof"><Cards /></Shell>} />
+          <Route path="/prof/flashcards" element={<Shell role="prof"><Flashcards /></Shell>} />
+          <Route path="/prof/cartes" element={<Navigate to="/prof/flashcards" replace />} />
+          <Route path="/prof/reglages" element={<Shell role="prof"><Settings /></Shell>} />
+          <Route path="/prof/eleves" element={<Shell role="prof"><Students /></Shell>} />
           <Route path="/prof/progression" element={<Shell role="prof"><Sequences /></Shell>} />
           <Route path="/prof/progression/:seqId" element={<Shell role="prof"><Sequences /></Shell>} />
           <Route path="/prof/sequences" element={<Navigate to="/prof/progression" replace />} />
-          <Route path="/prof/classes" element={<Shell role="prof"><Groups /></Shell>} />
+          <Route path="/prof/classes" element={<Navigate to="/prof/reglages" replace />} />
           <Route path="/prof/classes/:id" element={<Shell role="prof"><GroupPage /></Shell>} />
           <Route path="/prof/classes/:id/fiches" element={<Shell role="prof"><Tickets /></Shell>} />
           <Route path="/prof/eleves/:id" element={<Shell role="prof"><StudentPage /></Shell>} />
@@ -147,7 +158,7 @@ export function App() {
           <Route path="/prof/trombi/imprimer/:id" element={<Shell role="prof"><TrombiPrint /></Shell>} />
           <Route path="/prof/competences" element={<Shell role="prof"><Competences /></Shell>} />
           <Route path="/prof/edt" element={<Shell role="prof"><Timetable /></Shell>} />
-          <Route path="/prof/import" element={<Shell role="prof"><ImportPage /></Shell>} />
+          <Route path="/prof/import" element={<Navigate to="/prof/flashcards?onglet=import" replace />} />
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />
           <Route path="/eleve/revision/:subject" element={<Shell role="eleve"><ReviewSession /></Shell>} />
           <Route path="/eleve/stats" element={<Shell role="eleve"><MyStats /></Shell>} />
