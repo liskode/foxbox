@@ -30,7 +30,8 @@ export function DoneCell({
 }) {
   const [open, setOpen] = useState(false);
   const [other, setOther] = useState('');
-  const recent = open ? recentCourseDays(tt, g, groups) : [];
+  // Derniers cours de la classe, dans l'ordre chronologique (le plus récent en bas)
+  const recent = open ? recentCourseDays(tt, g, groups).reverse() : [];
 
   async function pick(date: string) {
     await markDone(g.id, unitId, date);
@@ -64,7 +65,7 @@ export function DoneCell({
             {recent.map((d) => (
               <button key={d} className={'btn small' + (d === done ? ' primary' : ' ghost')} style={{ justifyContent: 'flex-start' }} onClick={() => pick(d)}>
                 {dayLabel(d)}
-                {d === today() ? " (aujourd'hui)" : ''}
+                {d === today() ? " (aujourd'hui)" : d === recent[recent.length - 1] ? ' (dernier cours)' : ''}
               </button>
             ))}
             {!recent.length && (
