@@ -111,6 +111,15 @@ async function pushGroup(table: string, ids: string[], explicitDelete: Set<strin
       const m = await db.media.get(id);
       const bucket = supabase.storage.from(bucketOf(id));
       if (!m && !explicitDelete.has(`media|${id}`)) continue;
+      if (m) {
+        let ok = m.blob.size > 0;
+        try {
+          if (ok) await m.blob.slice(0, 8).arrayBuffer();
+        } catch {
+          ok = false;
+        }
+        if (!ok) throw new Error(`fichier « ${m.name} » illisible sur cet ordinateur : retirez-le puis ajoutez-le à nouveau`);
+      }
       const { error } = m ? await bucket.upload(id, m.blob, { upsert: true, contentType: m.blob.type }) : await bucket.remove([id]);
       if (error) throw error;
     }

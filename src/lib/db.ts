@@ -347,3 +347,9 @@ export async function resetAll() {
   await db.delete();
   location.reload();
 }
+
+// Copie réelle du contenu d'un fichier choisi par l'utilisateur. Safari ne garde sinon qu'une référence
+// au fichier, qui devient vide plus tard (envoi refusé : « No content provided »).
+export async function fileBlob(f: File): Promise<Blob> {
+  return new Blob([await f.arrayBuffer()], { type: f.type || 'application/octet-stream' });
+}

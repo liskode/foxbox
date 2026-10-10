@@ -1,6 +1,6 @@
 // Descriptif d'une séquence ou d'une séance, et ses documents (PDF) téléchargeables par les élèves.
 import { useEffect, useState } from 'react';
-import { db, type Unit } from '../lib/db';
+import { db, fileBlob, type Unit } from '../lib/db';
 import { mediaUrl } from './CardFace';
 
 const MAX_MB = 50;
@@ -46,7 +46,7 @@ export function UnitDetails({ unit }: { unit: Unit }) {
       }
       setBusy(`Ajout de ${f.name}…`);
       const mediaId = `doc-${crypto.randomUUID()}`;
-      await db.media.put({ id: mediaId, name: f.name, blob: f });
+      await db.media.put({ id: mediaId, name: f.name, blob: await fileBlob(f) });
       added.push({ mediaId, name: f.name, size: f.size });
     }
     await db.units.update(unit.id, { documents: [...docs, ...added] });
@@ -109,7 +109,7 @@ export function DocumentsEditor({ docs, onChange, label = 'Documents' }: { docs:
       }
       setBusy(`Ajout de ${f.name}…`);
       const mediaId = `doc-${crypto.randomUUID()}`;
-      await db.media.put({ id: mediaId, name: f.name, blob: f });
+      await db.media.put({ id: mediaId, name: f.name, blob: await fileBlob(f) });
       added.push({ mediaId, name: f.name, size: f.size });
     }
     await onChange([...docs, ...added]);

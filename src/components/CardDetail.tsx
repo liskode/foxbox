@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type Card } from '../lib/db';
+import { db, uid, fileBlob, type Card } from '../lib/db';
 import { THEMES } from '../lib/apkg';
 import { cardByGroup } from '../lib/stats';
 import { CardFace } from './CardFace';
@@ -13,7 +13,7 @@ function FaceEditor({ label, html, onChange }: { label: string; html: string; on
   async function addImage(f: File | undefined, replace: boolean) {
     if (!f) return;
     const id = uid();
-    await db.media.put({ id, name: f.name, blob: f });
+    await db.media.put({ id, name: f.name, blob: await fileBlob(f) });
     const tag = `<img src="media:${id}">`;
     onChange(replace ? tag : html + tag);
   }
