@@ -9,6 +9,7 @@ import { Avatar } from '../../components/Avatar';
 import { removePhoto } from '../../lib/photos';
 import { NoteEditor } from '../../components/StudentNote';
 import { StudentEvaluations, ParentMessages } from '../../components/StudentEvaluations';
+import { StudentCompetences } from './Competences';
 
 export function StudentPage() {
   const { id } = useParams();
@@ -152,6 +153,7 @@ export function StudentPage() {
         <NoteEditor key={student.id} studentId={student.id} />
       </div>
       <StudentEvaluations student={student} />
+      <StudentCompetences student={student} />
       <ParentMessages key={student.id} student={student} />
       <StudentReport studentId={student.id} teacherView />
       <div>

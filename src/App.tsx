@@ -7,6 +7,7 @@ import { Signup } from './pages/Signup';
 import { subscribeSync, type SyncState } from './lib/sync';
 import { ONLINE } from './lib/supabase';
 import { Timetable } from './pages/prof/Timetable';
+import { Competences } from './pages/prof/Competences';
 import { Dashboard } from './pages/prof/Dashboard';
 import { Cards } from './pages/prof/Cards';
 import { Sequences } from './pages/prof/Sequences';
@@ -144,6 +145,7 @@ export function App() {
           <Route path="/prof/correction/:id" element={<Shell role="prof"><EvaluationPage /></Shell>} />
           <Route path="/prof/trombi" element={<Shell role="prof"><Trombi /></Shell>} />
           <Route path="/prof/trombi/imprimer/:id" element={<Shell role="prof"><TrombiPrint /></Shell>} />
+          <Route path="/prof/competences" element={<Shell role="prof"><Competences /></Shell>} />
           <Route path="/prof/edt" element={<Shell role="prof"><Timetable /></Shell>} />
           <Route path="/prof/import" element={<Shell role="prof"><ImportPage /></Shell>} />
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />

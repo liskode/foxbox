@@ -38,6 +38,7 @@ export interface Teacher {
   password: string;
   levelColors?: Record<string, string>; // couleur de chaque niveau (6e, 5e, 4e, 3e)
   timetable?: import('./timetable').Timetable; // emploi du temps et calendrier A/B
+  competences?: import('./competences').Competence[]; // référentiel de compétences
 }
 
 export interface Group {
@@ -165,6 +166,7 @@ export interface Criterion {
   label: string;
   points: number;
   cardIds?: string[]; // cartes FoxBox liées à ce critère
+  competenceIds?: string[]; // compétences évaluées par ce critère (APP, ANA… ou sous-compétences)
 }
 export interface Evaluation {
   id: string;

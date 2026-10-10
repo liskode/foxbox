@@ -31,6 +31,7 @@ import { frDate } from '../../lib/dates';
 import { Avatar } from '../../components/Avatar';
 import { CardBrowser } from '../../components/CardBrowser';
 import { NoteButton } from '../../components/StudentNote';
+import { CompetencePicker } from '../../components/CompetencePicker';
 
 const pct = (l: number | null | undefined) => (l === null || l === undefined ? '' : `${Math.round(l * 100)}`);
 const isTyping = (t: EventTarget | null) => /INPUT|TEXTAREA|SELECT/.test((t as HTMLElement)?.tagName ?? '');
@@ -281,6 +282,7 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
                 <td className="muted">{i + 1}</td>
                 <td style={{ width: '70%' }}>
                   <input style={{ width: '100%' }} value={c.label} placeholder="Ex. Équilibrage 5 3 4" onChange={(e) => setCrit(i, { label: e.target.value })} />
+                  <CompetencePicker value={c.competenceIds ?? []} onChange={(ids) => setCrit(i, { competenceIds: ids })} />
                 </td>
                 <td>
                   <input

@@ -118,6 +118,9 @@ export function Correction() {
     <div className="page stack">
       <div className="spread">
         <h1 className="title" style={{ margin: 0 }}>Évaluations</h1>
+        <Link to="/prof/competences" className="btn">
+          🎯 Compétences
+        </Link>
 
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, alignItems: 'start' }}>
