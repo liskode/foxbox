@@ -1,5 +1,5 @@
 // Accueil : 4 tuiles (Progression, Évaluations, Flashcards, Élève), emploi du temps (accès aux classes), À faire.
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
@@ -10,6 +10,7 @@ import { TodoList } from '../../components/TodoList';
 import { TimetableWidget } from '../../components/TimetableWidget';
 import { StudentSearch } from '../../components/StudentSearch';
 import { useOverview } from './Correction';
+import { syncAllShares } from '../../lib/grading';
 
 function Tile({ to, title, sub, alert, children }: { to: string; title: string; sub: string; alert?: ReactNode; children?: ReactNode }) {
   return (
@@ -39,6 +40,14 @@ function useAlerts() {
 }
 
 export function Dashboard() {
+  // Une fois : les copies déjà rendues reçoivent l'histogramme par compétence dans l'espace élève
+  useEffect(() => {
+    (async () => {
+      if (await db.meta.get('shares-competences')) return;
+      for (const ev of await db.evaluations.toArray()) if (!ev.template) await syncAllShares(ev);
+      await db.meta.put({ key: 'shares-competences', value: true });
+    })();
+  }, []);
   const alerts = useAlerts();
   const evals = useOverview();
   const toCorrect = evals?.rows.reduce((a, r) => a + r.pills.filter((p) => p.state === 'grading').length, 0) ?? 0;

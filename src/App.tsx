@@ -91,9 +91,9 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           ['/prof/eleves', 'Élèves'],
         ]
       : [
-          ['/eleve', 'Réviser'],
-          ['/eleve/stats', 'Mes progrès'],
-          ['/eleve/documents', 'Documents'],
+          ['/eleve', 'Flashcards'],
+          ['/eleve/notes', 'Notes'],
+          ['/eleve/documents', 'Documents de cours'],
         ];
   return (
     <>
@@ -168,7 +168,8 @@ export function App() {
           <Route path="/prof/import" element={<Navigate to="/prof/flashcards?onglet=import" replace />} />
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />
           <Route path="/eleve/revision/:subject" element={<Shell role="eleve"><ReviewSession /></Shell>} />
-          <Route path="/eleve/stats" element={<Shell role="eleve"><MyStats /></Shell>} />
+          <Route path="/eleve/notes" element={<Shell role="eleve"><MyStats /></Shell>} />
+          <Route path="/eleve/stats" element={<Navigate to="/eleve" replace />} />
           <Route path="/eleve/documents" element={<Shell role="eleve"><StudentDocuments /></Shell>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

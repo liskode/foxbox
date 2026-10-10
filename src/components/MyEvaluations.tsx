@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { frDate } from '../lib/dates';
 import { levelColor } from '../lib/grading';
+import { CompetenceHisto } from './CompetenceHisto';
 
 export function MyEvaluations({ studentId }: { studentId: string }) {
   const list = useLiveQuery(
@@ -10,13 +11,13 @@ export function MyEvaluations({ studentId }: { studentId: string }) {
     [studentId],
     [],
   );
-  if (!list.length) return null;
+  if (!list.length) return <div className="notice">Aucune note pour l'instant.</div>;
   return (
     <div className="panel stack">
-      <h3 style={{ margin: 0 }}>📋 Mes évaluations</h3>
-      {list.map((s) => (
-        <details key={s.id} className="stack" style={{ borderTop: '1px solid var(--muted-line)', paddingTop: 8 }}>
-          <summary style={{ cursor: s.detail || s.appreciation ? 'pointer' : 'default', listStyle: s.detail || s.appreciation ? undefined : 'none' }}>
+      <span className="small muted">Clique sur une évaluation pour voir le détail.</span>
+      {list.map((s, i) => (
+        <details key={s.id} open={i === 0} className="stack" style={{ borderTop: '1px solid var(--muted-line)', paddingTop: 8 }}>
+          <summary style={{ cursor: 'pointer' }}>
             <span className="spread" style={{ display: 'inline-flex', width: 'calc(100% - 20px)' }}>
               <span>
                 <b>{s.name}</b> <span className="small muted">· {frDate(s.date)}</span>
@@ -24,6 +25,11 @@ export function MyEvaluations({ studentId }: { studentId: string }) {
               <b>{s.absent ? 'Absent' : s.note20 !== undefined ? `${s.note20}/20` : ''}</b>
             </span>
           </summary>
+          {s.competences?.length ? (
+            <div style={{ margin: '8px 0' }}>
+              <CompetenceHisto bars={s.competences.map(({ note, total, ...c }) => ({ c, note, total }))} />
+            </div>
+          ) : null}
           {s.appreciation && <div style={{ fontStyle: 'italic', margin: '6px 0' }}>« {s.appreciation} »</div>}
           {s.detail && (
             <table className="list" style={{ marginTop: 6 }}>

@@ -5,6 +5,7 @@ import { db } from '../../lib/db';
 import { studentSubjects, todaySession } from '../../lib/leitner';
 import { Ring } from '../../components/widgets';
 import { Avatar } from '../../components/Avatar';
+import { StudentReport } from '../../components/StudentReport';
 
 export function StudentHome() {
   const { session } = useAuth();
@@ -70,6 +71,8 @@ export function StudentHome() {
           </div>
         );
       })}
+      <h2 style={{ margin: '10px 0 0' }}>Mes progrès</h2>
+      <StudentReport studentId={student.id} />
     </div>
   );
 }

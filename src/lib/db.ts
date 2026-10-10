@@ -178,7 +178,7 @@ export interface Evaluation {
   groupIds: string[];
   criteria: Criterion[];
   // Ce que voit l'élève dans son espace
-  visibility: { note: boolean; appreciation: boolean; detail: boolean };
+  visibility: { note: boolean; appreciation: boolean; detail: boolean; competences?: boolean }; // competences : visible par défaut
   template?: boolean; // modèle réutilisable (sans classe)
   level?: string; // niveau (6e…3e)
   unitId?: string; // séance d'évaluation de la Progression (les variantes partagent la même séance)
@@ -208,6 +208,7 @@ export interface ResultShare {
   note20?: number;
   appreciation?: string;
   detail?: { label: string; points: number; level: number | null }[];
+  competences?: { code: string; name: string; color: string; note: number; total: number }[]; // histogramme par compétence
 }
 export interface ParentMessage {
   id: string;
