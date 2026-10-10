@@ -32,7 +32,7 @@ import { Avatar } from '../../components/Avatar';
 import { CardBrowser } from '../../components/CardBrowser';
 import { NoteButton } from '../../components/StudentNote';
 import { CompetencePicker, useCompetences } from '../../components/CompetencePicker';
-import { competenceScores, evalCategories, masteryOf } from '../../lib/competences';
+import { competenceScores, evalCategories, masteryOf, type Competence } from '../../lib/competences';
 import { DocumentsEditor } from '../../components/UnitDetails';
 
 const pct = (l: number | null | undefined) => (l === null || l === undefined ? '' : `${Math.round(l * 100)}`);
@@ -394,30 +394,45 @@ function NoteBadge({ ev, r }: { ev: Evaluation; r?: Result }) {
   );
 }
 
-// Répartition par compétence d'une copie, pondérée par le barème (points obtenus / points des critères rattachés)
+// Petit histogramme par compétence : hauteur = points du barème, vert = réussi, rouge = manqué
+const fr = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
+export function CompetenceHisto({ bars, height = 64 }: { bars: { c: Competence; note: number; total: number }[]; height?: number }) {
+  const max = Math.max(...bars.map((b) => b.total), 0.0001);
+  const w = height > 60 ? 34 : 26;
+  return (
+    <div className="row" style={{ gap: 6, alignItems: 'flex-end', flexWrap: 'nowrap' }}>
+      {bars.map(({ c, note, total }) => {
+        const h = (total / max) * height;
+        const ok = total ? (note / total) * h : 0;
+        return (
+          <div
+            key={c.id}
+            className="stack"
+            style={{ gap: 2, alignItems: 'center' }}
+            title={`${c.name} : ${fr(note)}/${fr(total)} pts (${total ? Math.round((note / total) * 100) : 0} %) · ${masteryOf(total ? note / total : 0).name}`}
+          >
+            <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>
+              {fr(note)}/{fr(total)}
+            </span>
+            <div style={{ height, width: w, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+              <div style={{ height: h, border: '1.5px solid var(--line)', borderRadius: 4, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, background: '#f08a80' }} />
+                <div style={{ height: ok, background: 'var(--easy)' }} />
+              </div>
+            </div>
+            <span style={{ background: c.color, borderRadius: 5, padding: '0 4px', fontSize: '0.7rem', fontWeight: 800 }}>{c.code}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function CompetenceBadges({ ev, r, small }: { ev: Evaluation; r?: Result; small?: boolean }) {
   const list = useCompetences();
   const scores = competenceScores(list, ev, r);
   if (!scores.length) return null;
-  return (
-    <span className="row" style={{ gap: 4 }}>
-      {scores.map(({ c, note, total, value }) => {
-        const m = masteryOf(value);
-        return (
-          <span
-            key={c.id}
-            title={`${c.name} : ${String(note).replace('.', ',')}/${String(total).replace('.', ',')} pts (${Math.round(value * 100)} %) · ${m.name}`}
-            style={{ display: 'inline-flex', borderRadius: 6, overflow: 'hidden', border: '1.5px solid #00000033', fontSize: small ? '0.72rem' : '0.8rem', fontWeight: 800 }}
-          >
-            <span style={{ background: c.color, padding: '0 5px' }}>{c.code}</span>
-            <span style={{ background: m.color, padding: '0 5px' }}>
-              {String(note).replace('.', ',')}/{String(total).replace('.', ',')}
-            </span>
-          </span>
-        );
-      })}
-    </span>
-  );
+  return <CompetenceHisto bars={scores} height={small ? 34 : 64} />;
 }
 
 // Résultats d'une classe par compétence : moyenne des élèves (chacun pondéré par le barème)
@@ -426,42 +441,21 @@ function ClassCompetences({ ev, rs }: { ev: Evaluation; rs: (Result | undefined)
   const cats = evalCategories(list, ev);
   if (!cats.length) return null;
   const all = rs.map((r) => competenceScores(list, ev, r));
+  // Moyenne de la classe : points moyens obtenus sur les points du barème de chaque compétence
+  const bars = cats.map((c) => {
+    const total = ev.criteria
+      .filter((cr) => cr.competenceIds?.some((k) => k === c.id || list.find((x) => x.id === k)?.parentId === c.id))
+      .reduce((a, cr) => a + cr.points, 0);
+    const vals = all.map((x) => x.find((y) => y.c.id === c.id)?.value).filter((v): v is number => v !== undefined);
+    const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+    return { c, total, note: mean * total, n: vals.length };
+  });
   return (
-    <details open>
-      <summary style={{ fontWeight: 800, cursor: 'pointer' }}>Réussite par compétence</summary>
-      <table className="list" style={{ marginTop: 6 }}>
-        <tbody>
-          {cats.map((c) => {
-            const vals = all.map((x) => x.find((y) => y.c.id === c.id)?.value).filter((v): v is number => v !== undefined);
-            const v = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-            const pts = round1(ev.criteria.filter((cr) => cr.competenceIds?.some((k) => k === c.id || list.find((x) => x.id === k)?.parentId === c.id)).reduce((a, cr) => a + cr.points, 0));
-            return (
-              <tr key={c.id}>
-                <td style={{ width: '60%' }}>
-                  <span style={{ background: c.color, borderRadius: 6, padding: '0 6px', fontWeight: 800 }}>{c.code}</span> {c.name}{' '}
-                  <span className="small muted">({String(pts).replace('.', ',')} pts du barème)</span>
-                </td>
-                <td>
-                  {v === null ? (
-                    <span className="muted small">—</span>
-                  ) : (
-                    <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
-                      <div style={{ width: 140, height: 12, border: '2px solid var(--line)', borderRadius: 6, overflow: 'hidden', background: 'var(--paper)' }}>
-                        <div style={{ width: `${v * 100}%`, height: '100%', background: masteryOf(v).color }} />
-                      </div>
-                      <b>{Math.round(v * 100)} %</b>
-                      <span className="small" style={{ background: masteryOf(v).color, borderRadius: 6, padding: '0 5px', fontWeight: 800 }}>
-                        {masteryOf(v).code}
-                      </span>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </details>
+    <div className="stack" style={{ gap: 6 }}>
+      <b>Réussite par compétence (moyenne de la classe)</b>
+      <CompetenceHisto bars={bars} height={100} />
+      <span className="small muted">Hauteur : points du barème · vert : réussi · rouge : manqué.</span>
+    </div>
   );
 }
 
