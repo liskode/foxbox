@@ -534,8 +534,8 @@ function LevelsOverview() {
                                 borderRadius: 6,
                                 padding: '0 5px',
                                 fontWeight: 700,
-                                background: all ? g.color ?? '#eee' : n ? '#fff3c4' : 'transparent',
-                                border: `1px ${n ? 'solid' : 'dashed'} ${n ? '#00000033' : 'var(--muted-line)'}`,
+                                background: all ? '#bfe5c9' : n ? '#fff3c4' : 'transparent', // vert : terminée ; jaune : en cours
+                                border: `1px ${n ? 'solid' : 'dashed'} ${all ? 'var(--easy)' : n ? '#00000033' : 'var(--muted-line)'}`,
                                 color: n ? 'var(--ink)' : '#9a968d',
                               }}
                             >
