@@ -46,8 +46,8 @@ export function DoneCell({
         title={done ? `Faite le ${dayLabel(done)}` : planned ? `Prévue le ${dayLabel(planned)}` : 'Pas de date prévue (au-delà de la fin de l’année ?)'}
         style={{
           cursor: viaSeq ? 'default' : 'pointer',
-          background: done ? '#bfe5c9' : 'var(--paper)', // vert : séance faite
-          border: `2px ${done ? 'solid' : 'dashed'} ${done ? 'var(--easy)' : 'var(--muted-line)'}`,
+          background: done ? g.color ?? 'var(--paper)' : 'var(--paper)',
+          border: `2px ${done ? 'solid' : 'dashed'} ${done ? 'var(--ink)' : 'var(--muted-line)'}`,
           color: done ? 'var(--ink)' : '#9a968d',
           fontWeight: done ? 800 : 600,
           whiteSpace: 'nowrap',
