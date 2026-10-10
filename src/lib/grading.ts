@@ -1,5 +1,6 @@
 // Calculs de l'onglet Correction : notes, statistiques, partage avec l'élève, lien avec les cartes.
-import { db, uid, type Evaluation, type Result, type ResultShare, type Student } from './db';
+import { db, uid, SUBJECTS, type Evaluation, type Group, type Result, type ResultShare, type Student, type Unit } from './db';
+import { levelOfName, nextSeanceCode } from './units';
 import { today } from './dates';
 
 export const round1 = (x: number) => Math.round(x * 10) / 10;
@@ -159,6 +160,7 @@ export function duplicate(ev: Evaluation): Evaluation {
     date: today(),
     template: false,
     groupIds: ev.template ? [] : ev.groupIds,
+    groupDates: ev.template ? {} : ev.groupDates,
     criteria: ev.criteria.map((c) => ({ ...c, id: uid() })),
     createdAt: Date.now(),
   };
@@ -179,3 +181,74 @@ export function parseCriteria(text: string) {
     });
 }
 
+
+// ----- Évaluations rattachées à un niveau et à une séance d'évaluation de la Progression -----
+export const levelOfEval = (ev: Evaluation, groups: Group[]) =>
+  ev.level ?? ev.groupIds.map((id) => levelOfName(groups.find((g) => g.id === id)?.name ?? '')).find(Boolean);
+
+// Crée une séance « Évaluation » en fin de séquence ; si aucune évaluation n'existe, en crée une pour toutes les classes du niveau
+export async function createEvalSeance(seq: Unit, existing?: Evaluation): Promise<{ unit: Unit; ev: Evaluation }> {
+  const kids = await db.units.where('parentId').equals(seq.id).toArray();
+  const unit: Unit = {
+    id: uid(),
+    kind: 'seance',
+    parentId: seq.id,
+    subject: seq.subject,
+    level: seq.level,
+    theme: seq.theme,
+    name: existing?.name ?? `Évaluation – ${seq.name}`,
+    order: kids.length + 1,
+    code: await nextSeanceCode(seq),
+    isEval: true,
+  };
+  await db.units.put(unit);
+  let ev = existing;
+  if (ev) {
+    ev = { ...ev, unitId: unit.id, level: seq.level };
+  } else {
+    const groups = (await db.groups.toArray()).filter((g) => !g.archived && levelOfName(g.name) === seq.level);
+    ev = { ...newEvaluation(SUBJECTS[0], groups.map((g) => g.id)), name: unit.name, level: seq.level, unitId: unit.id };
+  }
+  await db.evaluations.put(ev);
+  return { unit, ev };
+}
+
+// Séance d'évaluation cochée « faite » pour une classe : la date du cours devient la date de l'évaluation pour cette classe.
+// Renvoie l'évaluation (la variante) qui concerne la classe.
+export async function evalDone(unitId: string, groupId: string, date: string): Promise<Evaluation | undefined> {
+  const evs = (await db.evaluations.toArray()).filter((e) => e.unitId === unitId && !e.template);
+  let ev = evs.find((e) => e.groupIds.includes(groupId));
+  if (!ev && evs.length) ev = { ...evs[0], groupIds: [...evs[0].groupIds, groupId] };
+  if (!ev) return undefined;
+  ev = { ...ev, groupDates: { ...(ev.groupDates ?? {}), [groupId]: date } };
+  await db.evaluations.put(ev);
+  await syncAllShares(ev);
+  return ev;
+}
+
+// Variante : copie de l'évaluation pour d'autres classes du même niveau (même séance d'évaluation)
+export function variantOf(ev: Evaluation): Evaluation {
+  return { ...duplicate(ev), name: `${ev.name} (variante)`, groupIds: [], groupDates: {} };
+}
+
+// Une classe ne passe qu'une variante d'une même séance d'évaluation
+export async function assignClass(ev: Evaluation, groupId: string, on: boolean) {
+  if (on && ev.unitId) {
+    const siblings = (await db.evaluations.toArray()).filter((e) => e.id !== ev.id && e.unitId === ev.unitId && e.groupIds.includes(groupId));
+    for (const s of siblings) await db.evaluations.update(s.id, { groupIds: s.groupIds.filter((x) => x !== groupId) });
+  }
+  await db.evaluations.update(ev.id, { groupIds: on ? [...new Set([...ev.groupIds, groupId])] : ev.groupIds.filter((x) => x !== groupId) });
+}
+
+// Notes d'une classe pour Pronote : une ligne par élève (ordre alphabétique), sur 20, « Abs » si absent
+export function pronoteColumn(ev: Evaluation, list: { student: Student; groupId: string }[], results: Map<string, Result>, groupId: string) {
+  return list
+    .filter((x) => x.groupId === groupId)
+    .map(({ student }) => {
+      const r = results.get(student.id);
+      if (r?.absent) return 'Abs';
+      const s = score(ev, r);
+      return s ? String(s.note20).replace('.', ',') : '';
+    })
+    .join('\n');
+}

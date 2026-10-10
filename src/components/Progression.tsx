@@ -83,6 +83,7 @@ export function Progression({ group }: { group: Group }) {
               {items.map((it) => (
                 <div key={it.unit.id} className="row" style={{ gap: 10, paddingLeft: 12, flexWrap: 'nowrap' }}>
                   <span style={{ flex: 1, fontWeight: doneDate(plan, it) ? 700 : 500 }} title={it.unit.description || undefined}>
+                    {it.unit.isEval && '📝 '}
                     {it.unit.id === seq.id ? '(séquence entière)' : unitLabel(it.unit)}
                     {it.unit.documents?.length ? <span className="small muted"> · 📄{it.unit.documents.length}</span> : null}
                   </span>
@@ -95,6 +96,7 @@ export function Progression({ group }: { group: Group }) {
                     tt={data.tt}
                     groups={lp.groups}
                     showName={false}
+                    isEval={it.unit.isEval}
                   />
                 </div>
               ))}

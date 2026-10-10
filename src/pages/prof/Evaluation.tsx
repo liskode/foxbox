@@ -20,7 +20,13 @@ import {
   studentsOf,
   syncAllShares,
   dateFor,
+  levelOfEval,
+  createEvalSeance,
+  variantOf,
+  assignClass,
+  pronoteColumn,
 } from '../../lib/grading';
+import { LEVELS as UNIT_LEVELS, levelOfName, nextSeanceCode, unitLabel } from '../../lib/units';
 import { frDate } from '../../lib/dates';
 import { Avatar } from '../../components/Avatar';
 import { CardBrowser } from '../../components/CardBrowser';
@@ -89,8 +95,26 @@ function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => 
 
 function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluation>) => Promise<void> }) {
   const nav = useNavigate();
-  const groups = useLiveQuery(() => db.groups.filter((g) => !g.archived).toArray(), [], []);
+  const allGroups = useLiveQuery(() => db.groups.filter((g) => !g.archived).toArray(), [], []);
+  const level = levelOfEval(ev, allGroups);
+  // Seules les classes du niveau de l'évaluation sont proposées
+  const groups = allGroups.filter((g) => !level || levelOfName(g.name) === level);
+  const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const evUnit = units.find((u) => u.id === ev.unitId);
+  const seqs = units
+    .filter((u) => u.kind === 'sequence' && u.level === level)
+    .sort((a, b) => (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }));
   const [paste, setPaste] = useState('');
+
+  async function setSequence(seqId: string) {
+    if (!seqId) return update({ unitId: undefined });
+    const seq = units.find((u) => u.id === seqId)!;
+    if (evUnit) {
+      if (evUnit.parentId === seqId) return;
+      const n = units.filter((u) => u.parentId === seqId).length;
+      await db.units.update(evUnit.id, { parentId: seqId, order: n + 1, code: await nextSeanceCode(seq), theme: seq.theme });
+    } else await createEvalSeance(seq, ev);
+  }
   const setCrit = (i: number, p: Partial<Criterion>) => update({ criteria: ev.criteria.map((c, j) => (j === i ? { ...c, ...p } : c)) });
   const move = (i: number, d: number) => {
     const list = [...ev.criteria];
@@ -114,6 +138,28 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
             </label>
           )}
           <label className="field">
+            Niveau
+            <select value={level ?? ''} onChange={(e) => update({ level: e.target.value || undefined })}>
+              <option value="">—</option>
+              {UNIT_LEVELS.map((l) => (
+                <option key={l}>{l}</option>
+              ))}
+            </select>
+          </label>
+          {level && (
+            <label className="field" style={{ maxWidth: 280 }}>
+              Séquence (Progression)
+              <select value={evUnit?.parentId ?? ''} onChange={(e) => setSequence(e.target.value)}>
+                <option value="">— aucune —</option>
+                {seqs.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {unitLabel(q)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="field">
             Matière
             <select value={ev.subject} onChange={(e) => update({ subject: e.target.value })}>
               {SUBJECTS.map((s) => (
@@ -124,7 +170,21 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
         </div>
         {!ev.template && (
           <div className="stack" style={{ gap: 6 }}>
-            <b className="small">Classes concernées</b>
+            <div className="spread">
+              <b className="small">Classes concernées{level ? ` (${level})` : ''}</b>
+              <button
+                className="btn small ghost"
+                title="Copie de cette évaluation, à adapter pour d'autres classes du niveau"
+                onClick={async () => {
+                  const v = variantOf(ev);
+                  await db.evaluations.put(v);
+                  nav(`/prof/correction/${v.id}?onglet=bareme`);
+                }}
+              >
+                + Créer une variante pour d'autres classes
+              </button>
+            </div>
+            {ev.unitId && <span className="small muted">Une classe ne passe qu'une variante : la cocher ici la retire des autres variantes.</span>}
             <div className="row" style={{ gap: 6 }}>
               {groups
                 .slice()
@@ -136,7 +196,7 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
                       key={g.id}
                       className={'chip' + (on ? '' : ' off')}
                       style={{ background: g.color ?? 'var(--paper)' }}
-                      onClick={() => update({ groupIds: on ? ev.groupIds.filter((x) => x !== g.id) : [...ev.groupIds, g.id] })}
+                      onClick={() => assignClass(ev, g.id, !on)}
                     >
                       {on ? '✓ ' : ''}
                       {g.name}
@@ -281,7 +341,7 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
           <button
             className="btn ghost"
             onClick={async () => {
-              const t = { ...duplicate(ev), template: true, groupIds: [], name: ev.name };
+              const t = { ...duplicate(ev), template: true, groupIds: [], groupDates: {}, unitId: undefined, name: ev.name };
               await db.evaluations.put(t);
               alert('Modèle enregistré : il apparaît dans la liste des modèles de l’onglet Correction.');
             }}
@@ -332,7 +392,8 @@ function NoteBadge({ ev, r }: { ev: Evaluation; r?: Result }) {
 function CopiesTab({ ev }: { ev: Evaluation }) {
   const { list, results } = useResults(ev);
   const [params, setParams] = useSearchParams();
-  const sid = params.get('eleve') ?? list[0]?.student.id;
+  // ?classe= : on commence par le premier élève de cette classe
+  const sid = params.get('eleve') ?? (list.find((x) => x.groupId === params.get('classe')) ?? list[0])?.student.id;
   const idx = list.findIndex((x) => x.student.id === sid);
   const cur = list[idx];
   const r = (cur && results.get(cur.student.id)) || (cur ? emptyResult(ev, cur.student.id) : undefined);
@@ -744,12 +805,24 @@ function ResultatsTab({ ev }: { ev: Evaluation }) {
         const maxBin = Math.max(1, ...bins);
         return (
           <div key={gid} className="panel stack">
-            <h2 style={{ margin: 0 }}>
-              <span style={{ background: g?.color, borderRadius: 10, padding: '0 8px' }}>{g?.name}</span>{' '}
-              <span className="small muted" style={{ fontWeight: 600 }}>
-                {frDate(dateFor(ev, gid))}
-              </span>
-            </h2>
+            <div className="spread">
+              <h2 style={{ margin: 0 }}>
+                <span style={{ background: g?.color, borderRadius: 10, padding: '0 8px' }}>{g?.name}</span>{' '}
+                <span className="small muted" style={{ fontWeight: 600 }}>
+                  {frDate(dateFor(ev, gid))}
+                </span>
+              </h2>
+              <button
+                className="btn small"
+                title="Notes sur 20, une par ligne, dans l'ordre alphabétique : cliquez dans la première case de la colonne Pronote puis collez (Cmd+V)"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(pronoteColumn(ev, list, results, gid));
+                  setMsg(`Notes de ${g?.name} copiées (${members.length} élèves, ordre alphabétique, sur 20, « Abs » pour les absents). Dans Pronote, cliquez sur la case du premier élève puis collez.`);
+                }}
+              >
+                📋 Copier les notes pour Pronote
+              </button>
+            </div>
             <div className="grid3">
               <div>
                 <div className="muted small">Moyenne (absents exclus)</div>
@@ -864,7 +937,7 @@ export function EvaluationPage() {
       <div className="spread">
         <div>
           <Link to="/prof/correction" className="small muted">
-            ← Correction
+            ← Évaluations
           </Link>
           <h1 className="title" style={{ margin: 0 }}>
             {ev.name}

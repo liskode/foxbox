@@ -106,6 +106,7 @@ export interface Unit {
   description?: string; // descriptif de la séance (professeur)
   documents?: { mediaId: string; name: string; size: number }[]; // PDF téléchargeables par les élèves
   duration?: number; // durée prévue en heures de cours (1 par défaut)
+  isEval?: boolean; // séance d'évaluation (liée à une ou plusieurs évaluations, une par variante)
 }
 
 export interface UnitCard {
@@ -177,6 +178,8 @@ export interface Evaluation {
   // Ce que voit l'élève dans son espace
   visibility: { note: boolean; appreciation: boolean; detail: boolean };
   template?: boolean; // modèle réutilisable (sans classe)
+  level?: string; // niveau (6e…3e)
+  unitId?: string; // séance d'évaluation de la Progression (les variantes partagent la même séance)
   createdAt: number;
 }
 export interface Result {

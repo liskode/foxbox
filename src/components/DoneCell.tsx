@@ -1,6 +1,8 @@
 // Case « classe × séance » : date prévisionnelle (grise) ou date où la séance a été faite (noire).
 // Un clic ouvre un petit choix : faite lors de l'un des derniers cours, à une autre date, ou décocher.
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { evalDone } from '../lib/grading';
 import type { Group } from '../lib/db';
 import { today } from '../lib/dates';
 import { dm, markDone, recentCourseDays, unmarkDone } from '../lib/forecast';
@@ -18,6 +20,7 @@ export function DoneCell({
   tt,
   groups,
   showName = true,
+  isEval = false,
 }: {
   g: Group;
   unitId: string;
@@ -27,7 +30,9 @@ export function DoneCell({
   tt: Timetable;
   groups: Group[];
   showName?: boolean;
+  isEval?: boolean; // séance d'évaluation : cocher ouvre la saisie des copies de la classe
 }) {
+  const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const [other, setOther] = useState('');
   // Derniers cours de la classe, dans l'ordre chronologique (le plus récent en bas)
@@ -36,6 +41,10 @@ export function DoneCell({
   async function pick(date: string) {
     await markDone(g.id, unitId, date);
     setOpen(false);
+    if (isEval) {
+      const ev = await evalDone(unitId, g.id, date);
+      if (ev) nav(`/prof/correction/${ev.id}?onglet=copies&classe=${g.id}`);
+    }
   }
 
   return (

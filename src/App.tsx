@@ -78,7 +78,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
       ? [
           ['/prof', 'Tableau de bord'],
           ['/prof/classes', 'Classes'],
-          ['/prof/correction', 'Correction'],
+          ['/prof/correction', 'Évaluations'],
           ['|', ''],
           ['#', 'Bibliothèque :'],
           ['/prof/progression', 'Progression'],

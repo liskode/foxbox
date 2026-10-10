@@ -11,6 +11,7 @@ import { unitLabel, nextSequenceCode, nextSeanceCode, themesFor, themeLabel, lev
 import { levelPlans, sequencesOf, finishedByAll, doneDate, durationOf, dm, type ClassPlan, type LevelPlan } from '../../lib/forecast';
 import type { Timetable } from '../../lib/timetable';
 import { DoneCell } from '../../components/DoneCell';
+import { createEvalSeance, variantOf } from '../../lib/grading';
 import { useAuth } from '../../lib/auth';
 import { UnitDetails } from '../../components/UnitDetails';
 
@@ -74,6 +75,8 @@ function SequenceScreen({ seqId }: { seqId: string }) {
     const ids = [u.id, ...units.filter((x) => x.parentId === u.id).map((x) => x.id)];
     await db.unitCards.where('unitId').anyOf(ids).delete();
     await db.publications.where('unitId').anyOf(ids).delete();
+    // Les évaluations liées restent (avec leurs copies) mais ne sont plus rattachées à une séance
+    for (const e of (await db.evaluations.toArray()).filter((e) => e.unitId && ids.includes(e.unitId))) await db.evaluations.update(e.id, { unitId: undefined });
     await db.units.bulkDelete(ids);
     if (u.kind === 'sequence') nav('/prof/progression');
     else setSel(u.parentId!);
@@ -177,6 +180,7 @@ function SequenceScreen({ seqId }: { seqId: string }) {
                       setPicking(false);
                     }}
                   >
+                    {se.isEval && '📝 '}
                     {unitLabel(se)}
                   </button>
                 ))}
@@ -205,9 +209,18 @@ function SequenceScreen({ seqId }: { seqId: string }) {
                 </div>
                 <div className="row">
                   {unit.kind === 'sequence' && (
-                    <button className="btn" onClick={() => addSeance(unit)}>
-                      + Séance
-                    </button>
+                    <>
+                      <button className="btn" onClick={() => addSeance(unit)}>
+                        + Séance
+                      </button>
+                      <button
+                        className="btn"
+                        title="Ajoute une séance d'évaluation en fin de séquence"
+                        onClick={async () => setSel((await createEvalSeance(unit)).unit.id)}
+                      >
+                        + Évaluation
+                      </button>
+                    </>
                   )}
                   <button className="btn ghost" disabled={!movable?.up} title="Monter (les codes sont renumérotés)" onClick={() => moveUnit(unit, -1)}>
                     ↑
@@ -224,6 +237,7 @@ function SequenceScreen({ seqId }: { seqId: string }) {
                 </div>
               </div>
 
+              {unit.isEval && <EvalLinks unit={unit} />}
               <UnitDetails unit={unit} />
               {data && lp && (
                 <ClassProgress
@@ -308,6 +322,51 @@ function SequenceScreen({ seqId }: { seqId: string }) {
         </div>
       </div>
       {open && <CardDetail cardId={open} startEditing={creating === open} onClose={() => (setOpen(null), setCreating(null))} />}
+    </div>
+  );
+}
+
+// Séance d'évaluation : les évaluations liées (une par variante) et leurs classes
+function EvalLinks({ unit }: { unit: Unit }) {
+  const nav = useNavigate();
+  const evs = useLiveQuery(async () => (await db.evaluations.toArray()).filter((e) => e.unitId === unit.id && !e.template), [unit.id], []);
+  const groups = useLiveQuery(() => db.groups.toArray(), [], [] as Group[]);
+  return (
+    <div className="panel stack" style={{ borderColor: '#e05a4f' }}>
+      <div className="spread">
+        <h3 style={{ margin: 0 }}>📝 Évaluation{evs.length > 1 ? 's (variantes)' : ''}</h3>
+        {evs[0] && (
+          <button
+            className="btn small"
+            title="Copie de l'évaluation pour d'autres classes du niveau"
+            onClick={async () => {
+              const v = variantOf(evs[evs.length - 1]);
+              await db.evaluations.put(v);
+              nav(`/prof/correction/${v.id}?onglet=bareme`);
+            }}
+          >
+            + Variante
+          </button>
+        )}
+      </div>
+      {evs.map((e) => (
+        <div key={e.id} className="row" style={{ gap: 8 }}>
+          <Link to={`/prof/correction/${e.id}?onglet=bareme`} style={{ fontWeight: 800 }}>
+            {e.name}
+          </Link>
+          <span className="small muted">{e.criteria.length} critère(s)</span>
+          {e.groupIds.map((id) => {
+            const g = groups.find((x) => x.id === id);
+            return g ? (
+              <span key={id} className="chip" style={{ background: g.color }}>
+                {g.name}
+              </span>
+            ) : null;
+          })}
+        </div>
+      ))}
+      {!evs.length && <span className="muted small">Aucune évaluation liée à cette séance.</span>}
+      <span className="small muted">Cocher la séance « faite » pour une classe ouvre directement la saisie de ses copies, à la date du cours.</span>
     </div>
   );
 }
@@ -420,6 +479,11 @@ function ClassProgress({
             {shown.map((it) => (
               <tr key={it.unit.id} style={{ background: it.unit.id === selected ? '#fff3c4' : undefined }}>
                 <td style={{ cursor: 'pointer', minWidth: 180 }} onClick={() => onSelect(it.unit.id)}>
+                  {it.unit.isEval && (
+                    <span className="chip" style={{ background: '#f6c9c3', marginRight: 6 }}>
+                      Éval
+                    </span>
+                  )}
                   <b>{unitLabel(it.unit)}</b>
                 </td>
                 <td style={{ width: 70 }}>
@@ -450,6 +514,7 @@ function ClassProgress({
                           planned={plan?.planned.get(it.unit.id)}
                           tt={tt}
                           groups={lp.groups}
+                          isEval={it.unit.isEval}
                         />
                       );
                     })}

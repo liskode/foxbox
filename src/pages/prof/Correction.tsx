@@ -1,48 +1,91 @@
-// Onglet Correction : liste des évaluations et des modèles.
+// Évaluations : une colonne par niveau, état de chaque classe (à venir / à corriger / corrigée), modèles.
 import { useNavigate, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, SUBJECTS, type Evaluation } from '../../lib/db';
-import { newEvaluation, duplicate, score, stats, dateFor } from '../../lib/grading';
-import { frDate } from '../../lib/dates';
+import { db, SUBJECTS, type Evaluation, type Group } from '../../lib/db';
+import { newEvaluation, duplicate, score, stats, levelOfEval } from '../../lib/grading';
+import { today } from '../../lib/dates';
+import { useAuth } from '../../lib/auth';
+import { levelPlans, dm } from '../../lib/forecast';
+import { LEVELS, levelColors, levelOfName } from '../../lib/units';
 
 function useGroups() {
   return useLiveQuery(() => db.groups.toArray(), [], []);
 }
 
-function EvalCard({ ev }: { ev: Evaluation }) {
-  const groups = useGroups();
-  const info = useLiveQuery(async () => {
-    const rs = await db.results.where('evaluationId').equals(ev.id).toArray();
-    const ids = new Set<string>();
-    for (const g of ev.groupIds) (await db.memberships.where('groupId').equals(g).toArray()).forEach((m) => ids.add(m.studentId));
-    const notes = rs.map((r) => score(ev, r)?.note20).filter((x): x is number => x !== undefined);
-    const done = rs.filter((r) => r.absent || score(ev, r)).length;
-    return { done, total: ids.size, mean: stats(notes)?.mean };
-  }, [ev]);
+interface Pill {
+  g: Group;
+  state: 'todo' | 'grading' | 'done';
+  label: string;
+  title: string;
+}
+
+// Toutes les évaluations, avec l'état de chaque classe : à venir (gris), à corriger (jaune), corrigée (vert)
+function useOverview() {
+  const { session } = useAuth();
+  return useLiveQuery(async () => {
+    const [evs, groups, results, ms, plans] = await Promise.all([
+      db.evaluations.toArray(),
+      db.groups.toArray(),
+      db.results.toArray(),
+      db.memberships.toArray(),
+      levelPlans(session!.id),
+    ]);
+    const t = today();
+    const rows = evs
+      .filter((e) => !e.template)
+      .map((ev) => {
+        const level = levelOfEval(ev, groups);
+        const rs = results.filter((r) => r.evaluationId === ev.id);
+        const pills: Pill[] = [];
+        let first = '9999';
+        for (const gid of ev.groupIds) {
+          const g = groups.find((x) => x.id === gid);
+          if (!g) continue;
+          const members = new Set(ms.filter((m) => m.groupId === gid).map((m) => m.studentId));
+          const mine = rs.filter((r) => members.has(r.studentId));
+          const corrected = mine.filter((r) => r.absent || score(ev, r)).length;
+          const notes = mine.map((r) => score(ev, r)?.note20).filter((x): x is number => x !== undefined);
+          const planned = ev.unitId ? plans.levels.find((l) => l.level === level)?.plans.get(gid)?.planned.get(ev.unitId) : undefined;
+          const date = ev.groupDates?.[gid] ?? planned ?? ev.date;
+          first = date < first ? date : first;
+          const name = g.name.replace(/_.*/, '');
+          if (members.size && corrected >= members.size)
+            pills.push({ g, state: 'done', label: `${name} ${stats(notes)?.mean ?? '—'}`, title: `Corrigée · moyenne ${stats(notes)?.mean ?? '—'}/20` });
+          else if (corrected || (ev.groupDates?.[gid] ?? (!ev.unitId ? ev.date : '9999')) <= t)
+            pills.push({ g, state: 'grading', label: `${name} ${corrected}/${members.size}`, title: `${corrected} copie(s) corrigée(s) sur ${members.size}` });
+          else pills.push({ g, state: 'todo', label: `${name} ${dm(date)}`, title: planned ? `Prévue le ${dm(date)} (d'après la Progression)` : `Prévue le ${dm(date)}` });
+        }
+        return { ev, level, pills, first };
+      })
+      .sort((a, b) => a.first.localeCompare(b.first) || a.ev.createdAt - b.ev.createdAt);
+    return { rows, groups };
+  }, [session?.id]);
+}
+
+const PILL_STYLE: Record<Pill['state'], React.CSSProperties> = {
+  todo: { background: 'transparent', border: '1px dashed var(--muted-line)', color: '#9a968d' },
+  grading: { background: '#fff3c4', border: '1px solid #00000033' },
+  done: { background: '#bfe5c9', border: '1px solid var(--easy)' },
+};
+
+function EvalCard({ ev, pills }: { ev: Evaluation; pills: Pill[] }) {
   return (
-    <Link to={`/prof/correction/${ev.id}`} className="panel stack" style={{ textDecoration: 'none', gap: 6 }}>
-      <h3 style={{ margin: 0 }}>{ev.name}</h3>
-      <div className="muted small">
+    <Link to={`/prof/correction/${ev.id}`} className="btn" style={{ display: 'block', textAlign: 'left', whiteSpace: 'normal', background: 'var(--paper)' }}>
+      <div>
+        {ev.unitId && '📝 '}
+        {ev.name}
+      </div>
+      <div className="small muted" style={{ fontWeight: 600 }}>
         {ev.criteria.length} critère(s)
       </div>
-      <div className="row" style={{ gap: 4 }}>
-        {ev.groupIds.map((id) => {
-          const g = groups.find((x) => x.id === id);
-          return g ? (
-            <span key={id} className="chip" style={{ background: g.color ?? 'var(--paper)' }}>
-              {g.name} · {frDate(dateFor(ev, id))}
-            </span>
-          ) : null;
-        })}
+      <div className="row" style={{ gap: 4, marginTop: 4 }}>
+        {pills.map((p) => (
+          <span key={p.g.id} className="small" title={p.title} style={{ borderRadius: 6, padding: '0 5px', fontWeight: 700, ...PILL_STYLE[p.state] }}>
+            {p.label}
+          </span>
+        ))}
+        {!pills.length && <span className="small muted">Aucune classe</span>}
       </div>
-      {info && (
-        <div className="small">
-          <b>
-            {info.done}/{info.total}
-          </b>{' '}
-          copie(s) corrigée(s){info.mean !== undefined && <> · moyenne <b>{info.mean}/20</b></>}
-        </div>
-      )}
     </Link>
   );
 }
@@ -51,12 +94,16 @@ export function Correction() {
   const nav = useNavigate();
   const evs = useLiveQuery(() => db.evaluations.toArray(), [], []);
   const groups = useGroups();
-  const last = (e: Evaluation) => [e.date, ...e.groupIds.map((g) => dateFor(e, g))].sort().pop()!;
-  const list = evs.filter((e) => !e.template).sort((a, b) => last(b).localeCompare(last(a)) || b.createdAt - a.createdAt);
+  const data = useOverview();
+  const { session } = useAuth();
+  const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
   const templates = evs.filter((e) => e.template).sort((a, b) => a.name.localeCompare(b.name));
+  const rows = data?.rows ?? [];
+  const columns = [...LEVELS, ...(rows.some((r) => !r.level) ? [''] : [])];
 
-  async function create() {
-    const ev = newEvaluation(SUBJECTS[0], []);
+  async function create(level?: string) {
+    const ids = groups.filter((g) => !g.archived && level && levelOfName(g.name) === level).map((g) => g.id);
+    const ev = { ...newEvaluation(SUBJECTS[0], ids), level };
     await db.evaluations.put(ev);
     nav(`/prof/correction/${ev.id}?onglet=bareme`);
   }
@@ -70,21 +117,32 @@ export function Correction() {
   return (
     <div className="page stack">
       <div className="spread">
-        <h1 className="title" style={{ margin: 0 }}>Correction</h1>
-        <button className="btn primary" onClick={create}>
-          + Nouvelle évaluation
-        </button>
+        <h1 className="title" style={{ margin: 0 }}>Évaluations</h1>
+
       </div>
-      {!list.length && (
-        <div className="notice">
-          Créez une évaluation (ou partez d'un modèle ci-dessous), choisissez la ou les classes, saisissez le barème par
-          critère, puis corrigez copie par copie.
-        </div>
-      )}
-      <div className="grid3">
-        {list.map((ev) => (
-          <EvalCard key={ev.id} ev={ev} />
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, alignItems: 'start' }}>
+        {columns.map((level) => {
+          const list = rows.filter((r) => (r.level ?? '') === level);
+          return (
+            <div key={level || '-'} className="panel stack" style={{ gap: 8, background: colors[level] ?? 'var(--paper)' }}>
+              <div className="spread">
+                <h2 style={{ margin: 0 }}>{level || 'Sans niveau'}</h2>
+                {level && (
+                  <button className="btn small" onClick={() => create(level)}>
+                    + Évaluation
+                  </button>
+                )}
+              </div>
+              {list.map((r) => (
+                <EvalCard key={r.ev.id} ev={r.ev} pills={r.pills} />
+              ))}
+              {!list.length && <span className="small muted">Aucune évaluation.</span>}
+            </div>
+          );
+        })}
+      </div>
+      <div className="small muted">
+        Gris : date prévue · jaune : copies à corriger · vert : corrigée (moyenne). 📝 : évaluation placée dans une séquence de la Progression.
       </div>
       {templates.length > 0 && (
         <div className="panel stack">
@@ -95,7 +153,7 @@ export function Correction() {
               {templates.map((t) => (
                 <tr key={t.id}>
                   <td>
-                    <b>{t.name}</b>
+                    <b>{t.name}</b> {t.level && <span className="chip" style={{ background: colors[t.level] }}>{t.level}</span>}
                   </td>
                   <td className="small muted">
                     {t.criteria.length} critères · {Math.round(t.criteria.reduce((a, c) => a + c.points, 0) * 10) / 10} pts
