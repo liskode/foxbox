@@ -261,6 +261,7 @@ export interface Outbox {
   table: string;
   id: string;
   del?: boolean; // suppression explicite demandée par l'utilisateur
+  err?: string; // refusé par le serveur : mis de côté pour ne pas bloquer les autres envois
 }
 
 class FoxBoxDB extends Dexie {

@@ -45,6 +45,7 @@ export interface SyncState {
   pending: number;
   syncing: boolean;
   error?: string;
+  failed?: number; // modifications refusées par le serveur (mises de côté)
   lastSync?: number;
 }
 let state: SyncState = { pending: 0, syncing: false };
@@ -103,61 +104,102 @@ function schedulePush() {
 }
 
 let pushing = false;
+// Envoi d'un groupe d'éléments d'une même table (lève une erreur si le serveur refuse)
+async function pushGroup(table: string, ids: string[], explicitDelete: Set<string>) {
+  if (table === 'media') {
+    for (const id of ids) {
+      const m = await db.media.get(id);
+      const bucket = supabase.storage.from(bucketOf(id));
+      if (!m && !explicitDelete.has(`media|${id}`)) continue;
+      const { error } = m ? await bucket.upload(id, m.blob, { upsert: true, contentType: m.blob.type }) : await bucket.remove([id]);
+      if (error) throw error;
+    }
+    return;
+  }
+  const spec = SPECS[table];
+  const objs = await db.table(table).bulkGet(ids);
+  const rows = ids
+    .map((id, i) => {
+      const o = objs[i] as Obj | undefined;
+      if (o) return { id, data: o, deleted: false, ...spec.cols(o) };
+      // Absent de la copie locale : on ne supprime en ligne que sur demande explicite
+      return explicitDelete.has(`${table}|${id}`) ? { id, deleted: true } : null;
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+  if (spec.updateOnly) {
+    for (const r of rows) {
+      const { error } = await supabase.from(spec.remote).update({ data: (r as Obj).data, deleted: r.deleted }).eq('id', r.id);
+      if (error) throw error;
+    }
+    return;
+  }
+  const live = rows.filter((r) => !r.deleted);
+  const dead = rows.filter((r) => r.deleted).map((r) => r.id);
+  if (live.length) {
+    const { error } = await supabase.from(spec.remote).upsert(live);
+    if (error) throw error;
+  }
+  if (dead.length) {
+    const { error } = await supabase.from(spec.remote).update({ deleted: true }).in('id', dead);
+    if (error) throw error;
+  }
+}
+
+const errText = (e: unknown) => String((e as Error)?.message ?? e);
+// Coupure réseau : on réessaiera plus tard (rien n'est mis de côté)
+const isNetwork = (e: unknown) => /fetch|network|load failed|timeout|offline/i.test(errText(e));
+
+async function emitFailures() {
+  const failed = await db.outbox.filter((o) => !!o.err).toArray();
+  emit({
+    pending: await db.outbox.count(),
+    failed: failed.length,
+    error: failed.length ? `${failed.length} modification(s) refusée(s) par le serveur — ${failed[0].table} : ${failed[0].err}` : undefined,
+  });
+}
+
 export async function push() {
   if (!ONLINE || pushing || !me) return;
   pushing = true;
   try {
     for (;;) {
-      const batch = await db.outbox.limit(200).toArray();
+      const batch = await db.outbox.filter((o) => !o.err).limit(200).toArray();
       if (!batch.length) break;
       const byTable = new Map<string, string[]>();
       const explicitDelete = new Set(batch.filter((b) => b.del).map((b) => b.key));
       batch.forEach((b) => byTable.set(b.table, [...(byTable.get(b.table) ?? []), b.id]));
       for (const [table, ids] of byTable) {
-        if (table === 'media') {
+        try {
+          await pushGroup(table, ids, explicitDelete);
+          await db.outbox.bulkDelete(ids.map((id) => `${table}|${id}`));
+        } catch (e) {
+          if (isNetwork(e)) throw e;
+          // Un élément refusé ne doit pas bloquer les autres : on les envoie un par un
           for (const id of ids) {
-            const m = await db.media.get(id);
-            const bucket = supabase.storage.from(bucketOf(id));
-            if (!m && !explicitDelete.has(`media|${id}`)) continue;
-            const { error } = m
-              ? await bucket.upload(id, m.blob, { upsert: true, contentType: m.blob.type })
-              : await bucket.remove([id]);
-            if (error) throw error;
-          }
-        } else {
-          const spec = SPECS[table];
-          const objs = await db.table(table).bulkGet(ids);
-          const rows = ids.map((id, i) => {
-            const o = objs[i] as Obj | undefined;
-            if (o) return { id, data: o, deleted: false, ...spec.cols(o) };
-            // Absent de la copie locale : on ne supprime en ligne que sur demande explicite
-            return explicitDelete.has(`${table}|${id}`) ? { id, deleted: true } : null;
-          }).filter((r): r is NonNullable<typeof r> => r !== null);
-          if (spec.updateOnly) {
-            for (const r of rows) {
-              const { error } = await supabase.from(spec.remote).update({ data: (r as Obj).data, deleted: r.deleted }).eq('id', r.id);
-              if (error) throw error;
-            }
-          } else {
-            const live = rows.filter((r) => !r.deleted);
-            const dead = rows.filter((r) => r.deleted).map((r) => r.id);
-            if (live.length) {
-              const { error } = await supabase.from(spec.remote).upsert(live);
-              if (error) throw error;
-            }
-            if (dead.length) {
-              const { error } = await supabase.from(spec.remote).update({ deleted: true }).in('id', dead);
-              if (error) throw error;
+            try {
+              await pushGroup(table, [id], explicitDelete);
+              await db.outbox.delete(`${table}|${id}`);
+            } catch (e2) {
+              if (isNetwork(e2)) throw e2;
+              console.error('FoxBox : envoi refusé', table, id, e2);
+              await db.outbox.update(`${table}|${id}`, { err: errText(e2) });
             }
           }
         }
-        await db.outbox.bulkDelete(ids.map((id) => `${table}|${id}`));
       }
-      emit({ pending: await db.outbox.count(), error: undefined });
+      emit({ pending: await db.outbox.count() });
     }
   } finally {
     pushing = false;
   }
+}
+
+// Remet en file les éléments refusés (nouvel essai)
+export async function retryFailed() {
+  await db.outbox.toCollection().modify((o) => {
+    delete o.err;
+  });
+  await syncNow();
 }
 
 // ---------- Réception ----------
@@ -190,7 +232,16 @@ async function pullTable(name: string, spec: TableSpec) {
 
 export async function pull() {
   if (!ONLINE || !me) return;
-  for (const [name, spec] of Object.entries(SPECS)) await pullTable(name, spec);
+  // Une table en erreur n'empêche pas de recevoir les autres
+  let first: unknown;
+  for (const [name, spec] of Object.entries(SPECS))
+    try {
+      await pullTable(name, spec);
+    } catch (e) {
+      console.error('FoxBox : réception impossible', name, e);
+      first ??= new Error(`réception ${name} : ${errText(e)}`);
+    }
+  if (first) throw first;
 }
 
 let running = false;
@@ -201,7 +252,8 @@ export async function syncNow() {
   try {
     await push();
     await pull();
-    emit({ syncing: false, error: undefined, lastSync: Date.now(), pending: await db.outbox.count() });
+    emit({ syncing: false, lastSync: Date.now() });
+    await emitFailures();
   } catch (e) {
     emit({ syncing: false, error: String((e as Error).message ?? e) });
   } finally {
@@ -226,6 +278,10 @@ export async function startSync(userId: string) {
   if (!ONLINE) return;
   setSyncUser(userId);
   installHooks();
+  // Au chargement, on retente les envois refusés lors d'une session précédente
+  await db.outbox.toCollection().modify((o) => {
+    delete o.err;
+  });
   await syncNow();
   if (!timer) {
     timer = setInterval(syncNow, 60_000);

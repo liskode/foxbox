@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from './lib/auth';
 import { runOcr, subscribeOcr, type OcrState } from './lib/ocr';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
-import { subscribeSync, type SyncState } from './lib/sync';
+import { subscribeSync, retryFailed, type SyncState } from './lib/sync';
 import { ONLINE } from './lib/supabase';
 import { Timetable } from './pages/prof/Timetable';
 import { Competences } from './pages/prof/Competences';
@@ -53,9 +53,16 @@ function SyncBadge() {
   if (!s) return null;
   if (s.error)
     return (
-      <span className="chip" style={{ background: '#f6c9c3' }} title={s.error}>
-        ⚠ Hors ligne
-      </span>
+      <button
+        className="chip"
+        style={{ background: '#f6c9c3', cursor: 'pointer' }}
+        title={s.error}
+        onClick={() => {
+          if (confirm(`Problème d'enregistrement en ligne :\n\n${s.error}\n\nRéessayer maintenant ?`)) retryFailed();
+        }}
+      >
+        ⚠ {s.failed ? `${s.failed} non enregistré(s)` : 'Hors ligne'}
+      </button>
     );
   if (s.syncing || s.pending)
     return <span className="chip" title="Enregistrement en ligne">⟳ {s.pending || ''}</span>;
