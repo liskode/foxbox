@@ -6,6 +6,7 @@ import { uid } from '../../lib/db';
 import { addDays, fromISO, today } from '../../lib/dates';
 import {
   AUDIN_2026,
+  countsForProgress,
   DAYS,
   mergeWeeks,
   mondayOf,
@@ -328,7 +329,7 @@ export function Timetable() {
               + Ajouter un cours
             </button>
           </div>
-          <span className="small muted">Cliquez sur un cours pour le corriger. Les jours où vous n'êtes pas présent sont grisés.</span>
+          <span className="small muted">Cliquez sur un cours pour le corriger. « P » : le cours fait avancer la progression de la classe ; cliquez dessus pour le passer « HP » (hors progression). Les jours où vous n'êtes pas présent sont grisés.</span>
           {editing && (
             <SlotEditor
               key={editing.id}
@@ -341,7 +342,14 @@ export function Timetable() {
               }}
             />
           )}
-          <WeekGrid tt={tt} groups={groups} week={week} onSlot={setEditing} selected={editing?.id} />
+          <WeekGrid
+            tt={tt}
+            groups={groups}
+            week={week}
+            onSlot={setEditing}
+            selected={editing?.id}
+            onToggleHp={(s) => save({ ...tt, slots: tt.slots.map((x) => (x.id === s.id ? { ...x, hp: countsForProgress(s) } : x)) })}
+          />
           <div className="row" style={{ gap: 12 }}>
             <b className="small">Mes jours de présence :</b>
             {[1, 2, 3, 4, 5].map((d) => (

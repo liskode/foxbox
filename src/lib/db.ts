@@ -105,6 +105,7 @@ export interface Unit {
   theme?: string; // thème du programme, 1 à 4
   description?: string; // descriptif de la séance (professeur)
   documents?: { mediaId: string; name: string; size: number }[]; // PDF téléchargeables par les élèves
+  duration?: number; // durée prévue en heures de cours (1 par défaut)
 }
 
 export interface UnitCard {

@@ -81,7 +81,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           ['/prof/correction', 'Correction'],
           ['|', ''],
           ['#', 'Bibliothèque :'],
-          ['/prof/sequences', 'Séquences'],
+          ['/prof/progression', 'Progression'],
           ['/prof/cartes', 'Cartes'],
           ['/prof/import', 'Import'],
         ]
@@ -133,7 +133,9 @@ export function App() {
           <Route path="/inscription" element={<Signup />} />
           <Route path="/prof" element={<Shell role="prof"><Dashboard /></Shell>} />
           <Route path="/prof/cartes" element={<Shell role="prof"><Cards /></Shell>} />
-          <Route path="/prof/sequences" element={<Shell role="prof"><Sequences /></Shell>} />
+          <Route path="/prof/progression" element={<Shell role="prof"><Sequences /></Shell>} />
+          <Route path="/prof/progression/:seqId" element={<Shell role="prof"><Sequences /></Shell>} />
+          <Route path="/prof/sequences" element={<Navigate to="/prof/progression" replace />} />
           <Route path="/prof/classes" element={<Shell role="prof"><Groups /></Shell>} />
           <Route path="/prof/classes/:id" element={<Shell role="prof"><GroupPage /></Shell>} />
           <Route path="/prof/classes/:id/fiches" element={<Shell role="prof"><Tickets /></Shell>} />

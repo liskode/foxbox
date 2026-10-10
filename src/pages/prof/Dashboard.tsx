@@ -39,7 +39,7 @@ export function Dashboard() {
 
   const steps = [
     { done: !!counts?.cards, label: 'Importer vos cartes (Bibliothèque › Import)', to: '/prof/import' },
-    { done: !!counts?.seqs, label: 'Préparer vos séquences et séances (Bibliothèque › Séquences)', to: '/prof/sequences' },
+    { done: !!counts?.seqs, label: 'Préparer vos séquences et séances (Progression)', to: '/prof/progression' },
     { done: groups.length > 0, label: 'Créer vos classes et importer les élèves', to: '/prof/classes' },
   ];
 

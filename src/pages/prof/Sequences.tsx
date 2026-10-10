@@ -1,92 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, nextCardCode, SUBJECTS, type Unit } from '../../lib/db';
+import { db, uid, nextCardCode, SUBJECTS, type Group, type Unit } from '../../lib/db';
 import { THEMES as CARD_THEMES } from '../../lib/apkg';
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
 import { CardFace } from '../../components/CardFace';
 import { themeColor } from '../../components/widgets';
-import { frDate, today } from '../../lib/dates';
-import { unitLabel, nextSequenceCode, nextSeanceCode, LEVELS, themesFor, themeLabel, levelColors, moveUnit, canMove } from '../../lib/units';
+import { unitLabel, nextSequenceCode, nextSeanceCode, themesFor, themeLabel, levelColors, moveUnit, canMove } from '../../lib/units';
+import { levelPlans, sequencesOf, finishedByAll, doneDate, durationOf, dm, type ClassPlan, type LevelPlan } from '../../lib/forecast';
+import type { Timetable } from '../../lib/timetable';
+import { DoneCell } from '../../components/DoneCell';
 import { useAuth } from '../../lib/auth';
 import { UnitDetails } from '../../components/UnitDetails';
 
-function Publish({ unit }: { unit: Unit }) {
-  const groups = useLiveQuery(() => db.groups.filter((g) => g.subject === unit.subject && !g.archived).toArray(), [unit.subject], []);
-  const pubs = useLiveQuery(
-    () => db.publications.where('unitId').anyOf([unit.id, unit.parentId ?? '-']).toArray(),
-    [unit.id, unit.parentId],
-    [],
-  );
-  const [dates, setDates] = useState<Record<string, string>>({});
-
-  async function publish(groupId: string) {
-    await db.publications.put({ id: uid(), groupId, unitId: unit.id, date: dates[groupId] ?? today() });
-  }
-
-  return (
-    <div className="panel stack">
-      <h3 style={{ margin: 0 }}>Publier pour une classe</h3>
-      {!groups.length && <span className="muted">Aucune classe de {unit.subject}. Créez-en une dans l'onglet Classes.</span>}
-      <table className="list">
-        <tbody>
-          {groups.map((g) => {
-            const p = pubs.filter((x) => x.groupId === g.id).sort((a, b) => a.date.localeCompare(b.date))[0];
-            const viaParent = p && p.unitId !== unit.id;
-            return (
-              <tr key={g.id}>
-                <td style={{ width: 110 }}>
-                  <b style={{ background: g.color, borderRadius: 8, padding: '1px 8px' }}>{g.name}</b>
-                </td>
-                <td>
-                  {p ? (
-                    <span>
-                      {p.date > today() ? '🕒 Programmée le ' : '✓ Publiée le '}
-                      {frDate(p.date)}
-                      {viaParent && <span className="muted small"> (avec la séquence)</span>}
-                    </span>
-                  ) : (
-                    <div className="row" style={{ gap: 8 }}>
-                      <input
-                        type="date"
-                        value={dates[g.id] ?? today()}
-                        onChange={(e) => setDates({ ...dates, [g.id]: e.target.value })}
-                      />
-                      <button className="btn small primary" onClick={() => publish(g.id)}>
-                        Publier
-                      </button>
-                    </div>
-                  )}
-                </td>
-                <td style={{ width: 90, textAlign: 'right' }}>
-                  {p && !viaParent && (
-                    <button
-                      className="btn small ghost"
-                      onClick={() => confirm(`Annuler la publication pour ${g.name} ?`) && db.publications.delete(p.id)}
-                    >
-                      Annuler
-                    </button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <span className="small muted">
-        Les cartes publiées entrent dans les révisions des élèves à la date choisie. Une carte déjà vue n'est jamais
-        dupliquée, même si elle appartient à plusieurs séquences.
-      </span>
-    </div>
-  );
-}
-
-export function Sequences() {
+function SequenceScreen({ seqId }: { seqId: string }) {
   const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const nav = useNavigate();
+  const [hideDone, setHideDone] = useHideDone();
+  const data = usePlans();
   const { session } = useAuth();
   const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
   const bgOf = (u: Unit) => (u.level && colors[u.level]) || 'var(--paper)';
-  const [sel, setSel] = useState<string | null>(null);
+  const [sel, setSel] = useState<string | null>(seqId);
+  useEffect(() => setSel(seqId), [seqId]);
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
@@ -103,38 +40,18 @@ export function Sequences() {
       .sort((a, b) => a.card.code.localeCompare(b.card.code));
   }, [sel, units]);
 
-  const [lvl, setLvl] = useState('');
-  const levels = [...new Set(units.filter((u) => u.kind === 'sequence' && u.level).map((u) => u.level!))].sort((a, b) => b.localeCompare(a));
-  const seqs = units
-    .filter((u) => u.kind === 'sequence' && (!lvl || u.level === lvl))
-    .sort(
-      (a, b) =>
-        LEVELS.indexOf(a.level ?? '') - LEVELS.indexOf(b.level ?? '') ||
-        (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }) ||
-        a.order - b.order,
-    );
+  // Écran d'un niveau : seules ses séquences sont listées (on peut masquer celles terminées par toutes les classes)
+  const lvl = units.find((u) => u.id === seqId)?.level ?? '';
+  const lp = data?.levels.find((l) => l.level === lvl);
+  const seqs = sequencesOf(units, lvl).filter(
+    (q) => !hideDone || !lp || q.id === seqId || !finishedByAll(lp, lp.items.filter((it) => it.seq.id === q.id)),
+  );
   // On ne déplie que la séquence en cours (sinon la liste devient très longue)
   const openSeq = unit?.kind === 'sequence' ? unit.id : unit?.parentId;
 
   async function addSequence() {
-    const level = lvl || prompt(`Niveau de la séquence (${LEVELS.join(', ')})`, '4e')?.trim();
-    if (!level) return;
-    const names = themesFor(level);
-    const theme = prompt(`Thème :\n${Object.entries(names).map(([k, v]) => `${k} – ${v}`).join('\n')}`, '1')?.trim();
-    if (!theme || !names[theme]) return;
-    const name = prompt('Titre de la séquence (ex. « La masse volumique »)');
-    if (!name) return;
-    const subject = SUBJECTS[0];
-    let code;
-    try {
-      code = await nextSequenceCode(level, theme);
-    } catch (e) {
-      return alert((e as Error).message);
-    }
-    const order = units.filter((x) => x.kind === 'sequence' && x.level === level && x.theme === theme).length + 1;
-    const u: Unit = { id: uid(), kind: 'sequence', subject, level, theme, name, order, code };
-    await db.units.put(u);
-    setSel(u.id);
+    const u = await createSequence(lvl, units);
+    if (u) setSel(u.id);
   }
 
   async function addSeance(parent: Unit) {
@@ -158,7 +75,8 @@ export function Sequences() {
     await db.unitCards.where('unitId').anyOf(ids).delete();
     await db.publications.where('unitId').anyOf(ids).delete();
     await db.units.bulkDelete(ids);
-    setSel(null);
+    if (u.kind === 'sequence') nav('/prof/progression');
+    else setSel(u.parentId!);
   }
 
   // Nouvelle carte créée directement dans la séquence / séance, avec le niveau et le thème déjà renseignés
@@ -205,26 +123,22 @@ export function Sequences() {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 300px) 1fr', gap: 20, alignItems: 'start' }}>
         <div className="panel stack" style={{ position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
           <div className="spread">
-            <h2 style={{ margin: 0 }}>Séquences</h2>
+            <h2 style={{ margin: 0, background: colors[lvl], borderRadius: 10, padding: '0 10px' }}>{lvl}</h2>
             <button className="btn small primary" onClick={addSequence}>
               + Séquence
             </button>
           </div>
-          {levels.length > 1 && (
-            <div className="row" style={{ gap: 4 }}>
-              {['', ...levels].map((l) => (
-                <button key={l} className={'chip' + (lvl === l ? '' : ' off')} style={{ background: 'var(--matiere)' }} onClick={() => setLvl(l)}>
-                  {l || 'Tous'}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="spread">
+            <Link to="/prof/progression" className="small">
+              ← Tous les niveaux
+            </Link>
+            <HideDoneToggle value={hideDone} onChange={setHideDone} />
+          </div>
           {!seqs.length && <span className="muted small">Créez votre première séquence.</span>}
           {seqs.map((s, i) => (
             <div key={s.id} className="stack" style={{ gap: 4 }}>
-              {(i === 0 || seqs[i - 1].theme !== s.theme || seqs[i - 1].level !== s.level) && (
+              {(i === 0 || seqs[i - 1].theme !== s.theme) && (
                 <div className="small" style={{ fontWeight: 900, marginTop: i ? 8 : 0, color: 'var(--ink-soft)' }}>
-                  {!lvl && s.level ? `${s.level} · ` : ''}
                   {themeLabel(s.theme, s.level)}
                 </div>
               )}
@@ -311,7 +225,16 @@ export function Sequences() {
               </div>
 
               <UnitDetails unit={unit} />
-              <Publish unit={unit} />
+              {data && lp && (
+                <ClassProgress
+                  seq={unit.kind === 'sequence' ? unit : units.find((u) => u.id === unit.parentId)!}
+                  lp={lp}
+                  tt={data.tt}
+                  selected={unit.id}
+                  onSelect={setSel}
+                  hideDone={hideDone}
+                />
+              )}
 
               {picking ? (
                 <div className="stack">
@@ -387,4 +310,254 @@ export function Sequences() {
       {open && <CardDetail cardId={open} startEditing={creating === open} onClose={() => (setOpen(null), setCreating(null))} />}
     </div>
   );
+}
+
+// « Masquer ce qui est terminé » : préférence gardée dans le navigateur
+function useHideDone(): [boolean, (v: boolean) => void] {
+  const [v, setV] = useState(() => {
+    try {
+      return localStorage.getItem('foxbox-hide-done') === '1';
+    } catch {
+      return false;
+    }
+  });
+  return [
+    v,
+    (x: boolean) => {
+      setV(x);
+      try {
+        localStorage.setItem('foxbox-hide-done', x ? '1' : '0');
+      } catch {
+        /* navigation privée */
+      }
+    },
+  ];
+}
+
+function HideDoneToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="row small" style={{ gap: 6, fontWeight: 700 }}>
+      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
+      Masquer ce qui est terminé
+    </label>
+  );
+}
+
+function usePlans() {
+  const { session } = useAuth();
+  return useLiveQuery(() => levelPlans(session!.id), [session?.id]);
+}
+
+async function createSequence(level: string, units: Unit[]) {
+  const names = themesFor(level);
+  const theme = prompt(`Nouvelle séquence de ${level}. Thème :\n${Object.entries(names).map(([k, v]) => `${k} – ${v}`).join('\n')}`, '1')?.trim();
+  if (!theme || !names[theme]) return;
+  const name = prompt('Titre de la séquence (ex. « La masse volumique »)');
+  if (!name) return;
+  let code;
+  try {
+    code = await nextSequenceCode(level, theme);
+  } catch (e) {
+    alert((e as Error).message);
+    return;
+  }
+  const order = units.filter((x) => x.kind === 'sequence' && x.level === level && x.theme === theme).length + 1;
+  const u: Unit = { id: uid(), kind: 'sequence', subject: SUBJECTS[0], level, theme, name, order, code };
+  await db.units.put(u);
+  return u;
+}
+
+// Bilan d'une classe : fin de programme prévue, ou retard
+function ClassBilan({ g, plan }: { g: Group; plan?: ClassPlan }) {
+  if (!plan) return null;
+  const name = <b>{g.name.replace(/_.*/, '')}</b>;
+  if (!plan.hasTimetable)
+    return (
+      <div className="small muted" title="Aucun cours de cette classe dans l'emploi du temps à venir">
+        {name} : pas de cours à venir
+      </div>
+    );
+  if (plan.overflowWeeks)
+    return (
+      <div className="small" style={{ color: 'var(--forgot)', fontWeight: 700 }}>
+        {name} : dépasse de {plan.overflowWeeks} semaine{plan.overflowWeeks > 1 ? 's' : ''}
+      </div>
+    );
+  return <div className="small">{name} : {plan.end ? <>fin prévue le {dm(plan.end)} ✓</> : 'tout est fait ✓'}</div>;
+}
+
+const DURATIONS = [0.5, 1, 1.5, 2, 3, 4];
+const hLabel = (h: number) => `${String(h).replace('.', ',')} h`;
+
+// Tableau de la séquence : une ligne par séance, une case par classe du niveau
+function ClassProgress({
+  seq,
+  lp,
+  tt,
+  selected,
+  onSelect,
+  hideDone,
+}: {
+  seq: Unit;
+  lp: LevelPlan;
+  tt: Timetable;
+  selected: string;
+  onSelect: (id: string) => void;
+  hideDone: boolean;
+}) {
+  const items = lp.items.filter((it) => it.seq.id === seq.id);
+  const shown = items.filter((it) => !hideDone || it.unit.id === selected || !finishedByAll(lp, [it]));
+  return (
+    <div className="panel stack">
+      <div className="spread">
+        <h3 style={{ margin: 0 }}>Avancement des classes de {lp.level}</h3>
+        <span className="small muted">Gris : date prévue · noir : séance faite (cartes publiées)</span>
+      </div>
+      {!lp.groups.length && <span className="muted">Aucune classe de {lp.level}.</span>}
+      <div style={{ overflowX: 'auto' }}>
+        <table className="list">
+          <tbody>
+            {shown.map((it) => (
+              <tr key={it.unit.id} style={{ background: it.unit.id === selected ? '#fff3c4' : undefined }}>
+                <td style={{ cursor: 'pointer', minWidth: 180 }} onClick={() => onSelect(it.unit.id)}>
+                  <b>{unitLabel(it.unit)}</b>
+                </td>
+                <td style={{ width: 70 }}>
+                  <select
+                    value={durationOf(it.unit)}
+                    title="Durée prévue"
+                    onChange={(e) => db.units.update(it.unit.id, { duration: +e.target.value })}
+                    style={{ fontSize: '0.8rem' }}
+                  >
+                    {DURATIONS.map((d) => (
+                      <option key={d} value={d}>
+                        {hLabel(d)}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td>
+                  <div className="row" style={{ gap: 4 }}>
+                    {lp.groups.map((g) => {
+                      const plan = lp.plans.get(g.id);
+                      return (
+                        <DoneCell
+                          key={g.id}
+                          g={g}
+                          unitId={it.unit.id}
+                          done={doneDate(plan, it)}
+                          viaSeq={!plan?.done.has(it.unit.id) && plan?.done.has(it.seq.id)}
+                          planned={plan?.planned.get(it.unit.id)}
+                          tt={tt}
+                          groups={lp.groups}
+                        />
+                      );
+                    })}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {shown.length < items.length && <span className="small muted">{items.length - shown.length} séance(s) terminée(s) masquée(s).</span>}
+      <span className="small muted">
+        Cliquez sur une date pour cocher la séance « faite » lors d'un cours : ses cartes sont publiées pour la classe et ses documents deviennent
+        visibles. Les dates prévues se recalculent à chaque fois, d'après l'emploi du temps et le calendrier.
+      </span>
+    </div>
+  );
+}
+
+// Vue d'ensemble : une colonne par niveau
+function LevelsOverview() {
+  const data = usePlans();
+  const { session } = useAuth();
+  const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
+  const [hideDone, setHideDone] = useHideDone();
+  const nav = useNavigate();
+  if (!data) return null;
+  const { units } = data;
+
+  return (
+    <div className="page stack">
+      <div className="spread">
+        <h1 className="title" style={{ margin: 0 }}>
+          Progression
+        </h1>
+        <HideDoneToggle value={hideDone} onChange={setHideDone} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, alignItems: 'start' }}>
+        {data.levels.map((lp) => {
+          const seqs = sequencesOf(units, lp.level);
+          return (
+            <div key={lp.level} className="panel stack" style={{ gap: 8, background: colors[lp.level] }}>
+              <div className="spread">
+                <h2 style={{ margin: 0 }}>{lp.level}</h2>
+                <button
+                  className="btn small"
+                  onClick={async () => {
+                    const u = await createSequence(lp.level, units);
+                    if (u) nav(`/prof/progression/${u.id}`);
+                  }}
+                >
+                  + Séquence
+                </button>
+              </div>
+              {lp.groups.map((g) => (
+                <ClassBilan key={g.id} g={g} plan={lp.plans.get(g.id)} />
+              ))}
+              {seqs.map((q, i) => {
+                const items = lp.items.filter((it) => it.seq.id === q.id);
+                if (hideDone && finishedByAll(lp, items)) return null;
+                return (
+                  <div key={q.id} className="stack" style={{ gap: 4 }}>
+                    {(i === 0 || seqs[i - 1].theme !== q.theme) && (
+                      <div className="small" style={{ fontWeight: 900, marginTop: 6, color: 'var(--ink-soft)' }}>
+                        {themeLabel(q.theme, q.level)}
+                      </div>
+                    )}
+                    <Link to={`/prof/progression/${q.id}`} className="btn" style={{ display: 'block', textAlign: 'left', whiteSpace: 'normal', background: 'var(--paper)' }}>
+                      <div>{unitLabel(q)}</div>
+                      <div className="row" style={{ gap: 4, marginTop: 4 }}>
+                        {lp.groups.map((g) => {
+                          const plan = lp.plans.get(g.id);
+                          const n = items.filter((it) => doneDate(plan, it)).length;
+                          const next = items.map((it) => plan?.planned.get(it.unit.id)).find(Boolean);
+                          const all = items.length > 0 && n === items.length;
+                          return (
+                            <span
+                              key={g.id}
+                              className="small"
+                              title={all ? 'Terminée' : next ? `Prochaine séance prévue le ${dm(next)}` : undefined}
+                              style={{
+                                borderRadius: 6,
+                                padding: '0 5px',
+                                fontWeight: 700,
+                                background: all ? g.color ?? '#eee' : n ? '#fff3c4' : 'transparent',
+                                border: `1px ${n ? 'solid' : 'dashed'} ${n ? '#00000033' : 'var(--muted-line)'}`,
+                                color: n ? 'var(--ink)' : '#9a968d',
+                              }}
+                            >
+                              {g.name.replace(/_.*/, '')} {all ? '✓' : n ? `${n}/${items.length}` : next ? dm(next) : ''}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
+              {!seqs.length && <span className="small muted">Aucune séquence.</span>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function Sequences() {
+  const { seqId } = useParams();
+  return seqId ? <SequenceScreen seqId={seqId} /> : <LevelsOverview />;
 }

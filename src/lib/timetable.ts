@@ -17,6 +17,7 @@ export interface Slot {
   groupId?: string; // classe FoxBox correspondante
   room?: string;
   aide?: string; // accompagnant (AESH…)
+  hp?: boolean; // hors progression (par défaut : Devoirs faits, parcours orientation)
 }
 
 export interface Timetable {
@@ -52,6 +53,9 @@ export function slotsOn(tt: Timetable, iso: string): Slot[] {
   const d = dayOf(iso);
   return tt.slots.filter((s) => s.day === d && (s.week === 'AB' || s.week === w)).sort((a, b) => a.start.localeCompare(b.start));
 }
+
+// Le cours fait-il avancer la progression de la classe ?
+export const countsForProgress = (s: Slot) => !(s.hp ?? /devoirs faits|orientation/i.test(s.subject));
 
 export const isPresent = (tt: Timetable, day: number) => !tt.presentDays?.length || tt.presentDays.includes(day);
 

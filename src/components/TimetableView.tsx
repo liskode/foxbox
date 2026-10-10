@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Group } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { addDays, fromISO, today } from '../lib/dates';
-import { DAYS, isPresent, loadTimetable, matchGroup, minutes, shortTime, slotsOn, type Slot, type Timetable, type WeekType } from '../lib/timetable';
+import { DAYS, countsForProgress, isPresent, loadTimetable, matchGroup, minutes, shortTime, slotsOn, type Slot, type Timetable, type WeekType } from '../lib/timetable';
 import { useProgressSummary } from './Progression';
 
 export function useTimetable() {
@@ -37,6 +37,7 @@ export function WeekGrid({
   week,
   compact = false,
   onSlot,
+  onToggleHp,
   selected,
 }: {
   tt: Timetable;
@@ -45,6 +46,7 @@ export function WeekGrid({
   week?: WeekType;
   compact?: boolean;
   onSlot?: (s: Slot) => void;
+  onToggleHp?: (s: Slot) => void; // bascule « P » (compte pour la progression) / « HP » (hors progression)
   selected?: string;
 }) {
   const days = tt.slots.some((s) => s.day === 6) ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5];
@@ -121,7 +123,8 @@ export function WeekGrid({
                     right: 2,
                     overflow: 'hidden',
                     background: g?.color ?? '#ece9e2',
-                    border: `2px solid ${selected === s.id ? 'var(--ink)' : '#00000022'}`,
+                    border: `2px ${countsForProgress(s) ? 'solid' : 'dashed'} ${selected === s.id ? 'var(--ink)' : '#00000033'}`,
+                    opacity: countsForProgress(s) ? 1 : 0.6,
                     borderRadius: 6,
                     padding: '1px 4px',
                     fontSize: compact ? '0.7rem' : '0.78rem',
@@ -131,6 +134,29 @@ export function WeekGrid({
                   title={`${shortTime(s.start)}–${shortTime(s.end)} · ${subjectLabel(s.subject)} · ${s.label}${s.room ? ` · ${s.room}` : ''}${s.aide ? ` · AESH : ${s.aide}` : ''}`}
                   onClick={onSlot ? () => onSlot(s) : undefined}
                 >
+                  {onToggleHp && (
+                    <button
+                      className="small"
+                      title={countsForProgress(s) ? 'Compte pour la progression (cliquer pour passer hors progression)' : 'Hors progression'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleHp(s);
+                      }}
+                      style={{
+                        float: 'right',
+                        border: 'none',
+                        borderRadius: 4,
+                        padding: '0 3px',
+                        fontSize: '0.65rem',
+                        fontWeight: 900,
+                        cursor: 'pointer',
+                        background: countsForProgress(s) ? 'var(--ink)' : '#d9d5cc',
+                        color: countsForProgress(s) ? '#fff' : '#77736b',
+                      }}
+                    >
+                      {countsForProgress(s) ? 'P' : 'HP'}
+                    </button>
+                  )}
                   <b>{s.label.replace(/[[\]]/g, '') || subjectLabel(s.subject)}</b>
                   {s.week !== 'AB' && !date && <span className="muted"> · {s.week}</span>}
                   {!compact && h > 30 && <div style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{subjectLabel(s.subject)}</div>}
