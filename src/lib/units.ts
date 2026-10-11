@@ -16,8 +16,9 @@ export const THEME_NAMES_C3: Record<string, string> = {
   '2': 'Le vivant, sa diversité et les fonctions qui le caractérisent',
   '3': 'La Terre, une planète peuplée par des êtres vivants',
 };
-export const themesFor = (level?: string) => (level === '6e' ? THEME_NAMES_C3 : THEME_NAMES);
-export const themeLabel = (t?: string, level?: string) => (t ? `Thème ${t} – ${themesFor(level)[t] ?? ''}` : 'Sans thème');
+export const HORS_THEME = 'Hors thème (présentation, révisions)';
+export const themesFor = (level?: string): Record<string, string> => ({ ...(level === '6e' ? THEME_NAMES_C3 : THEME_NAMES), '0': HORS_THEME });
+export const themeLabel = (t?: string, level?: string) => (t === '0' ? HORS_THEME : t ? `Thème ${t} – ${themesFor(level)[t] ?? ''}` : 'Sans thème');
 
 export const unitLabel = (u: Pick<Unit, 'code' | 'name'>) => (u.code ? `${u.code} · ${u.name}` : u.name);
 
@@ -72,15 +73,17 @@ export async function setLevelColor(teacherId: string, level: string, color: str
   await applyLevelColors(teacherId);
 }
 
-// ----- Réordonner : déplace une séquence (dans son niveau et son thème) ou une séance (dans sa séquence),
-// puis renumérote les codes pour qu'ils suivent l'ordre (411, 412… ; 4111, 4112…)
+// ----- Ordre de la progression : les séquences d'un niveau sont rangées dans l'ordre où elles sont faites
+// (champ order), les thèmes pouvant alterner ; le code (niveau + thème + n) suit cet ordre à l'intérieur d'un thème.
+export const byProgression = (a: Unit, b: Unit) => a.order - b.order || (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true });
+
 async function siblingsOf(u: Unit) {
   const all = await db.units.toArray();
   const sib =
     u.kind === 'sequence'
-      ? all.filter((x) => x.kind === 'sequence' && x.level === u.level && x.theme === u.theme && x.subject === u.subject)
+      ? all.filter((x) => x.kind === 'sequence' && x.level === u.level && x.subject === u.subject)
       : all.filter((x) => x.kind === 'seance' && x.parentId === u.parentId);
-  return sib.sort((a, b) => a.order - b.order || (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }));
+  return sib.sort(byProgression);
 }
 
 async function renumberSeances(seq: Unit) {
@@ -91,24 +94,32 @@ async function renumberSeances(seq: Unit) {
   }
 }
 
+// Renumérote un niveau : order = rang dans la progression, code = niveau + thème + rang dans le thème
+export async function renumberLevel(seqs: Unit[]) {
+  const perTheme = new Map<string, number>();
+  for (const [k, x] of seqs.entries()) {
+    const t = x.theme ?? '0';
+    const n = (perTheme.get(t) ?? 0) + 1;
+    perTheme.set(t, n);
+    const code = x.level ? `${x.level[0]}${t}${n}` : x.code;
+    if (x.order !== k + 1 || x.code !== code) {
+      await db.units.update(x.id, { order: k + 1, code });
+      await renumberSeances({ ...x, code });
+    }
+  }
+}
+
 export async function moveUnit(u: Unit, delta: -1 | 1) {
   const sib = await siblingsOf(u);
   const i = sib.findIndex((x) => x.id === u.id);
   const j = i + delta;
   if (i < 0 || j < 0 || j >= sib.length) return;
   [sib[i], sib[j]] = [sib[j], sib[i]];
+  if (u.kind === 'sequence') return renumberLevel(sib);
+  const parent = await db.units.get(u.parentId!);
   for (const [k, x] of sib.entries()) {
-    if (x.kind === 'sequence') {
-      const code = x.level && x.theme ? `${x.level[0]}${x.theme}${k + 1}` : x.code;
-      if (x.order !== k + 1 || x.code !== code) {
-        await db.units.update(x.id, { order: k + 1, code });
-        await renumberSeances({ ...x, code });
-      }
-    } else {
-      const parent = await db.units.get(x.parentId!);
-      const code = parent?.code ? `${parent.code}${k + 1}` : x.code;
-      if (x.order !== k + 1 || x.code !== code) await db.units.update(x.id, { order: k + 1, code });
-    }
+    const code = parent?.code ? `${parent.code}${k + 1}` : x.code;
+    if (x.order !== k + 1 || x.code !== code) await db.units.update(x.id, { order: k + 1, code });
   }
 }
 

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Group, type Unit } from '../lib/db';
 import { useAuth } from '../lib/auth';
-import { unitLabel, themeLabel, levelOfName } from '../lib/units';
+import { unitLabel, themeLabel, levelOfName, byProgression } from '../lib/units';
 import { levelPlans, doneDate, dm } from '../lib/forecast';
 import { DoneCell } from './DoneCell';
 
@@ -17,7 +17,7 @@ export function useClassSequences(group: Group) {
     const lvl = levelOf(group);
     return (await db.units.toArray())
       .filter((u) => u.kind === 'sequence' && (!lvl || u.level === lvl))
-      .sort((a, b) => (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }) || a.order - b.order);
+      .sort(byProgression);
   }, [group.id, group.name]);
 }
 

@@ -420,7 +420,7 @@ async function createSequence(level: string, units: Unit[]) {
     alert((e as Error).message);
     return;
   }
-  const order = units.filter((x) => x.kind === 'sequence' && x.level === level && x.theme === theme).length + 1;
+  const order = Math.max(0, ...units.filter((x) => x.kind === 'sequence' && x.level === level).map((x) => x.order)) + 1;
   const u: Unit = { id: uid(), kind: 'sequence', subject: SUBJECTS[0], level, theme, name, order, code };
   await db.units.put(u);
   return u;
@@ -445,8 +445,12 @@ function ClassBilan({ g, plan }: { g: Group; plan?: ClassPlan }) {
   return <div className="small">{name} : {plan.end ? <>fin prévue le {dm(plan.end)} ✓</> : 'tout est fait ✓'}</div>;
 }
 
-const DURATIONS = [0.5, 1, 1.5, 2, 3, 4];
-const hLabel = (h: number) => `${String(h).replace('.', ',')} h`;
+const DURATIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8];
+const hLabel = (h: number) => {
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  return hh && mm ? `${hh} h ${String(mm).padStart(2, '0')}` : hh ? `${hh} h` : `${mm} min`;
+};
 
 // Tableau de la séquence : une ligne par séance, une case par classe du niveau
 function ClassProgress({
@@ -493,7 +497,7 @@ function ClassProgress({
                     onChange={(e) => db.units.update(it.unit.id, { duration: +e.target.value })}
                     style={{ fontSize: '0.8rem' }}
                   >
-                    {DURATIONS.map((d) => (
+                    {[...new Set([...DURATIONS, durationOf(it.unit)])].sort((a, b) => a - b).map((d) => (
                       <option key={d} value={d}>
                         {hLabel(d)}
                       </option>

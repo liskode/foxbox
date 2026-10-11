@@ -26,7 +26,7 @@ import {
   assignClass,
   pronoteColumn,
 } from '../../lib/grading';
-import { LEVELS as UNIT_LEVELS, levelOfName, nextSeanceCode, unitLabel } from '../../lib/units';
+import { LEVELS as UNIT_LEVELS, levelOfName, nextSeanceCode, unitLabel, byProgression } from '../../lib/units';
 import { frDate } from '../../lib/dates';
 import { Avatar } from '../../components/Avatar';
 import { CardBrowser } from '../../components/CardBrowser';
@@ -107,7 +107,7 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
   const evUnit = units.find((u) => u.id === ev.unitId);
   const seqs = units
     .filter((u) => u.kind === 'sequence' && u.level === level)
-    .sort((a, b) => (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }));
+    .sort(byProgression);
   const [paste, setPaste] = useState('');
 
   async function setSequence(seqId: string) {

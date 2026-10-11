@@ -26,7 +26,7 @@ export function StudentDocuments() {
       seqs.get(seq.id)!.items.push(u);
     }
     return [...seqs.values()]
-      .sort((a, b) => (a.seq.code ?? '').localeCompare(b.seq.code ?? '', 'fr', { numeric: true }) || a.seq.order - b.seq.order)
+      .sort((a, b) => a.seq.order - b.seq.order || (a.seq.code ?? '').localeCompare(b.seq.code ?? '', 'fr', { numeric: true }))
       .map((b) => ({ ...b, items: b.items.sort((x, y) => (x.kind === 'sequence' ? -1 : y.kind === 'sequence' ? 1 : x.order - y.order)) }));
   }, [session]);
 

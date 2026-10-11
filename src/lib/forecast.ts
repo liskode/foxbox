@@ -3,18 +3,18 @@
 import { db, uid, type Group, type Publication, type Unit } from './db';
 import { addDays, today } from './dates';
 import { countsForProgress, loadTimetable, matchGroup, minutes, slotsOn, type Timetable } from './timetable';
-import { LEVELS, levelOfName } from './units';
+import { LEVELS, levelOfName, byProgression } from './units';
 
 export const durationOf = (u: Unit) => u.duration ?? 1;
 export const classCode = (g: Group) => g.name.toUpperCase().match(/^\s*(\d[A-Z])/)?.[1];
 export const groupsOfLevel = (groups: Group[], level: string) =>
   groups.filter((g) => !g.archived && levelOfName(g.name) === level).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
 
-// Séquences d'un niveau dans l'ordre de la Bibliothèque (thème puis code)
+// Séquences d'un niveau dans l'ordre de la progression
 export const sequencesOf = (units: Unit[], level: string) =>
   units
     .filter((u) => u.kind === 'sequence' && u.level === level)
-    .sort((a, b) => (a.code ?? '').localeCompare(b.code ?? '', 'fr', { numeric: true }) || a.order - b.order);
+    .sort(byProgression);
 export const seancesOf = (units: Unit[], seq: Unit) => units.filter((u) => u.parentId === seq.id).sort((a, b) => a.order - b.order);
 
 // Unités à faire, dans l'ordre : chaque séance, ou la séquence elle-même si elle n'a pas de séance
