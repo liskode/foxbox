@@ -9,6 +9,7 @@ import { ONLINE } from './lib/supabase';
 import { Timetable } from './pages/prof/Timetable';
 import { Competences } from './pages/prof/Competences';
 import { Settings } from './pages/prof/Settings';
+import { Rooms } from './pages/prof/Rooms';
 import { Flashcards } from './pages/prof/Flashcards';
 import { Students } from './pages/prof/Students';
 import { Dashboard } from './pages/prof/Dashboard';
@@ -164,6 +165,7 @@ export function App() {
           <Route path="/prof/trombi" element={<Shell role="prof"><Trombi /></Shell>} />
           <Route path="/prof/trombi/imprimer/:id" element={<Shell role="prof"><TrombiPrint /></Shell>} />
           <Route path="/prof/competences" element={<Shell role="prof"><Competences /></Shell>} />
+          <Route path="/prof/salles" element={<Shell role="prof"><Rooms /></Shell>} />
           <Route path="/prof/edt" element={<Shell role="prof"><Timetable /></Shell>} />
           <Route path="/prof/import" element={<Navigate to="/prof/flashcards?onglet=import" replace />} />
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />

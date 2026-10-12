@@ -39,6 +39,7 @@ export interface Teacher {
   levelColors?: Record<string, string>; // couleur de chaque niveau (6e, 5e, 4e, 3e)
   timetable?: import('./timetable').Timetable; // emploi du temps et calendrier A/B
   competences?: import('./competences').Competence[]; // référentiel de compétences
+  rooms?: import('./rooms').Room[]; // salles (places cochées sur un quadrillage)
 }
 
 export interface Group {
@@ -50,6 +51,7 @@ export interface Group {
   archived?: boolean;
   color?: string; // couleur de repérage (palette CLASS_COLORS)
   sequenceIds?: string[]; // séquences suivies par la classe (Progression), dans l'ordre
+  seatPlans?: import('./rooms').SeatPlan[]; // plans de classe
 }
 
 // Couleurs de classe : déclinaisons claires de la charte physifox, lisibles avec du texte noir

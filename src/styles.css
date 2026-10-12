@@ -257,3 +257,12 @@ table.list tr.click:hover td { background: #faf7ef; }
   .home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .home-grid .home-edt, .home-grid .home-todo { grid-column: 1 / span 2; grid-row: auto; }
 }
+
+/* Plan de classe : affichage en grand et impression */
+.plan-overlay { display: none; position: fixed; inset: 0; background: #fff; z-index: 100; overflow: auto; padding: 20px; }
+.plan-overlay.show { display: block; }
+@media print {
+  body.printing-plan #root { display: none; }
+  body.printing-plan .plan-overlay { display: block; position: static; padding: 0; }
+  body.printing-plan .plan-overlay .small.muted { display: none; }
+}

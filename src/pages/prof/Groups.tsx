@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SeatPlanTab } from '../../components/SeatPlanTab';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, SUBJECTS, CLASS_COLORS, type Group, type Rule } from '../../lib/db';
@@ -572,7 +573,7 @@ export function GroupPage() {
   const group = useLiveQuery(async () => (await db.groups.get(id!)) ?? null, [id]);
   // Onglet gardé dans l'adresse : le retour depuis une fiche élève revient au même onglet
   const [params, setParams] = useSearchParams();
-  type Tab = 'apercu' | 'progression' | 'eleves' | 'suivi' | 'trombi' | 'evaluations' | 'profs';
+  type Tab = 'apercu' | 'progression' | 'eleves' | 'suivi' | 'trombi' | 'plan' | 'evaluations' | 'profs';
   const raw = params.get('onglet');
   const tab = ((raw === 'stats' ? 'suivi' : raw) as Tab) || 'apercu';
   const setTab = (t: string) => setParams({ onglet: t }, { replace: true });
@@ -583,6 +584,7 @@ export function GroupPage() {
     ['progression', 'Progression'],
     ['eleves', 'Élèves'],
     ['trombi', 'Trombi'],
+    ['plan', 'Plan de classe'],
     ['evaluations', 'Évaluations'],
     ['suivi', 'Flashcards'],
     ['profs', 'Réglages'],
@@ -624,6 +626,7 @@ export function GroupPage() {
       {tab === 'suivi' && <StatsTab groupId={group.id} />}
       {tab === 'eleves' && <StudentsTab group={group} />}
       {tab === 'trombi' && <Trombi groupId={group.id} />}
+      {tab === 'plan' && <SeatPlanTab group={group} />}
       {tab === 'evaluations' && <ClassEvaluations group={group} />}
       {tab === 'profs' && <TeachersTab group={group} />}
     </div>

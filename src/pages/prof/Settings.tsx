@@ -11,6 +11,7 @@ export function Settings() {
   const links = [
     ['/prof/edt', '🗓 Emploi du temps et calendrier', 'PDF Pronote, semaines A / B, vacances, jours de présence, cours hors progression'],
     ['/prof/competences', '🎯 Référentiel de compétences', 'APP, ANA, REA, VAL, COM et leurs sous-compétences'],
+    ['/prof/salles', '🪑 Salles', 'Disposition des places, pour les plans de classe'],
     ['/prof/trombi', '📷 Trombi toutes classes', 'Entraînement à la mémorisation des prénoms'],
   ];
   return (
