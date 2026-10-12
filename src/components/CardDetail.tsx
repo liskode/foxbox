@@ -34,7 +34,8 @@ function FaceEditor({ label, html, onChange }: { label: string; html: string; on
       </div>
       <textarea value={html} onChange={(e) => onChange(e.target.value)} />
       <div className="small muted">
-        Texte libre ; formules entre <span className="code">\( … \)</span> ou <span className="code">\[ … \]</span>, comme dans Anki.
+        Texte libre ; formules entre <span className="code">$ … $</span> (ex. <span className="code">$E_c=\frac{'{1}{2}'}mv^2$</span>), ou{' '}
+        <span className="code">$$ … $$</span> pour une formule centrée sur sa ligne.
       </div>
       <div className="panel" style={{ boxShadow: 'none', padding: 10 }}>
         <CardFace html={html} />

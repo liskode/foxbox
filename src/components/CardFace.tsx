@@ -73,12 +73,13 @@ export function CardFace({ html, full = false }: { html: string; full?: boolean 
     if (ref.current) repairImages(ref.current);
   }, [out]);
   useEffect(() => {
-    if (ref.current && /\\\(|\\\[|\$\$/.test(out)) {
+    if (ref.current && /\\\(|\\\[|\$/.test(out)) {
       renderMathInElement(ref.current, {
         delimiters: [
           { left: '\\(', right: '\\)', display: false },
           { left: '\\[', right: '\\]', display: true },
           { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false }, // $E_c=\frac{1}{2}mv^2$
         ],
         throwOnError: false,
       });
