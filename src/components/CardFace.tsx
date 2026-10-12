@@ -33,7 +33,8 @@ export async function mediaUrl(id: string, force = false): Promise<string | null
 
 async function resolve(html: string): Promise<string> {
   const ids = [...new Set([...html.matchAll(/src="media:([^"]+)"/g)].map((m) => m[1]))];
-  let out = html;
+  // **mot** → gras
+  let out = html.replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
   for (const id of ids) {
     const u = await mediaUrl(id);
     // data-mid : permet de recharger l'image si l'affichage échoue

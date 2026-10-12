@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, fileBlob, type Card } from '../lib/db';
 import { THEMES } from '../lib/apkg';
@@ -10,6 +10,19 @@ import { RateBar, ThemeChip } from './widgets';
 const THEME_LIST = Object.values(THEMES);
 
 function FaceEditor({ label, html, onChange }: { label: string; html: string; onChange: (h: string) => void }) {
+  const ta = useRef<HTMLTextAreaElement>(null);
+  // Entoure la sélection (ou insère des marques vides) puis replace le curseur
+  function wrap(before: string, after: string) {
+    const el = ta.current;
+    if (!el) return;
+    const a = el.selectionStart;
+    const b = el.selectionEnd;
+    onChange(html.slice(0, a) + before + html.slice(a, b) + after + html.slice(b));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(a + before.length, b + before.length);
+    });
+  }
   async function addImage(f: File | undefined, replace: boolean) {
     if (!f) return;
     const id = uid();
@@ -32,9 +45,34 @@ function FaceEditor({ label, html, onChange }: { label: string; html: string; on
           </label>
         </div>
       </div>
-      <textarea value={html} onChange={(e) => onChange(e.target.value)} />
+      <div className="row" style={{ gap: 4 }}>
+        <button type="button" className="btn small ghost" style={{ fontWeight: 900, minWidth: 34 }} title="Gras (⌘B) : sélectionnez le texte puis cliquez" onClick={() => wrap('**', '**')}>
+          G
+        </button>
+        <button type="button" className="btn small ghost" style={{ fontStyle: 'italic', minWidth: 34 }} title="Italique (⌘I)" onClick={() => wrap('<i>', '</i>')}>
+          I
+        </button>
+        <button type="button" className="btn small ghost" style={{ textDecoration: 'underline', minWidth: 34 }} title="Souligné (⌘U)" onClick={() => wrap('<u>', '</u>')}>
+          S
+        </button>
+        <button type="button" className="btn small ghost" title="Formule : sélectionnez-la puis cliquez" onClick={() => wrap('$', '$')}>
+          $ formule $
+        </button>
+      </div>
+      <textarea
+        ref={ta}
+        value={html}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (!(e.metaKey || e.ctrlKey)) return;
+          const k = e.key.toLowerCase();
+          if (k === 'b') (e.preventDefault(), wrap('**', '**'));
+          else if (k === 'i') (e.preventDefault(), wrap('<i>', '</i>'));
+          else if (k === 'u') (e.preventDefault(), wrap('<u>', '</u>'));
+        }}
+      />
       <div className="small muted">
-        Texte libre ; formules entre <span className="code">$ … $</span> (ex. <span className="code">$E_c=\frac{'{1}{2}'}mv^2$</span>), ou{' '}
+        <span className="code">**mot**</span> pour le gras ; formules entre <span className="code">$ … $</span> (ex. <span className="code">$E_c=\frac{'{1}{2}'}mv^2$</span>), ou{' '}
         <span className="code">$$ … $$</span> pour une formule centrée sur sa ligne.
       </div>
       <div className="panel" style={{ boxShadow: 'none', padding: 10 }}>
