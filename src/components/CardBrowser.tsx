@@ -35,12 +35,14 @@ export function CardBrowser({
   onToggleMany,
   onOpen,
   exclude,
+  onCreate,
 }: {
   selected?: Set<string>;
   onToggle?: (id: string) => void;
   onToggleMany?: (ids: string[], on: boolean) => void;
   onOpen?: (c: Card) => void;
   exclude?: Set<string>;
+  onCreate?: () => void; // tuile « + » en fin de liste pour créer une carte
 }) {
   const cards = useLiveQuery(() => db.cards.filter((c) => !c.deleted).toArray(), [], []);
   const linked = useLiveQuery(async () => new Set((await db.unitCards.toArray()).map((u) => u.cardId)), [], new Set<string>());
@@ -170,6 +172,11 @@ export function CardBrowser({
             </div>
           </button>
         ))}
+        {onCreate && (
+          <button className="thumb" onClick={onCreate} title="Nouvelle carte" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200, borderStyle: 'dashed', background: 'transparent' }}>
+            <span style={{ fontSize: '3rem', fontWeight: 300, color: 'var(--ink-soft)' }}>+</span>
+          </button>
+        )}
       </div>
       {!cards.length && (
         <div className="notice">

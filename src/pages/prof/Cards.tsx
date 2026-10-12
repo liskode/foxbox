@@ -31,7 +31,7 @@ export function Cards({ embedded = false }: { embedded?: boolean }) {
           + Nouvelle carte
         </button>
       </div>
-      <CardBrowser onOpen={(c) => setOpen({ id: c.id, edit: false })} />
+      <CardBrowser onOpen={(c) => setOpen({ id: c.id, edit: false })} onCreate={create} />
       {open && <CardDetail cardId={open.id} startEditing={open.edit} onClose={() => setOpen(null)} />}
     </div>
   );
