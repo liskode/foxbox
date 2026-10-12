@@ -15,7 +15,7 @@ import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar, StudentName } from '../../components/Avatar';
 import { importPhotos } from '../../lib/photos';
 import { TrombiImport } from '../../components/TrombiImport';
-import { NoteButton } from '../../components/StudentNote';
+import { NoteButton, FlagChecks } from '../../components/StudentNote';
 import { ClassOverview, ClassEvaluations } from '../../components/ClassOverview';
 import { Progression } from '../../components/Progression';
 import { Trombi } from './Trombi';
@@ -353,6 +353,7 @@ function StudentsTab({ group }: { group: Group }) {
               <th>Objectif / jour</th>
               <th>Règle d'erreur</th>
               <th></th>
+              <th>Aménagements</th>
               <th>Note</th>
             </tr>
           </thead>
@@ -421,6 +422,9 @@ function StudentsTab({ group }: { group: Group }) {
                   >
                     🗑
                   </button>
+                </td>
+                <td>
+                  <FlagChecks studentId={s.id} compact />
                 </td>
                 <td>
                   <NoteButton student={s} />

@@ -30,7 +30,7 @@ import { LEVELS as UNIT_LEVELS, levelOfName, nextSeanceCode, unitLabel, byProgre
 import { frDate } from '../../lib/dates';
 import { Avatar } from '../../components/Avatar';
 import { CardBrowser } from '../../components/CardBrowser';
-import { NoteButton } from '../../components/StudentNote';
+import { NoteButton, FlagBadges, useAllFlags } from '../../components/StudentNote';
 import { CompetencePicker, useCompetences } from '../../components/CompetencePicker';
 import { competenceScores, evalCategories, masteryOf } from '../../lib/competences';
 import { CompetenceHisto } from '../../components/CompetenceHisto';
@@ -427,6 +427,11 @@ function ClassCompetences({ ev, rs }: { ev: Evaluation; rs: (Result | undefined)
   );
 }
 
+function CurFlags({ id }: { id: string }) {
+  const flags = useAllFlags();
+  return <FlagBadges flags={flags.get(id)} />;
+}
+
 function GroupChip({ id }: { id: string }) {
   const g = useLiveQuery(() => db.groups.get(id), [id]);
   return g ? (
@@ -523,7 +528,7 @@ function CopiesTab({ ev }: { ev: Evaluation }) {
             >
               <Avatar student={student} size={26} />
               <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 700 }}>
-                {student.lastName} {student.firstName}
+                {student.lastName} {student.firstName} <CurFlags id={student.id} />
               </span>
               <span style={{ fontSize: '0.8rem' }}>{rr?.absent ? 'ABS' : done ? '✓' : ''}</span>
             </button>
@@ -538,7 +543,7 @@ function CopiesTab({ ev }: { ev: Evaluation }) {
             <div>
               <h2 style={{ margin: 0 }}>
                 {cur.student.firstName} {cur.student.lastName}{' '}
-                <GroupChip id={cur.groupId} />
+                <GroupChip id={cur.groupId} /> <CurFlags id={cur.student.id} />
               </h2>
               <div className="small muted">
                 Copie {idx + 1}/{list.length} · ← → copie précédente / suivante

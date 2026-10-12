@@ -6,6 +6,7 @@ import { groupOverview } from '../lib/stats';
 import { dateFor, newEvaluation, score, stats } from '../lib/grading';
 import { frDate } from '../lib/dates';
 import { TodoList } from './TodoList';
+import { ClassNotes } from './ClassNotes';
 import { useProgressSummary } from './Progression';
 import { StudentName } from './Avatar';
 import { DoneCell } from './DoneCell';
@@ -173,7 +174,10 @@ export function ClassOverview({ group, goTab }: { group: Group; goTab: (t: strin
           )}
         </div>
       </div>
-      <TodoList groupId={group.id} />
+      <div className="stack">
+        <ClassNotes group={group} />
+        <TodoList groupId={group.id} />
+      </div>
     </div>
   );
 }

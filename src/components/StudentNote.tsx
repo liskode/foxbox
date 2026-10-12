@@ -1,18 +1,20 @@
 // Note privée du professeur sur un élève (appréciations, points de vigilance…).
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Student } from '../lib/db';
+import { db, type Student, type StudentFlags } from '../lib/db';
 import { useAuth } from '../lib/auth';
 
 export function useNote(studentId: string) {
   const { session } = useAuth();
   const id = `${session!.id}|${studentId}`;
   const note = useLiveQuery(() => db.notes.get(id), [id]);
-  const save = async (text: string) => {
-    if (!text.trim()) await db.notes.delete(id);
-    else await db.notes.put({ id, teacherId: session!.id, studentId, text, updatedAt: Date.now() });
+  const write = async (text: string, flags?: StudentFlags) => {
+    if (!text.trim() && !Object.values(flags ?? {}).some(Boolean)) await db.notes.delete(id);
+    else await db.notes.put({ id, teacherId: session!.id, studentId, text, flags, updatedAt: Date.now() });
   };
-  return { text: note?.text ?? '', updatedAt: note?.updatedAt, save };
+  const save = (text: string) => write(text, note?.flags);
+  const setFlag = (k: keyof StudentFlags, v: boolean) => write(note?.text ?? '', { ...(note?.flags ?? {}), [k]: v });
+  return { text: note?.text ?? '', flags: note?.flags ?? {}, updatedAt: note?.updatedAt, save, setFlag };
 }
 
 export function NoteEditor({ studentId, onDone, autoFocus = false }: { studentId: string; onDone?: () => void; autoFocus?: boolean }) {
@@ -91,5 +93,50 @@ export function NoteButton({ student }: { student: Student }) {
         </>
       )}
     </>
+  );
+}
+
+// ----- Aménagements : cases à cocher (privées) et pastilles -----
+export const FLAGS: { key: keyof StudentFlags; label: string; short: string }[] = [
+  { key: 'tiersTemps', label: 'Tiers temps', short: '⅓T' },
+  { key: 'ulis', label: 'ULIS', short: 'ULIS' },
+  { key: 'ordinateur', label: 'Ordinateur en évaluation', short: '💻' },
+];
+
+export function FlagChecks({ studentId, compact = false }: { studentId: string; compact?: boolean }) {
+  const { flags, setFlag } = useNote(studentId);
+  return (
+    <span className="row" style={{ gap: compact ? 8 : 14, flexWrap: compact ? 'nowrap' : 'wrap' }}>
+      {FLAGS.map((f) => (
+        <label key={f.key} className="row small" style={{ gap: 4, fontWeight: 700, whiteSpace: 'nowrap' }} title={f.label}>
+          <input type="checkbox" checked={!!flags[f.key]} onChange={(e) => setFlag(f.key, e.target.checked)} />
+          {compact ? f.short : f.label}
+        </label>
+      ))}
+    </span>
+  );
+}
+
+// Aménagements de tous les élèves (pour les listes)
+export function useAllFlags() {
+  const { session } = useAuth();
+  return useLiveQuery(async () => {
+    const m = new Map<string, StudentFlags>();
+    for (const n of await db.notes.filter((n) => n.teacherId === session!.id).toArray()) if (n.flags) m.set(n.studentId, n.flags);
+    return m;
+  }, [session?.id], new Map<string, StudentFlags>());
+}
+
+export function FlagBadges({ flags }: { flags?: StudentFlags }) {
+  const on = FLAGS.filter((f) => flags?.[f.key]);
+  if (!on.length) return null;
+  return (
+    <span className="row" style={{ gap: 3, display: 'inline-flex', flexWrap: 'nowrap' }}>
+      {on.map((f) => (
+        <span key={f.key} title={f.label} style={{ background: '#e8e1f5', border: '1px solid #00000033', borderRadius: 5, padding: '0 4px', fontSize: '0.68rem', fontWeight: 800 }}>
+          {f.short}
+        </span>
+      ))}
+    </span>
   );
 }

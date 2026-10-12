@@ -159,6 +159,20 @@ export interface Note {
   teacherId: string;
   studentId: string;
   text: string;
+  flags?: StudentFlags; // aménagements (privés, comme la note)
+  updatedAt: number;
+}
+export interface StudentFlags {
+  tiersTemps?: boolean;
+  ulis?: boolean;
+  ordinateur?: boolean; // ordinateur en évaluation
+}
+// Notes du professeur sur une classe (privées)
+export interface ClassNote {
+  id: string; // teacherId|groupId
+  teacherId: string;
+  groupId: string;
+  text: string;
   updatedAt: number;
 }
 
@@ -280,6 +294,7 @@ class FoxBoxDB extends Dexie {
   studentCards!: Table<StudentCard, string>;
   reviews!: Table<Review, string>;
   outbox!: Table<Outbox, string>;
+  classNotes!: Table<ClassNote, string>;
   imports!: Table<ImportRecord, string>;
   notes!: Table<Note, string>;
   evaluations!: Table<Evaluation, string>;
@@ -318,6 +333,7 @@ class FoxBoxDB extends Dexie {
       parentMessages: 'id, studentId',
     });
     this.version(6).stores({ todos: 'id, groupId' });
+    this.version(7).stores({ classNotes: 'id' });
   }
 }
 

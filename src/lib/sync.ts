@@ -36,6 +36,7 @@ const SPECS: Record<string, TableSpec> = {
   resultShares: { remote: 'result_shares', cols: (r) => ({ student_id: r.studentId }) },
   parentMessages: { remote: 'parent_messages', cols: (m) => ({ teacher_id: m.teacherId, student_id: m.studentId }) },
   todos: { remote: 'todos', cols: (t) => ({ teacher_id: t.teacherId }) },
+  classNotes: { remote: 'class_notes', cols: (n) => ({ teacher_id: n.teacherId }) },
 };
 
 // ---------- Envoi ----------

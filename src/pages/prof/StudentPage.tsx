@@ -7,7 +7,7 @@ import { StudentReport } from '../../components/StudentReport';
 import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar } from '../../components/Avatar';
 import { removePhoto } from '../../lib/photos';
-import { NoteEditor } from '../../components/StudentNote';
+import { NoteEditor, FlagChecks } from '../../components/StudentNote';
 import { StudentEvaluations, ParentMessages } from '../../components/StudentEvaluations';
 import { StudentCompetences } from './Competences';
 
@@ -169,6 +169,7 @@ export function StudentPage() {
       </div>
       <div className="panel stack">
         <h3 style={{ margin: 0 }}>📝 Note</h3>
+        <FlagChecks studentId={student.id} />
         <NoteEditor key={student.id} studentId={student.id} />
       </div>
       <StudentEvaluations student={student} />

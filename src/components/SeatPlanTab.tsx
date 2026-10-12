@@ -8,6 +8,7 @@ import { db, uid, type Group, type Student } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { autoPlace, loadRooms, savePlans, seatKey, timetableRooms, type Room, type SeatPlan } from '../lib/rooms';
 import { Avatar } from './Avatar';
+import { FlagBadges, useAllFlags } from './StudentNote';
 
 type Pick = { student: string } | { seat: string } | null;
 
@@ -28,6 +29,7 @@ function PlanGrid({
   flip: boolean;
   cell: number;
 }) {
+  const flags = useAllFlags();
   const seats = new Set(room.seats);
   const rows = Array.from({ length: room.rows }, (_, r) => r);
   const cols = Array.from({ length: room.cols }, (_, c) => c);
@@ -76,6 +78,7 @@ function PlanGrid({
                   <>
                     <Avatar student={s} size={Math.round(cell * 0.5)} zoom={!!onSeat} />
                     <b>{s.firstName}</b>
+                    <FlagBadges flags={flags.get(s.id)} />
                     <span className="muted">{s.lastName.slice(0, 12)}</span>
                   </>
                 ) : (
@@ -109,6 +112,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
   const [flip, setFlip] = useState(false);
   const [big, setBig] = useState(false);
 
+  const flags = useAllFlags();
   const byId = new Map(students.map((s) => [s.id, s]));
   const validSeats = new Set(room?.seats ?? []);
   const placed = new Set(Object.entries(plan?.seats ?? {}).filter(([k, id]) => validSeats.has(k) && byId.has(id)).map(([, id]) => id));
@@ -259,7 +263,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
                   style={{ justifyContent: 'flex-start', display: 'flex', gap: 6 }}
                   onClick={() => setPick(on ? null : { student: s.id })}
                 >
-                  <Avatar student={s} size={24} zoom /> {s.firstName} {s.lastName}
+                  <Avatar student={s} size={24} zoom /> {s.firstName} {s.lastName} <FlagBadges flags={flags.get(s.id)} />
                 </button>
               );
             })}
