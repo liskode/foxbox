@@ -33,7 +33,8 @@ function Photo({ student, size }: { student: Student; size: number | string }) {
   );
 }
 
-function Session({ entries, teacherId, onEnd }: { entries: Entry[]; teacherId: string; onEnd: () => void }) {
+// free : entraînement libre (sans attendre la date de révision) — seuls les oublis font revenir un visage en boîte 1
+function Session({ entries, teacherId, onEnd, free = false }: { entries: Entry[]; teacherId: string; onEnd: () => void; free?: boolean }) {
   const [queue, setQueue] = useState<Entry[] | null>(null);
   const [i, setI] = useState(0);
   const [shown, setShown] = useState(false);
@@ -51,7 +52,11 @@ function Session({ entries, teacherId, onEnd }: { entries: Entry[]; teacherId: s
         .filter((e) => cards.has(e.student.id) && cards.get(e.student.id)!.due <= day)
         .sort((a, b) => cards.get(a.student.id)!.due.localeCompare(cards.get(b.student.id)!.due));
       const fresh = entries.filter((e) => !cards.has(e.student.id)).sort(() => Math.random() - 0.5);
-      setQueue([...due, ...fresh].slice(0, 20));
+      if (free) {
+        // Les visages les moins bien retenus d'abord, au hasard à boîte égale
+        const all = [...entries].sort(() => Math.random() - 0.5).sort((a, b) => (cards.get(a.student.id)?.box ?? 0) - (cards.get(b.student.id)?.box ?? 0));
+        setQueue(all.slice(0, 20));
+      } else setQueue([...due, ...fresh].slice(0, 20));
     })();
   }, [entries, teacherId]);
 
@@ -68,6 +73,12 @@ function Session({ entries, teacherId, onEnd }: { entries: Entry[]; teacherId: s
       const e = queue[i];
       const id = `${teacherId}|${e.student.id}`;
       const prev = await db.trombi.get(id);
+      if (free && prev && r !== 'forgot') {
+        // Entraînement libre : un visage reconnu garde sa boîte et sa date de révision
+        setShown(false);
+        setI((n) => n + 1);
+        return;
+      }
       const box = nextBox(prev?.box ?? 0, r, 'strict');
       const card: TrombiCard = { id, teacherId, studentId: e.student.id, box, due: addDays(today(), INTERVALS[box]) };
       await db.trombi.put(card);
@@ -76,7 +87,7 @@ function Session({ entries, teacherId, onEnd }: { entries: Entry[]; teacherId: s
       setShown(false);
       setI((n) => n + 1);
     },
-    [queue, i, shown, teacherId],
+    [queue, i, shown, teacherId, free],
   );
 
   useEffect(() => {
@@ -165,7 +176,7 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
   );
   const [selected, setSelected] = useState<Set<string> | null>(null);
   const sel = groupId ? new Set([groupId]) : (selected ?? new Set(groups.map((g) => g.id)));
-  const [mode, setMode] = useState<'galerie' | 'session'>('galerie');
+  const [mode, setMode] = useState<'galerie' | 'session' | 'libre'>('galerie');
   const [hideNames, setHideNames] = useState(false);
 
   const entries = useLiveQuery(async () => {
@@ -206,10 +217,10 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
     setSelected(n);
   };
 
-  if (mode === 'session')
+  if (mode === 'session' || mode === 'libre')
     return (
       <div className={groupId ? '' : 'page'}>
-        <Session entries={withPhoto} teacherId={teacherId} onEnd={() => setMode('galerie')} />
+        <Session entries={withPhoto} teacherId={teacherId} free={mode === 'libre'} onEnd={() => setMode('galerie')} />
       </div>
     );
 
@@ -247,6 +258,14 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
           <div className="row">
             <button className="btn primary big" disabled={!progress?.due} onClick={() => setMode('session')}>
               S'entraîner ({Math.min(20, progress?.due ?? 0)})
+            </button>
+            <button
+              className="btn"
+              disabled={!withPhoto.length}
+              onClick={() => setMode('libre')}
+              title="Sans attendre la date de révision : 20 visages, les moins bien retenus d'abord. Un oubli remet le visage en boîte 1 ; un visage reconnu ne change pas de boîte."
+            >
+              Entraînement libre
             </button>
           </div>
           <span className="small muted">
