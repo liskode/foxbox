@@ -1,15 +1,21 @@
 // Case « classe × séance » : date prévisionnelle (grise) ou date où la séance a été faite (noire).
 // Un clic ouvre un petit choix : faite lors de l'un des derniers cours, à une autre date, ou décocher.
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { evalDone } from '../lib/grading';
-import type { Group } from '../lib/db';
-import { today } from '../lib/dates';
-import { dm, markDone, recentCourseDays, unmarkDone } from '../lib/forecast';
-import type { Timetable } from '../lib/timetable';
-import { fromISO } from '../lib/dates';
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
+import { evalDone } from "../lib/grading";
+import type { Group } from "../lib/db";
+import { today } from "../lib/dates";
+import { dm, markDone, recentCourseDays, unmarkDone } from "../lib/forecast";
+import type { Timetable } from "../lib/timetable";
+import { fromISO } from "../lib/dates";
 
-const dayLabel = (iso: string) => fromISO(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+const dayLabel = (iso: string) =>
+  fromISO(iso).toLocaleDateString("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
 
 export function DoneCell({
   g,
@@ -34,7 +40,27 @@ export function DoneCell({
 }) {
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
-  const [other, setOther] = useState('');
+  const btn = useRef<HTMLButtonElement>(null);
+  // Position du menu : sous la date (ou au-dessus s'il n'y a pas la place), au-dessus de toute la page
+  const [pos, setPos] = useState<{
+    left: number;
+    top?: number;
+    bottom?: number;
+  }>({ left: 0 });
+  const toggle = () => {
+    if (viaSeq) return;
+    const r = btn.current?.getBoundingClientRect();
+    if (r) {
+      const left = Math.max(8, Math.min(r.left, window.innerWidth - 248));
+      setPos(
+        window.innerHeight - r.bottom > 340
+          ? { left, top: r.bottom + 6 }
+          : { left, bottom: window.innerHeight - r.top + 6 },
+      );
+    }
+    setOpen(!open);
+  };
+  const [other, setOther] = useState("");
   // Derniers cours de la classe, dans l'ordre chronologique (le plus récent en bas)
   const recent = open ? recentCourseDays(tt, g, groups).reverse() : [];
 
@@ -48,54 +74,106 @@ export function DoneCell({
   }
 
   return (
-    <span style={{ position: 'relative', display: 'inline-block' }}>
+    <span style={{ position: "relative", display: "inline-block" }}>
       <button
+        ref={btn}
         className="chip"
-        onClick={() => !viaSeq && setOpen(!open)}
-        title={done ? `Faite le ${dayLabel(done)}` : planned ? `Prévue le ${dayLabel(planned)}` : 'Pas de date prévue (au-delà de la fin de l’année ?)'}
+        onClick={toggle}
+        title={
+          done
+            ? `Faite le ${dayLabel(done)}`
+            : planned
+              ? `Prévue le ${dayLabel(planned)}`
+              : "Pas de date prévue (au-delà de la fin de l’année ?)"
+        }
         style={{
-          cursor: viaSeq ? 'default' : 'pointer',
-          background: done ? g.color ?? 'var(--paper)' : 'var(--paper)',
-          border: `2px ${done ? 'solid' : 'dashed'} ${done ? 'var(--ink)' : 'var(--muted-line)'}`,
-          color: done ? 'var(--ink)' : '#9a968d',
+          cursor: viaSeq ? "default" : "pointer",
+          background: done ? (g.color ?? "var(--paper)") : "var(--paper)",
+          border: `2px ${done ? "solid" : "dashed"} ${done ? "var(--ink)" : "var(--muted-line)"}`,
+          color: done ? "var(--ink)" : "#9a968d",
           fontWeight: done ? 800 : 600,
-          whiteSpace: 'nowrap',
-          fontSize: '0.8rem',
+          whiteSpace: "nowrap",
+          fontSize: "0.8rem",
         }}
       >
-        {showName && <span style={{ color: 'var(--ink)', fontWeight: 800 }}>{g.name.replace(/_.*/, '')} </span>}
-        {done ? `✓ ${dm(done)}` : planned ? dm(planned) : '—'}
+        {showName && (
+          <span style={{ color: "var(--ink)", fontWeight: 800 }}>
+            {g.name.replace(/_.*/, "")}{" "}
+          </span>
+        )}
+        {done ? `✓ ${dm(done)}` : planned ? dm(planned) : "—"}
       </button>
-      {open && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setOpen(false)} />
-          <div className="panel stack" style={{ position: 'absolute', zIndex: 41, top: '110%', left: 0, minWidth: 220, gap: 6, padding: 12 }}>
-            <b className="small">{g.name} — faite le :</b>
-            {recent.map((d) => (
-              <button key={d} className={'btn small' + (d === done ? ' primary' : ' ghost')} style={{ justifyContent: 'flex-start' }} onClick={() => pick(d)}>
-                {dayLabel(d)}
-                {d === today() ? " (aujourd'hui)" : d === recent[recent.length - 1] ? ' (dernier cours)' : ''}
-              </button>
-            ))}
-            {!recent.length && (
-              <button className="btn small ghost" onClick={() => pick(today())}>
-                Aujourd'hui
-              </button>
-            )}
-            <div className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
-              <input type="date" value={other} onChange={(e) => setOther(e.target.value)} style={{ fontSize: '0.8rem' }} />
-              <button className="btn small" disabled={!other} onClick={() => pick(other)}>
-                OK
-              </button>
+      {open &&
+        createPortal(
+          <>
+            <div
+              style={{ position: "fixed", inset: 0, zIndex: 40 }}
+              onClick={() => setOpen(false)}
+            />
+            <div
+              className="panel stack"
+              style={{
+                position: "fixed",
+                zIndex: 41,
+                ...pos,
+                width: 240,
+                gap: 6,
+                padding: 12,
+              }}
+            >
+              <b className="small">{g.name} — faite le :</b>
+              {recent.map((d) => (
+                <button
+                  key={d}
+                  className={"btn small" + (d === done ? " primary" : " ghost")}
+                  style={{ justifyContent: "flex-start" }}
+                  onClick={() => pick(d)}
+                >
+                  {dayLabel(d)}
+                  {d === today()
+                    ? " (aujourd'hui)"
+                    : d === recent[recent.length - 1]
+                      ? " (dernier cours)"
+                      : ""}
+                </button>
+              ))}
+              {!recent.length && (
+                <button
+                  className="btn small ghost"
+                  onClick={() => pick(today())}
+                >
+                  Aujourd'hui
+                </button>
+              )}
+              <div className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
+                <input
+                  type="date"
+                  value={other}
+                  onChange={(e) => setOther(e.target.value)}
+                  style={{ fontSize: "0.8rem" }}
+                />
+                <button
+                  className="btn small"
+                  disabled={!other}
+                  onClick={() => pick(other)}
+                >
+                  OK
+                </button>
+              </div>
+              {done && (
+                <button
+                  className="btn small danger"
+                  onClick={() =>
+                    unmarkDone(g.id, unitId).then(() => setOpen(false))
+                  }
+                >
+                  Décocher (pas encore faite)
+                </button>
+              )}
             </div>
-            {done && (
-              <button className="btn small danger" onClick={() => unmarkDone(g.id, unitId).then(() => setOpen(false))}>
-                Décocher (pas encore faite)
-              </button>
-            )}
-          </div>
-        </>
-      )}
+          </>,
+          document.body,
+        )}
     </span>
   );
 }
