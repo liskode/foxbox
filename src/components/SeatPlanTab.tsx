@@ -74,7 +74,7 @@ function PlanGrid({
               >
                 {s ? (
                   <>
-                    <Avatar student={s} size={Math.round(cell * 0.5)} />
+                    <Avatar student={s} size={Math.round(cell * 0.5)} zoom={!!onSeat} />
                     <b>{s.firstName}</b>
                     <span className="muted">{s.lastName.slice(0, 12)}</span>
                   </>
@@ -259,7 +259,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
                   style={{ justifyContent: 'flex-start', display: 'flex', gap: 6 }}
                   onClick={() => setPick(on ? null : { student: s.id })}
                 >
-                  <Avatar student={s} size={24} /> {s.firstName} {s.lastName}
+                  <Avatar student={s} size={24} zoom /> {s.firstName} {s.lastName}
                 </button>
               );
             })}
