@@ -55,7 +55,7 @@ function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => 
   const n = c.cardIds?.length ?? 0;
   return (
     <>
-      <button className={'btn small' + (n ? '' : ' ghost')} title="Cartes FoxBox liées à ce critère" onClick={() => (setSel(new Set(c.cardIds ?? [])), setOpen(true))}>
+      <button className={'btn small' + (n ? '' : ' ghost')} title="Flashcards FoxBox liées à ce critère" onClick={() => (setSel(new Set(c.cardIds ?? [])), setOpen(true))}>
         🃏 {n || ''}
       </button>
       {open && (
@@ -64,8 +64,8 @@ function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => 
           <aside className="drawer stack">
             <div className="spread" style={{ position: 'sticky', top: -20, background: 'var(--bg)', zIndex: 3, padding: '8px 0' }}>
               <div>
-                <b>Cartes liées à « {c.label || 'critère'} »</b>
-                <div className="small muted">Si un élève rate ce critère (≤ 25 %), ces cartes pourront revenir en boîte 1 pour lui.</div>
+                <b>Flashcards liées à « {c.label || 'critère'} »</b>
+                <div className="small muted">Si un élève rate ce critère (≤ 25 %), ces flashcards pourront revenir en boîte 1 pour lui.</div>
               </div>
               <div className="row">
                 <button className="btn ghost" onClick={() => setOpen(false)}>
@@ -277,7 +277,7 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
               <th>#</th>
               <th>Critère</th>
               <th>Points</th>
-              <th>Cartes</th>
+              <th>Flashcards</th>
               <th></th>
             </tr>
           </thead>
@@ -862,12 +862,12 @@ function ResultatsTab({ ev }: { ev: Evaluation }) {
           <button
             className="btn primary"
             onClick={async () => {
-              if (!confirm('Remettre en boîte 1 (à revoir dès aujourd’hui) les cartes liées aux critères ratés (≤ 25 %), pour chaque élève concerné ?')) return;
+              if (!confirm('Remettre en boîte 1 (à revoir dès aujourd’hui) les flashcards liées aux critères ratés (≤ 25 %), pour chaque élève concerné ?')) return;
               const r = await resetCardsForFailures(ev);
-              setMsg(`${r.cards} carte(s) remise(s) en boîte 1 pour ${r.students} élève(s).`);
+              setMsg(`${r.cards} flashcard(s) remise(s) en boîte 1 pour ${r.students} élève(s).`);
             }}
           >
-            🃏 Remettre en boîte 1 les cartes des critères ratés
+            🃏 Remettre en boîte 1 les flashcards des critères ratés
           </button>
         )}
       </div>

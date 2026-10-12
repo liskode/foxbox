@@ -121,7 +121,7 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
     setEdit(null);
   }
 
-  // Annuler la création d'une carte restée vide : on ne laisse pas de carte blanche (ni de lien vers une séquence)
+  // Annuler la création d'une flashcard restée vide : on ne laisse pas de flashcard blanche (ni de lien vers une séquence)
   async function cancel() {
     if (!card!.front.trim() && !card!.back.trim()) {
       await db.unitCards.where('cardId').equals(card!.id).delete();
@@ -131,7 +131,7 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
   }
 
   async function remove() {
-    if (!confirm(`Supprimer la carte ${card!.code} ? Elle disparaîtra des révisions des élèves (leur historique est conservé).`)) return;
+    if (!confirm(`Supprimer la flashcard ${card!.code} ? Elle disparaîtra des révisions des élèves (leur historique est conservé).`)) return;
     await db.cards.update(card!.id, { deleted: true, updatedAt: Date.now() });
     onClose();
   }
@@ -197,7 +197,7 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
               {units?.length ? (
                 <ul style={{ margin: 0 }}>{units.map((u) => <li key={u}>{u}</li>)}</ul>
               ) : (
-                <span className="muted">Cette carte n'est dans aucune séquence.</span>
+                <span className="muted">Cette flashcard n'est dans aucune séquence.</span>
               )}
               {card.tags.length > 0 && (
                 <div className="small">
@@ -263,7 +263,7 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
             </div>
             <div className="spread">
               <button className="btn danger" onClick={remove}>
-                Supprimer la carte
+                Supprimer la flashcard
               </button>
               <div className="row">
                 <button className="btn ghost" onClick={cancel}>

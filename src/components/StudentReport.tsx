@@ -66,15 +66,15 @@ export function StudentReport({ studentId, teacherView = false }: { studentId: s
       </div>
       <div className="panel stack">
         <div className="spread">
-          <h3 style={{ margin: 0 }}>Mes boîtes</h3>
+          <h3 style={{ margin: 0 }}>{teacherView ? 'Boîtes' : 'Mes boîtes'}</h3>
           <span className="muted small">
-            {total} carte(s) · {mastered} bien installée(s) (boîtes 5 à 7)
+            {total} flashcard(s) · {mastered} bien installée(s) (boîtes 5 à 7)
           </span>
         </div>
         <Boxes dist={data.dist} />
       </div>
       <div className="panel stack">
-        <h3 style={{ margin: 0 }}>Cartes difficiles ({data.hard.length})</h3>
+        <h3 style={{ margin: 0 }}>Flashcards difficiles ({data.hard.length})</h3>
         {data.hard.length ? (
           <div className="cardgrid">
             {data.hard.slice(0, 18).map(({ agg, card }) => (
@@ -90,7 +90,7 @@ export function StudentReport({ studentId, teacherView = false }: { studentId: s
             ))}
           </div>
         ) : (
-          <span className="muted">Aucune carte difficile pour l'instant 👍</span>
+          <span className="muted">Aucune flashcard difficile pour l'instant 👍</span>
         )}
       </div>
       {open && <CardDetail cardId={open} onClose={() => setOpen(null)} />}

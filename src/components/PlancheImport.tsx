@@ -35,7 +35,7 @@ export function PlancheImport({ subject }: { subject: string }) {
     }
     setBusy('');
     setItems([]);
-    setMsg(`${added} carte(s) ajoutée(s), ${updated} mise(s) à jour. Elles figurent dans « Derniers imports » (annulables).`);
+    setMsg(`${added} flashcard(s) ajoutée(s), ${updated} mise(s) à jour. Elles figurent dans « Derniers imports » (annulables).`);
     runOcr();
   }
 
@@ -45,7 +45,7 @@ export function PlancheImport({ subject }: { subject: string }) {
     <div className="panel stack">
       <h2>Importer des planches PDF (recto / verso)</h2>
       <p className="muted" style={{ margin: 0 }}>
-        Pour les planches de cartes faites pour l'impression : page 1 = rectos, page 2 = versos (et ainsi de suite). La grille est
+        Pour les planches de flashcards faites pour l'impression : page 1 = rectos, page 2 = versos (et ainsi de suite). La grille est
         détectée automatiquement et chaque recto est associé à son verso. Vérifiez les paires avant d'importer.
       </p>
       <div className="row">
@@ -63,7 +63,7 @@ export function PlancheImport({ subject }: { subject: string }) {
           <div key={k} className="stack" style={{ borderTop: '2px dashed var(--muted-line)', paddingTop: 10 }}>
             <div className="spread">
               <b>
-                {it.pl.fileName} — {pairs.length} carte(s){it.pl.level ? ` · ${it.pl.level}` : ''}
+                {it.pl.fileName} — {pairs.length} flashcard(s){it.pl.level ? ` · ${it.pl.level}` : ''}
               </b>
               <label className="row small" style={{ gap: 6, fontWeight: 700 }}>
                 <input
@@ -110,7 +110,7 @@ export function PlancheImport({ subject }: { subject: string }) {
       {items.length > 0 && (
         <div className="row">
           <button className="btn primary" onClick={doImport} disabled={!!busy || !total}>
-            Importer {total} carte(s)
+            Importer {total} flashcard(s)
           </button>
           <button className="btn ghost" onClick={() => setItems([])}>
             Annuler

@@ -1,5 +1,5 @@
 // Progression d'une classe : séquences et séances de son niveau, cochées quand elles sont faites
-// (date du cours), avec la date prévisionnelle des suivantes. Cocher publie les cartes pour la classe.
+// (date du cours), avec la date prévisionnelle des suivantes. Cocher publie les flashcards pour la classe.
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Group, type Unit } from '../lib/db';
@@ -44,7 +44,7 @@ export function Progression({ group }: { group: Group }) {
     <div className="stack">
       <div className="spread">
         <span className="small muted">
-          Cliquez sur une date pour cocher la séance « faite » : ses cartes sont <b>publiées</b> pour les élèves. Gris : date prévue.
+          Cliquez sur une date pour cocher la séance « faite » : ses flashcards sont <b>publiées</b> pour les élèves. Gris : date prévue.
         </span>
         <Link to={seqs[0] ? `/prof/progression/${seqs[0].id}` : '/prof/progression'} className="btn small ghost">
           Préparer les séquences

@@ -171,8 +171,8 @@ export function StatsTab({ groupId }: { groupId: string }) {
       </div>
 
       <div className="panel stack">
-        <h3 style={{ margin: 0 }}>Cartes difficiles pour la classe</h3>
-        <span className="small muted">Taux de réussite le plus bas (cartes vues au moins 3 fois). Cliquez pour voir la carte.</span>
+        <h3 style={{ margin: 0 }}>Flashcards difficiles pour la classe</h3>
+        <span className="small muted">Taux de réussite le plus bas (flashcards vues au moins 3 fois). Cliquez pour voir la flashcard.</span>
         <div className="cardgrid">
           {data.cards.slice(0, 12).map((a, i) => {
             const c = cards?.[i];
@@ -205,7 +205,7 @@ export function StatsTab({ groupId }: { groupId: string }) {
                 <th>Score</th>
                 <th>Régularité</th>
                 <th>Réussite</th>
-                <th>Cartes</th>
+                <th>Flashcards</th>
                 <th>Dernière révision</th>
                 <th>Note</th>
               </tr>
@@ -321,7 +321,7 @@ function StudentsTab({ group }: { group: Group }) {
         </div>
         <span className="small muted">
           CSV accepté : colonnes « Nom ; Prénom » (avec ou sans en-tête), ou export ENT/Pronote avec une colonne « Élève ».
-          Un élève déjà connu de FoxBox est réutilisé (pas de doublon, il garde ses cartes).
+          Un élève déjà connu de FoxBox est réutilisé (pas de doublon, il garde ses flashcards).
           <br />
           Photos : sélectionnez plusieurs fichiers nommés avec le nom et le prénom (ex. « DUPONT Marie.jpg »,
           « marie.dupont.png ») ; ils sont associés automatiquement. Un clic sur l'avatar change une photo.
@@ -405,7 +405,7 @@ function StudentsTab({ group }: { group: Group }) {
                   <button
                     className="btn small ghost"
                     onClick={() =>
-                      confirm(`Retirer ${s.firstName} ${s.lastName} de ${group.name} ? (son compte et ses cartes sont conservés)`) &&
+                      confirm(`Retirer ${s.firstName} ${s.lastName} de ${group.name} ? (son compte et ses flashcards sont conservés)`) &&
                       db.memberships.delete(`${group.id}|${s.id}`)
                     }
                   >
@@ -506,7 +506,7 @@ function DeleteGroup({ group }: { group: Group }) {
       ) : (
         <div className="notice stack" style={{ borderColor: 'var(--forgot)' }}>
           <b>Supprimer la classe « {group.name} »</b>
-          <span className="small">Les publications de cette classe sont supprimées. Les cartes et les séquences sont conservées.</span>
+          <span className="small">Les publications de cette classe sont supprimées. Les flashcards et les séquences sont conservées.</span>
           <label className="row small" style={{ gap: 8, fontWeight: 700 }}>
             <input type="checkbox" checked={orphans} onChange={(e) => setOrphans(e.target.checked)} />
             Supprimer aussi les élèves qui ne sont dans aucune autre classe (comptes, photos, progression)
@@ -560,7 +560,7 @@ function TeachersTab({ group }: { group: Group }) {
         <button
           className="btn ghost"
           onClick={() =>
-            confirm(group.archived ? 'Réactiver cette classe ?' : 'Archiver cette classe ? Les élèves gardent leurs comptes et leurs cartes.') &&
+            confirm(group.archived ? 'Réactiver cette classe ?' : 'Archiver cette classe ? Les élèves gardent leurs comptes et leurs flashcards.') &&
             db.groups.update(group.id, { archived: !group.archived })
           }
         >

@@ -60,7 +60,7 @@ export function Dashboard() {
   const steps = [
     { done: !!counts?.groups, label: 'Créer vos classes et importer les élèves (⚙️ Réglages)', to: '/prof/reglages' },
     { done: !!counts?.seqs, label: 'Préparer vos séquences et séances (Progression)', to: '/prof/progression' },
-    { done: !!counts?.cards, label: 'Importer vos cartes (Flashcards › Import)', to: '/prof/flashcards?onglet=import' },
+    { done: !!counts?.cards, label: 'Importer vos flashcards (Flashcards › Import)', to: '/prof/flashcards?onglet=import' },
   ];
 
   return (
@@ -95,7 +95,7 @@ export function Dashboard() {
         <Tile
           to="/prof/flashcards"
           title="Flashcards"
-          sub="Cartes, import, statistiques"
+          sub="Liste, import, statistiques"
           alert={alerts && (alerts.relancer ? <b>⚠️ {alerts.relancer} élève(s) à relancer</b> : <span className="muted">✓ Tout le monde révise</span>)}
         />
         <Tile to="/prof/eleves" title="Élève" sub="Recherche rapide, trombis">

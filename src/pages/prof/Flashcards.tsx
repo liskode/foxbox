@@ -1,4 +1,4 @@
-// Flashcards : cartes (recherche, création), import, statistiques de révision par classe, fiches de connexion.
+// Flashcards : flashcards (recherche, création), import, statistiques de révision par classe, fiches de connexion.
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
@@ -7,7 +7,7 @@ import { ImportPage } from './Import';
 import { StatsTab } from './Groups';
 
 const TABS = [
-  ['cartes', 'Cartes'],
+  ['cartes', 'Liste'],
   ['import', 'Import'],
   ['stats', 'Statistiques'],
   ['fiches', 'Fiches de connexion'],

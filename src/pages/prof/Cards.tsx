@@ -26,9 +26,9 @@ export function Cards({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className={embedded ? 'stack' : 'page stack'}>
       <div className="spread">
-        <h1 className="title" style={{ margin: 0, visibility: embedded ? 'hidden' : undefined }}>Cartes</h1>
+        <h1 className="title" style={{ margin: 0, visibility: embedded ? 'hidden' : undefined }}>Flashcards</h1>
         <button className="btn primary" onClick={create}>
-          + Nouvelle carte
+          + Nouvelle flashcard
         </button>
       </div>
       <CardBrowser onOpen={(c) => setOpen({ id: c.id, edit: false })} onCreate={create} />

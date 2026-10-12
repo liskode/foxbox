@@ -62,7 +62,7 @@ function NextSession({ group }: { group: Group }) {
         </div>
       ))}
       {!items.length && <span className="small muted">{lp.items.length ? 'Toutes les séances sont faites 🎉' : 'Aucune séquence pour ce niveau.'}</span>}
-      <span className="small muted">Cliquez sur la date pour cocher la séance « faite » (ses cartes sont publiées).</span>
+      <span className="small muted">Cliquez sur la date pour cocher la séance « faite » (ses flashcards sont publiées).</span>
     </div>
   );
 }

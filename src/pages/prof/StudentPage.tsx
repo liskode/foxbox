@@ -145,6 +145,17 @@ export function StudentPage() {
           </div>
           </div>
         </div>
+      </div>
+      <div className="panel stack">
+        <h3 style={{ margin: 0 }}>📝 Note</h3>
+        <FlagChecks studentId={student.id} />
+        <NoteEditor key={student.id} studentId={student.id} />
+      </div>
+      <StudentEvaluations student={student} />
+      <StudentCompetences student={student} />
+      <ParentMessages key={student.id} student={student} />
+      <section className="stack" style={{ gap: 12, borderTop: '3px solid var(--line)', paddingTop: 12 }}>
+        <h2 style={{ margin: 0 }}>🃏 Flashcards</h2>
         <div className="panel row" style={{ padding: '10px 14px' }}>
           {subjects.map((s) => (
             <label key={s} className="field">
@@ -166,16 +177,8 @@ export function StudentPage() {
             </select>
           </label>
         </div>
-      </div>
-      <div className="panel stack">
-        <h3 style={{ margin: 0 }}>📝 Note</h3>
-        <FlagChecks studentId={student.id} />
-        <NoteEditor key={student.id} studentId={student.id} />
-      </div>
-      <StudentEvaluations student={student} />
-      <StudentCompetences student={student} />
-      <ParentMessages key={student.id} student={student} />
-      <StudentReport studentId={student.id} teacherView />
+        <StudentReport studentId={student.id} teacherView />
+      </section>
       <div>
         <button
           className="btn danger"

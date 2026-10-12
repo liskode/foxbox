@@ -43,7 +43,7 @@ export function CardBrowser({
   onToggleMany?: (ids: string[], on: boolean) => void;
   onOpen?: (c: Card) => void;
   exclude?: Set<string>;
-  onCreate?: () => void; // tuile « + » en fin de liste pour créer une carte
+  onCreate?: () => void; // tuile « + » en fin de liste pour créer une flashcard
 }) {
   const cards = useLiveQuery(() => db.cards.filter((c) => !c.deleted).toArray(), [], []);
   const linked = useLiveQuery(async () => new Set((await db.unitCards.toArray()).map((u) => u.cardId)), [], new Set<string>());
@@ -143,7 +143,7 @@ export function CardBrowser({
             Dans aucune séquence
           </label>
           <span className="muted small" style={{ marginLeft: 'auto' }}>
-            {list.length} carte(s)
+            {list.length} flashcard(s)
           </span>
           {onToggleMany && (
             <button className="btn small" onClick={() => onToggleMany(list.map((c) => c.id), !allSelected)} disabled={!list.length}>
@@ -185,14 +185,14 @@ export function CardBrowser({
           </button>
         ))}
         {onCreate && (
-          <button className="thumb" onClick={onCreate} title="Nouvelle carte" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200, borderStyle: 'dashed', background: 'transparent' }}>
+          <button className="thumb" onClick={onCreate} title="Nouvelle flashcard" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200, borderStyle: 'dashed', background: 'transparent' }}>
             <span style={{ fontSize: '3rem', fontWeight: 300, color: 'var(--ink-soft)' }}>+</span>
           </button>
         )}
       </div>
       {!cards.length && (
         <div className="notice">
-          Aucune carte. Importez un paquet Anki depuis l'onglet <b>Import</b>, ou créez une carte.
+          Aucune flashcard. Importez un paquet Anki depuis l'onglet <b>Import</b>, ou créez une flashcard.
         </div>
       )}
     </div>

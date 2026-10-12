@@ -15,9 +15,9 @@ function History() {
   async function undo(id: string, name: string, added: number, updated: number) {
     const reviews = await importReviewCount(id);
     const warn = reviews
-      ? `\n\nAttention : les élèves ont déjà fait ${reviews} révision(s) sur ces cartes. Leur historique est conservé, mais les cartes supprimées disparaîtront de leurs révisions.`
+      ? `\n\nAttention : les élèves ont déjà fait ${reviews} révision(s) sur ces flashcards. Leur historique est conservé, mais les flashcards supprimées disparaîtront de leurs révisions.`
       : '';
-    if (!confirm(`Annuler l'import « ${name} » ?\n\n• ${added} carte(s) ajoutée(s) seront supprimées\n• ${updated} carte(s) mise(s) à jour reprendront leur contenu d'avant${warn}`)) return;
+    if (!confirm(`Annuler l'import « ${name} » ?\n\n• ${added} flashcard(s) ajoutée(s) seront supprimées\n• ${updated} flashcard(s) mise(s) à jour reprendront leur contenu d'avant${warn}`)) return;
     setBusy(id);
     await undoImport(id);
     setBusy('');
@@ -65,7 +65,7 @@ function History() {
         </table>
       </div>
       <span className="small muted">
-        Annuler un import supprime les cartes qu'il a ajoutées (y compris dans les séquences) et rend aux cartes qu'il a
+        Annuler un import supprime les flashcards qu'il a ajoutées (y compris dans les séquences) et rend aux flashcards qu'il a
         modifiées leur contenu d'avant. L'historique de révision des élèves est conservé.
       </span>
     </div>
@@ -123,8 +123,8 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
       <div className="panel stack">
         <h2>1. Importer un paquet Anki (.apkg)</h2>
         <p className="muted" style={{ margin: 0 }}>
-          Les cartes recto/verso, leurs images et formules sont importées. Si vous ré-importez un paquet corrigé dans Anki,
-          les cartes existantes sont mises à jour sans perdre la progression des élèves.
+          Les flashcards recto/verso, leurs images et formules sont importées. Si vous ré-importez un paquet corrigé dans Anki,
+          les flashcards existantes sont mises à jour sans perdre la progression des élèves.
         </p>
         <div className="row">
           <label className="field">
@@ -144,10 +144,10 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
         {err && <div className="notice" style={{ borderColor: 'var(--forgot)' }}>{err}</div>}
         {report && (
           <div className="notice">
-            <b>Import terminé :</b> {report.added} carte(s) ajoutée(s), {report.updated} mise(s) à jour, {report.media} image(s).
+            <b>Import terminé :</b> {report.added} flashcard(s) ajoutée(s), {report.updated} mise(s) à jour, {report.media} image(s).
             {report.skipped.length > 0 && (
               <details>
-                <summary>{report.skipped.length} carte(s) non importée(s)</summary>
+                <summary>{report.skipped.length} flashcard(s) non importée(s)</summary>
                 <ul>
                   {report.skipped.map((s, i) => (
                     <li key={i}>
@@ -157,7 +157,7 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
                 </ul>
               </details>
             )}{' '}
-            <Link to="/prof/flashcards">Voir les cartes →</Link>
+            <Link to="/prof/flashcards">Voir les flashcards →</Link>
           </div>
         )}
       </div>
@@ -169,7 +169,7 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
       <div className="panel stack">
         <h2>2. Lecture du texte des images</h2>
         <p className="muted" style={{ margin: 0 }}>
-          Vos cartes sont des images : FoxBox lit leur texte pour que la recherche par mot-clé fonctionne. Cela se fait en
+          Vos flashcards sont des images : FoxBox lit leur texte pour que la recherche par mot-clé fonctionne. Cela se fait en
           arrière-plan (quelques minutes) ; vous pouvez continuer à utiliser l'outil.
         </p>
         <div className="row">
@@ -184,10 +184,10 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
             </>
           ) : ocrPending ? (
             <button className="btn blue" onClick={() => runOcr()}>
-              Lancer la lecture ({ocrPending} carte(s))
+              Lancer la lecture ({ocrPending} flashcard(s))
             </button>
           ) : (
-            <span className="muted">{cardCount ? '✓ Toutes les cartes sont lues.' : 'Aucune carte pour le moment.'}</span>
+            <span className="muted">{cardCount ? '✓ Toutes les flashcards sont lues.' : 'Aucune flashcard pour le moment.'}</span>
           )}
         </div>
       </div>

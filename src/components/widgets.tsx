@@ -43,7 +43,7 @@ export function Heatmap({ counts, weeks = 20 }: { counts: Map<string, number>; w
         <div
           key={d}
           className="cell"
-          title={`${frDate(day)} : ${n} carte${n > 1 ? 's' : ''}`}
+          title={`${frDate(day)} : ${n} flashcard${n > 1 ? 's' : ''}`}
           style={{ background: day > end ? 'transparent' : SHADES[level] }}
         />,
       );
@@ -70,7 +70,7 @@ export function Boxes({ dist }: { dist: number[] }) {
   return (
     <div className="boxes">
       {dist.map((n, i) => (
-        <div key={i} className="b" title={i === 0 ? 'Cartes jamais vues' : `Boîte ${i}`}>
+        <div key={i} className="b" title={i === 0 ? 'Flashcards jamais vues' : `Boîte ${i}`}>
           <div className="n">{n}</div>
           <div
             className="fill"

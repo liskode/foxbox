@@ -71,7 +71,7 @@ function SequenceScreen({ seqId }: { seqId: string }) {
   }
 
   async function remove(u: Unit) {
-    if (!confirm(`Supprimer « ${u.name} » ? Les cartes elles-mêmes ne sont pas supprimées.`)) return;
+    if (!confirm(`Supprimer « ${u.name} » ? Les flashcards elles-mêmes ne sont pas supprimées.`)) return;
     const ids = [u.id, ...units.filter((x) => x.parentId === u.id).map((x) => x.id)];
     await db.unitCards.where('unitId').anyOf(ids).delete();
     await db.publications.where('unitId').anyOf(ids).delete();
@@ -82,7 +82,7 @@ function SequenceScreen({ seqId }: { seqId: string }) {
     else setSel(u.parentId!);
   }
 
-  // Nouvelle carte créée directement dans la séquence / séance, avec le niveau et le thème déjà renseignés
+  // Nouvelle flashcard créée directement dans la séquence / séance, avec le niveau et le thème déjà renseignés
   const [creating, setCreating] = useState<string | null>(null);
   const movable = useLiveQuery(async () => (unit ? canMove(unit) : undefined), [unit?.id, units]);
   async function newCard(u: Unit) {
@@ -193,8 +193,8 @@ function SequenceScreen({ seqId }: { seqId: string }) {
             <div className="panel">
               <h1 className="title">Séquences et séances</h1>
               <p>
-                Créez une séquence, découpez-la éventuellement en séances, puis ajoutez-y des cartes en les choisissant dans
-                la liste filtrable. Le jour où vous avez traité la séquence (ou la séance) en classe, publiez-la : les cartes
+                Créez une séquence, découpez-la éventuellement en séances, puis ajoutez-y des flashcards en les choisissant dans
+                la liste filtrable. Le jour où vous avez traité la séquence (ou la séance) en classe, publiez-la : les flashcards
                 arrivent dans les révisions des élèves.
               </p>
             </div>
@@ -253,13 +253,13 @@ function SequenceScreen({ seqId }: { seqId: string }) {
               {picking ? (
                 <div className="stack">
                   <div className="spread panel" style={{ position: 'sticky', top: 70, zIndex: 5 }}>
-                    <b>Cochez les cartes à ajouter à « {unit.name} »</b>
+                    <b>Cochez les flashcards à ajouter à « {unit.name} »</b>
                     <div className="row">
                       <button className="btn ghost" onClick={() => setPicking(false)}>
                         Annuler
                       </button>
                       <button className="btn primary" disabled={!picked.size} onClick={addPicked}>
-                        Ajouter {picked.size} carte(s)
+                        Ajouter {picked.size} flashcard(s)
                       </button>
                     </div>
                   </div>
@@ -278,13 +278,13 @@ function SequenceScreen({ seqId }: { seqId: string }) {
               ) : (
                 <div className="panel stack">
                   <div className="spread">
-                    <h3 style={{ margin: 0 }}>{cardsInUnit?.length ?? 0} carte(s)</h3>
+                    <h3 style={{ margin: 0 }}>{cardsInUnit?.length ?? 0} flashcard(s)</h3>
                     <div className="row">
                     <button className="btn" onClick={() => newCard(unit)}>
-                      + Nouvelle carte
+                      + Nouvelle flashcard
                     </button>
                     <button className="btn primary" onClick={() => setPicking(true)}>
-                      + Ajouter des cartes
+                      + Ajouter des flashcards
                     </button>
                     </div>
                   </div>
@@ -474,7 +474,7 @@ function ClassProgress({
     <div className="panel stack">
       <div className="spread">
         <h3 style={{ margin: 0 }}>Avancement des classes de {lp.level}</h3>
-        <span className="small muted">Gris : date prévue · noir : séance faite (cartes publiées)</span>
+        <span className="small muted">Gris : date prévue · noir : séance faite (flashcards publiées)</span>
       </div>
       {!lp.groups.length && <span className="muted">Aucune classe de {lp.level}.</span>}
       <div style={{ overflowX: 'auto' }}>
@@ -531,7 +531,7 @@ function ClassProgress({
       </div>
       {shown.length < items.length && <span className="small muted">{items.length - shown.length} séance(s) terminée(s) masquée(s).</span>}
       <span className="small muted">
-        Cliquez sur une date pour cocher la séance « faite » lors d'un cours : ses cartes sont publiées pour la classe et ses documents deviennent
+        Cliquez sur une date pour cocher la séance « faite » lors d'un cours : ses flashcards sont publiées pour la classe et ses documents deviennent
         visibles. Les dates prévues se recalculent à chaque fois, d'après l'emploi du temps et le calendrier.
       </span>
     </div>

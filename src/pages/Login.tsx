@@ -32,7 +32,7 @@ export function Login() {
       <div className="stack" style={{ alignItems: 'center', textAlign: 'center' }}>
         <img src="./logo.png" alt="Logo FoxBox" style={{ width: 150 }} />
         <h1 className="title" style={{ fontSize: '3.4rem', marginBottom: 0 }}>FoxBox</h1>
-        <p className="muted" style={{ marginTop: 0 }}>Mes cartes de révision, une boîte à la fois.</p>
+        <p className="muted" style={{ marginTop: 0 }}>Mes flashcards de révision, une boîte à la fois.</p>
       </div>
       <form className="panel stack" onSubmit={submit} style={{ marginTop: 20 }}>
         <label className="field">

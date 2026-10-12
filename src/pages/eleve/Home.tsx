@@ -35,7 +35,7 @@ export function StudentHome() {
           <div key={s.subject} className="panel stack">
             <div className="spread">
               <h2 style={{ margin: 0 }}>{s.subject}</h2>
-              <span className="muted small">{s.pending} carte(s) à revoir</span>
+              <span className="muted small">{s.pending} flashcard(s) à revoir</span>
             </div>
             <div className="row" style={{ gap: 20 }}>
               <Ring value={s.done} max={s.goal} label="aujourd'hui" />
@@ -49,7 +49,7 @@ export function StudentHome() {
                     <b>🎉 Objectif atteint ! Reviens demain.</b>
                     {s.pending > 0 && (
                       <button className="btn ghost" onClick={() => nav(`/eleve/revision/${encodeURIComponent(s.subject)}?extra=10`)}>
-                        Encore 10 cartes
+                        Encore 10 flashcards
                       </button>
                     )}
                   </>
@@ -61,7 +61,7 @@ export function StudentHome() {
                   <button className="btn small ghost" onClick={() => setGoal(s.subject, s.goal - 5)}>
                     −
                   </button>
-                  <b>{s.goal} cartes / jour</b>
+                  <b>{s.goal} flashcards / jour</b>
                   <button className="btn small ghost" onClick={() => setGoal(s.subject, s.goal + 5)}>
                     +
                   </button>
