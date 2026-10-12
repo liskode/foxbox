@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { LEVELS } from '../lib/units';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Card } from '../lib/db';
 import { CardFace } from './CardFace';
@@ -48,7 +49,8 @@ export function CardBrowser({
   const linked = useLiveQuery(async () => new Set((await db.unitCards.toArray()).map((u) => u.cardId)), [], new Set<string>());
   const [q, setQ] = useState('');
   const [themes, setThemes] = useState<Set<string>>(new Set());
-  const [level, setLevel] = useState('');
+  // Niveaux cochés (vide = tous) ; '' = niveau non renseigné
+  const [levels, setLevels] = useState<Set<string>>(new Set());
   const [tag, setTag] = useState('');
   const [orphans, setOrphans] = useState(false);
 
@@ -68,7 +70,7 @@ export function CardBrowser({
   const list = cards
     .filter((c) => !exclude?.has(c.id))
     .filter((c) => !themes.size || themes.has(c.theme ?? ''))
-    .filter((c) => !level || c.level === level)
+    .filter((c) => !levels.size || levels.has(c.level ?? ''))
     .filter((c) => !tag || c.tags.includes(tag))
     .filter((c) => !orphans || !linked.has(c.id))
     .filter((c) => {
@@ -99,14 +101,6 @@ export function CardBrowser({
             onChange={(e) => setQ(e.target.value)}
             style={{ flex: 1, minWidth: 220 }}
           />
-          {allLevels.length > 1 && (
-            <select value={level} onChange={(e) => setLevel(e.target.value)}>
-              <option value="">Tous niveaux</option>
-              {allLevels.map((l) => (
-                <option key={l}>{l}</option>
-              ))}
-            </select>
-          )}
           {allTags.length > 0 && (
             <select value={tag} onChange={(e) => setTag(e.target.value)}>
               <option value="">Tous les tags</option>
@@ -126,6 +120,24 @@ export function CardBrowser({
               {t}
             </button>
           ))}
+          <span className="row small" style={{ gap: 10, fontWeight: 700 }}>
+            {[...LEVELS, ''].map((l) => (
+              <label key={l || '-'} className="row" style={{ gap: 4 }}>
+                <input
+                  type="checkbox"
+                  checked={levels.has(l)}
+                  onChange={(e) => {
+                    const n = new Set(levels);
+                    if (e.target.checked) n.add(l);
+                    else n.delete(l);
+                    setLevels(n);
+                  }}
+                />
+                {l || 'Niveau non renseigné'}
+                <span className="muted" style={{ fontWeight: 500 }}>({cards.filter((c) => (c.level ?? '') === l).length})</span>
+              </label>
+            ))}
+          </span>
           <label className="row small" style={{ gap: 6, fontWeight: 700 }}>
             <input type="checkbox" checked={orphans} onChange={(e) => setOrphans(e.target.checked)} />
             Dans aucune séquence
