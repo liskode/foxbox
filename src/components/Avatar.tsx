@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Student } from '../lib/db';
 import { setPhoto } from '../lib/photos';
@@ -17,6 +17,27 @@ export function usePhoto(photoId?: string) {
   return url;
 }
 
+// Photo avec réparation automatique : à brancher sur onError de l'image
+export function useFixedPhoto(photoId?: string): [string | null, () => void] {
+  const loaded = usePhoto(photoId);
+  const [fixed, setFixed] = useState<string | null>(null);
+  useEffect(() => setFixed(null), [photoId]);
+  return [fixed ?? loaded, useRepair(photoId, setFixed)];
+}
+
+// Photo qui ne s'affiche pas (copie locale devenue illisible sous Safari) : on la re-télécharge, 2 essais au plus
+function useRepair(photoId: string | undefined, setUrl: (u: string | null) => void) {
+  const tries = useRef(0);
+  useEffect(() => {
+    tries.current = 0;
+  }, [photoId]);
+  return () => {
+    if (!photoId || tries.current >= 2) return;
+    tries.current++;
+    mediaUrl(photoId, true).then((u) => u && setUrl(u));
+  };
+}
+
 // Photo de l'élève (ou ses initiales). Avec `editable`, un clic permet de choisir une photo.
 export function Avatar({
   student,
@@ -29,7 +50,7 @@ export function Avatar({
   editable?: boolean;
   zoom?: boolean; // agrandit la photo au survol de la souris
 }) {
-  const url = usePhoto(student.photoId);
+  const [url, repair] = useFixedPhoto(student.photoId);
   const [hover, setHover] = useState<DOMRect | null>(null);
   const zoomProps =
     zoom && url
@@ -81,7 +102,7 @@ export function Avatar({
     cursor: editable ? 'pointer' : undefined,
   };
   const content = url ? (
-    <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    <img src={url} alt="" onError={repair} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
   ) : (
     <span>{initials.toUpperCase()}</span>
   );

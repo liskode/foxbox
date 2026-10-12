@@ -21,11 +21,11 @@ async function readable(blob?: Blob) {
 
 export async function mediaUrl(id: string, force = false): Promise<string | null> {
   if (!force && urlCache.has(id)) return urlCache.get(id)!;
-  const local = force ? undefined : (await db.media.get(id))?.blob;
+  // force : nouvelle adresse, à partir de la copie locale si elle est lisible, sinon re-téléchargée
+  const local = (await db.media.get(id))?.blob;
   const blob = (await readable(local)) ? local! : await fetchMedia(id);
   if (!blob) return null;
-  const old = urlCache.get(id);
-  if (old) URL.revokeObjectURL(old);
+  // L'ancienne adresse n'est pas libérée : d'autres vignettes peuvent encore l'afficher
   const u = URL.createObjectURL(blob);
   urlCache.set(id, u);
   return u;

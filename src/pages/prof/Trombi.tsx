@@ -6,7 +6,7 @@ import { useAuth } from '../../lib/auth';
 import { db, type Rating, type Student, type TrombiCard } from '../../lib/db';
 import { INTERVALS, nextBox } from '../../lib/leitner';
 import { addDays, frDate, today } from '../../lib/dates';
-import { usePhoto } from '../../components/Avatar';
+import { useFixedPhoto } from '../../components/Avatar';
 import { Boxes } from '../../components/widgets';
 
 interface Entry {
@@ -15,7 +15,7 @@ interface Entry {
 }
 
 function Photo({ student, size }: { student: Student; size: number | string }) {
-  const url = usePhoto(student.photoId);
+  const [url, repair] = useFixedPhoto(student.photoId);
   return (
     <div
       style={{
@@ -28,7 +28,7 @@ function Photo({ student, size }: { student: Student; size: number | string }) {
         margin: '0 auto',
       }}
     >
-      {url && <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+      {url && <img src={url} alt="" onError={repair} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
     </div>
   );
 }

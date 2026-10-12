@@ -2,14 +2,14 @@
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Student } from '../../lib/db';
-import { usePhoto } from '../../components/Avatar';
+import { useFixedPhoto } from '../../components/Avatar';
 
 function Cell({ s }: { s: Student }) {
-  const url = usePhoto(s.photoId);
+  const [url, repair] = useFixedPhoto(s.photoId);
   return (
     <div className="tp-cell">
       {/* Photo manquante : on laisse simplement un blanc */}
-      <div className={'tp-photo' + (url ? '' : ' empty')}>{url && <img src={url} alt="" />}</div>
+      <div className={'tp-photo' + (url ? '' : ' empty')}>{url && <img src={url} alt="" onError={repair} />}</div>
       <div className="tp-first">{s.firstName}</div>
       <div className="tp-last">{s.lastName}</div>
     </div>
