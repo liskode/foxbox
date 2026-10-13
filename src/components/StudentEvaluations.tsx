@@ -89,6 +89,8 @@ export function ParentMessages({ student }: { student: Student }) {
 
   async function record(sent: boolean) {
     const to = emails.split(/[,;\s]+/).filter((x) => x.includes('@')).join(', ');
+    // Mail s'ouvre immédiatement, pendant le clic : sinon Safari bloque l'ouverture (« composition automatique bloquée »)
+    if (sent) location.href = `mailto:${to.split(', ').map(encodeURIComponent).join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     await db.parentMessages.put({
       id: uid(),
       teacherId: session!.id,
@@ -99,7 +101,6 @@ export function ParentMessages({ student }: { student: Student }) {
       subject,
       message: body,
     });
-    if (sent) location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     setOpen(false);
   }
 
