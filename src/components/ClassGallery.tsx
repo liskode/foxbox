@@ -35,16 +35,6 @@ export function ClassGallery({ group }: { group: Group }) {
     setBrush(sg.id);
   }
 
-  // Deux demi-groupes par ordre alphabétique
-  function split() {
-    if (subs.length && !confirm('Remplacer les sous-groupes actuels par deux demi-groupes (ordre alphabétique) ?')) return;
-    const half = Math.ceil(students.length / 2);
-    save([
-      { id: uid(), name: 'Groupe 1', color: SUBGROUP_COLORS[0], studentIds: students.slice(0, half).map((s) => s.id) },
-      { id: uid(), name: 'Groupe 2', color: SUBGROUP_COLORS[1], studentIds: students.slice(half).map((s) => s.id) },
-    ]);
-  }
-
   function assign(st: Student) {
     if (!active) return nav(`/prof/eleves/${st.id}?classe=${group.id}`);
     const inIt = active.studentIds.includes(st.id);
@@ -77,11 +67,6 @@ export function ClassGallery({ group }: { group: Group }) {
           <button className="btn small ghost" onClick={add}>
             + Sous-groupe
           </button>
-          {!subs.length && students.length > 1 && (
-            <button className="btn small ghost" onClick={split} title="Groupe 1 et Groupe 2, par ordre alphabétique">
-              ½ Deux demi-groupes
-            </button>
-          )}
         </div>
         {active && (
           <div className="row" style={{ gap: 6 }}>
