@@ -1,4 +1,4 @@
-// Galerie des élèves d'une classe (photo et prénom, sur deux lignes) et sous-groupes (demi-groupes, îlots…).
+// Galerie des élèves d'une classe (photo et prénom, autant de lignes que nécessaire) et sous-groupes (demi-groupes, îlots…).
 // Un sous-groupe choisi comme « pinceau » : un clic sur un élève l'y affecte (ou l'en retire).
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -100,7 +100,8 @@ export function ClassGallery({ group }: { group: Group }) {
           Cliquez sur les élèves à mettre dans « {active.name} » (un second clic les retire).
         </span>
       )}
-      <div style={{ display: 'grid', gridTemplateRows: 'repeat(2, auto)', gridAutoFlow: 'column', gridAutoColumns: 76, gap: '8px 6px', overflowX: 'auto', paddingBottom: 4 }}>
+      {/* Autant de vignettes par ligne que la largeur le permet : pas de barre de défilement */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', gap: '8px 6px' }}>
         {students.map((st) => {
           const sg = subgroupOf(group, st.id);
           return (
