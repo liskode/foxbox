@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { DEFAULT_ORIGINS, defaultOrigin, loadOrigins, rememberOrigin } from '../../lib/cardCodes';
+import { useAuth } from '../../lib/auth';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { importApkg, undoImport, importReviewCount, type ImportReport } from '../../lib/apkg';
@@ -74,6 +76,9 @@ function History() {
 
 export function ImportPage({ embedded = false }: { embedded?: boolean }) {
   const [subject, setSubject] = useState(SUBJECTS[0]);
+  const [origin, setOrigin] = useState(defaultOrigin());
+  const { session } = useAuth();
+  const origins = useLiveQuery(() => (session ? loadOrigins(session.id) : DEFAULT_ORIGINS), [session?.id], DEFAULT_ORIGINS);
   const [busy, setBusy] = useState('');
   const [report, setReport] = useState<ImportReport | null>(null);
   const [err, setErr] = useState('');
@@ -94,7 +99,8 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
     setErr('');
     setReport(null);
     try {
-      const r = await importApkg(f, subject, setBusy);
+      rememberOrigin(origin);
+      const r = await importApkg(f, subject, setBusy, origin);
       setReport(r);
       runOcr();
     } catch (e) {
@@ -135,6 +141,17 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
               ))}
             </select>
           </label>
+          <label className="field">
+            Origine des flashcards
+            <select value={origin} onChange={(e) => (setOrigin(e.target.value), rememberOrigin(e.target.value))}>
+              {origins.map((o) => (
+                <option key={o.code} value={o.code}>
+                  {o.code}
+                  {o.name ? ` – ${o.name}` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="btn primary" style={{ alignSelf: 'flex-end' }}>
             Choisir le fichier .apkg
             <input type="file" accept=".apkg" hidden onChange={(e) => onFile(e.target.files?.[0])} disabled={!!busy} />
@@ -162,7 +179,7 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
         )}
       </div>
 
-      <PlancheImport subject={subject} />
+      <PlancheImport subject={subject} origin={origin} />
 
       <History />
 

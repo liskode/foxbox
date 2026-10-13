@@ -88,6 +88,7 @@ export async function importApkg(
   file: File,
   subject: string,
   onProgress: (msg: string) => void,
+  origin = defaultOrigin(), // origine des nouvelles flashcards (ER, MM…)
 ): Promise<ImportReport> {
   onProgress('Ouverture du paquet…');
   const zip = await JSZip.loadAsync(file);
@@ -213,8 +214,8 @@ export async function importApkg(
     } else {
       const card: Card = {
         id: uid(),
-        code: await cardCode({ level, theme, origin: defaultOrigin() }),
-        origin: defaultOrigin(),
+        code: await cardCode({ level, theme, origin }),
+        origin,
         sourceRef,
         ankiGuid: guid,
         subject,

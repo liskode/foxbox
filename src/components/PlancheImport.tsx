@@ -4,7 +4,7 @@ import { readPlanche, pairsOf, importPairs, type Planche } from '../lib/planches
 import { runOcr } from '../lib/ocr';
 import { isStaleVersionError } from './UpdateBanner';
 
-export function PlancheImport({ subject }: { subject: string }) {
+export function PlancheImport({ subject, origin }: { subject: string; origin: string }) {
   const [items, setItems] = useState<{ pl: Planche; mirrored: boolean; skip: Set<string> }[]>([]);
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState('');
@@ -29,7 +29,7 @@ export function PlancheImport({ subject }: { subject: string }) {
     for (const it of items) {
       setBusy(`Import de ${it.pl.fileName}…`);
       const pairs = pairsOf(it.pl, it.mirrored).filter((p) => !it.skip.has(p.key));
-      const r = await importPairs(it.pl, pairs, subject);
+      const r = await importPairs(it.pl, pairs, subject, origin);
       added += r.added;
       updated += r.updated;
     }
@@ -53,7 +53,7 @@ export function PlancheImport({ subject }: { subject: string }) {
           Choisir un ou plusieurs PDF
           <input type="file" accept="application/pdf,.pdf" multiple hidden onChange={(e) => onFiles(e.target.files)} disabled={!!busy} />
         </label>
-        <span className="small muted">Matière : {subject} (choisie plus haut)</span>
+        <span className="small muted">Matière : {subject} · origine : {origin} (choisies plus haut)</span>
       </div>
       {busy && <div className="notice">{busy}</div>}
       {msg && <div className="notice">{msg}</div>}

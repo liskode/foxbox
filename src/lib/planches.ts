@@ -151,7 +151,7 @@ export function pairsOf(pl: Planche, mirrored: boolean): PlanchePair[] {
   return out;
 }
 
-export async function importPairs(pl: Planche, pairs: PlanchePair[], subject: string) {
+export async function importPairs(pl: Planche, pairs: PlanchePair[], subject: string, origin = defaultOrigin()) {
   const now = Date.now();
   const added: string[] = [];
   let updated = 0;
@@ -169,8 +169,8 @@ export async function importPairs(pl: Planche, pairs: PlanchePair[], subject: st
     } else {
       const card: Card = {
         id: uid(),
-        code: await cardCode({ level: pl.level, origin: defaultOrigin() }),
-        origin: defaultOrigin(),
+        code: await cardCode({ level: pl.level, origin }),
+        origin,
         sourceRef: p.ref,
         ankiGuid: p.key,
         subject,
