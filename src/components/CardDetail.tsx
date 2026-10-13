@@ -13,7 +13,11 @@ const THEME_LIST = Object.values(THEMES);
 
 // Image déjà présente dans FoxBox (même nom et même taille) : on la réutilise au lieu d'en créer un doublon
 async function storeImage(name: string, blob: Blob) {
-  const same = await db.media.where('name').equals(name).filter((m) => m.blob?.size === blob.size).first();
+  const same = await db.media
+    .where('name')
+    .equals(name)
+    .filter((m) => m.blob?.size === blob.size)
+    .first();
   if (same) return same.id;
   const id = uid();
   await db.media.put({ id, name, blob });
@@ -21,7 +25,17 @@ async function storeImage(name: string, blob: Blob) {
 }
 
 // onImage : une image insérée est enregistrée tout de suite (sans attendre « Enregistrer »)
-function FaceEditor({ label, html, onChange, onImage }: { label: string; html: string; onChange: (h: string) => void; onImage: (h: string) => void }) {
+function FaceEditor({
+  label,
+  html,
+  onChange,
+  onImage,
+}: {
+  label: string;
+  html: string;
+  onChange: (h: string) => void;
+  onImage: (h: string) => void;
+}) {
   const ta = useRef<HTMLTextAreaElement>(null);
   // Entoure la sélection (ou insère des marques vides) puis replace le curseur
   function wrap(before: string, after: string) {
@@ -97,40 +111,61 @@ function FaceEditor({ label, html, onChange, onImage }: { label: string; html: s
         </div>
       </div>
       <div className="row" style={{ gap: 4 }}>
-        <button type="button" className="btn small ghost" style={{ fontWeight: 900, minWidth: 34 }} title="Gras (⌘B) : sélectionnez le texte puis cliquez" onClick={() => wrap('**', '**')}>
+        <button
+          type="button"
+          className="btn small ghost"
+          style={{ fontWeight: 900, minWidth: 34 }}
+          title="Gras (⌘B) : sélectionnez le texte puis cliquez"
+          onClick={() => wrap('**', '**')}
+        >
           G
         </button>
-        <button type="button" className="btn small ghost" style={{ fontStyle: 'italic', minWidth: 34 }} title="Italique (⌘I)" onClick={() => wrap('<i>', '</i>')}>
+        <button
+          type="button"
+          className="btn small ghost"
+          style={{ fontStyle: 'italic', minWidth: 34 }}
+          title="Italique (⌘I)"
+          onClick={() => wrap('<i>', '</i>')}
+        >
           I
         </button>
-        <button type="button" className="btn small ghost" style={{ textDecoration: 'underline', minWidth: 34 }} title="Souligné (⌘U)" onClick={() => wrap('<u>', '</u>')}>
+        <button
+          type="button"
+          className="btn small ghost"
+          style={{ textDecoration: 'underline', minWidth: 34 }}
+          title="Souligné (⌘U)"
+          onClick={() => wrap('<u>', '</u>')}
+        >
           S
         </button>
         <button type="button" className="btn small ghost" title="Formule : sélectionnez-la puis cliquez" onClick={() => wrap('$', '$')}>
           $ formule $
         </button>
       </div>
-      <textarea
-        ref={ta}
-        value={html}
-        onChange={(e) => onChange(e.target.value)}
-        onPaste={onPaste}
-        onDrop={onDrop}
-        placeholder="Texte, formule… ou collez une image (⌘V) / glissez un fichier image ici"
-        onKeyDown={(e) => {
-          if (!(e.metaKey || e.ctrlKey)) return;
-          const k = e.key.toLowerCase();
-          if (k === 'b') (e.preventDefault(), wrap('**', '**'));
-          else if (k === 'i') (e.preventDefault(), wrap('<i>', '</i>'));
-          else if (k === 'u') (e.preventDefault(), wrap('<u>', '</u>'));
-        }}
-      />
-      <div className="small muted">
-        <span className="code">**mot**</span> pour le gras ; formules entre <span className="code">$ … $</span> (ex. <span className="code">$E_c=\frac{'{1}{2}'}mv^2$</span>), ou{' '}
-        <span className="code">$$ … $$</span> pour une formule centrée sur sa ligne.
+      {/* Code à gauche, rendu à droite */}
+      <div className="face-edit">
+        <textarea
+          ref={ta}
+          value={html}
+          onChange={(e) => onChange(e.target.value)}
+          onPaste={onPaste}
+          onDrop={onDrop}
+          placeholder="Texte, formule… ou collez une image (⌘V) / glissez un fichier image ici"
+          onKeyDown={(e) => {
+            if (!(e.metaKey || e.ctrlKey)) return;
+            const k = e.key.toLowerCase();
+            if (k === 'b') (e.preventDefault(), wrap('**', '**'));
+            else if (k === 'i') (e.preventDefault(), wrap('<i>', '</i>'));
+            else if (k === 'u') (e.preventDefault(), wrap('<u>', '</u>'));
+          }}
+        />
+        <div className="panel" style={{ boxShadow: 'none', padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CardFace html={html} />
+        </div>
       </div>
-      <div className="panel" style={{ boxShadow: 'none', padding: 10 }}>
-        <CardFace html={html} />
+      <div className="small muted">
+        <span className="code">**mot**</span> pour le gras ; formules entre <span className="code">$ … $</span> (ex.{' '}
+        <span className="code">$E_c=\frac{'{1}{2}'}mv^2$</span>), ou <span className="code">$$ … $$</span> pour une formule centrée sur sa ligne.
       </div>
     </div>
   );
@@ -317,7 +352,11 @@ export function CardDetail({
             <div className="panel stack">
               <h3>Séquences</h3>
               {units?.length ? (
-                <ul style={{ margin: 0 }}>{units.map((u) => <li key={u}>{u}</li>)}</ul>
+                <ul style={{ margin: 0 }}>
+                  {units.map((u) => (
+                    <li key={u}>{u}</li>
+                  ))}
+                </ul>
               ) : (
                 <span className="muted">Cette flashcard n'est dans aucune séquence.</span>
               )}
@@ -379,20 +418,19 @@ export function CardDetail({
                 <label className="field">
                   Origine
                   <select value={edit.origin ?? 'ER'} onChange={(e) => setEdit({ ...edit, origin: e.target.value })}>
-                    {[...origins, ...(origins.some((o) => o.code === (edit.origin ?? 'ER')) ? [] : [{ code: edit.origin ?? 'ER', name: '' }])].map((o) => (
-                      <option key={o.code} value={o.code}>
-                        {o.code}
-                        {o.name ? ` – ${o.name}` : ''}
-                      </option>
-                    ))}
+                    {[...origins, ...(origins.some((o) => o.code === (edit.origin ?? 'ER')) ? [] : [{ code: edit.origin ?? 'ER', name: '' }])].map(
+                      (o) => (
+                        <option key={o.code} value={o.code}>
+                          {o.code}
+                          {o.name ? ` – ${o.name}` : ''}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </label>
                 <label className="field" style={{ flex: 1, minWidth: 200 }}>
                   Autres tags (séparés par des virgules)
-                  <input
-                    value={tagsText}
-                    onChange={(e) => setTagsText(e.target.value)}
-                  />
+                  <input value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
                 </label>
               </div>
               <label className="field">

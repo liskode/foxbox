@@ -197,7 +197,11 @@ table.list tr.click:hover td { background: #faf7ef; }
   border-left: var(--border); z-index: 31; overflow-y: auto; padding: 20px;
 }
 /* Fiche flashcard : à gauche, fond à peine assombri pour garder la liste des flashcards visible à droite */
-.drawer.left { left: 0; right: auto; border-left: none; border-right: var(--border); }
+.drawer.left { left: 0; right: auto; border-left: none; border-right: var(--border); width: min(1000px, 100%); }
+/* Éditeur d'une face : code à gauche, rendu à droite (l'un sous l'autre sur écran étroit) */
+.face-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+.face-edit textarea { min-height: 170px; height: 100%; resize: vertical; }
+@media (max-width: 700px) { .face-edit { grid-template-columns: 1fr; } }
 .drawer-bg.light { background: rgba(29, 29, 27, 0.12); }
 
 /* Trombi */
