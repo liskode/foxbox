@@ -41,8 +41,9 @@ function PlanGrid({
     <div
       style={{
         textAlign: 'center',
-        background: '#2f4f3f',
-        color: '#fff',
+        background: '#f6f4ef',
+        color: 'var(--ink)',
+        border: '1.5px solid #00000033',
         borderRadius: 6,
         fontWeight: 800,
         fontSize: '0.8rem',
