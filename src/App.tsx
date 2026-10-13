@@ -14,6 +14,7 @@ const Timetable = lazy(() => import('./pages/prof/Timetable').then((m) => ({ def
 const Competences = lazy(() => import('./pages/prof/Competences').then((m) => ({ default: m.Competences })));
 const Settings = lazy(() => import('./pages/prof/Settings').then((m) => ({ default: m.Settings })));
 const PlanScreen = lazy(() => import('./pages/prof/PlanScreen').then((m) => ({ default: m.PlanScreen })));
+const About = lazy(() => import('./pages/prof/About').then((m) => ({ default: m.About })));
 const Rooms = lazy(() => import('./pages/prof/Rooms').then((m) => ({ default: m.Rooms })));
 const Family = lazy(() => import('./pages/prof/Family').then((m) => ({ default: m.Family })));
 const Flashcards = lazy(() => import('./pages/prof/Flashcards').then((m) => ({ default: m.Flashcards })));
@@ -99,6 +100,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
   const links =
     role === 'prof'
       ? [
+          ['/prof', 'Tableau de bord'],
           ['/prof/progression', 'Progression'],
           ['/prof/correction', 'Évaluations'],
           ['/prof/flashcards', 'Flashcards'],
@@ -112,7 +114,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
   return (
     <>
       <header className={'topbar noprint' + (role === 'prof' ? ' thin' : '')}>
-        <Link to={role === 'prof' ? '/prof' : '/eleve'} className="brand" title="Accueil">
+        <Link to={role === 'prof' ? '/prof/about' : '/eleve'} className="brand" title={role === 'prof' ? 'À propos de FoxBox' : 'Accueil'}>
           <img src="./logo.png" alt="FoxBox" />
           {role === 'eleve' && <span>FoxBox</span>}
         </Link>
@@ -182,6 +184,7 @@ export function App() {
           <Route path="/prof/trombi/imprimer/:id" element={<Shell role="prof"><TrombiPrint /></Shell>} />
           <Route path="/prof/competences" element={<Shell role="prof"><Competences /></Shell>} />
           <Route path="/prof/plan/:groupId/:planId" element={<Bare role="prof"><PlanScreen /></Bare>} />
+          <Route path="/prof/about" element={<Shell role="prof"><About /></Shell>} />
           <Route path="/prof/salles" element={<Shell role="prof"><Rooms /></Shell>} />
           <Route path="/prof/edt" element={<Shell role="prof"><Timetable /></Shell>} />
           <Route path="/prof/import" element={<Navigate to="/prof/flashcards?onglet=import" replace />} />
