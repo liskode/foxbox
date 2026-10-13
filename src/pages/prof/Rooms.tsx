@@ -31,7 +31,7 @@ export function RoomGrid({ room, onChange, cell = 34 }: { room: Room; onChange?:
 
   return (
     <div className="stack" style={{ gap: 6, alignItems: 'center', userSelect: 'none', touchAction: 'none' }}>
-      <div style={{ width: Math.min(room.cols * cell, 600), maxWidth: '100%', textAlign: 'center', background: '#2f4f3f', color: '#fff', borderRadius: 6, fontWeight: 800, fontSize: '0.8rem', padding: 3 }}>
+      <div style={{ width: Math.min(room.cols * cell, 600), maxWidth: '100%', textAlign: 'center', background: '#f6f4ef', color: 'var(--ink)', border: '1.5px solid #00000033', borderRadius: 6, fontWeight: 800, fontSize: '0.8rem', padding: 3 }}>
         Tableau
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${room.cols}, ${cell}px)`, gap: 0, border: '2px solid var(--line)', borderRadius: 8, overflow: 'hidden', background: 'var(--paper)' }}>
