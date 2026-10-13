@@ -220,6 +220,17 @@ export function CardDetail({
                 </button>
               </span>
             )}
+            {edit && (
+              <button
+                className="btn primary"
+                onClick={async () => {
+                  await save();
+                  onClose();
+                }}
+              >
+                Enregistrer et fermer
+              </button>
+            )}
             {!edit && (
               <button className="btn primary" onClick={() => setEdit({ ...card })}>
                 Modifier
