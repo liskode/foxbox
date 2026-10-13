@@ -38,7 +38,19 @@ function PlanGrid({
     cols.reverse();
   }
   const board = (
-    <div style={{ textAlign: 'center', background: '#2f4f3f', color: '#fff', borderRadius: 6, fontWeight: 800, fontSize: '0.8rem', padding: 3, width: '60%', margin: '0 auto' }}>
+    <div
+      style={{
+        textAlign: 'center',
+        background: '#2f4f3f',
+        color: '#fff',
+        borderRadius: 6,
+        fontWeight: 800,
+        fontSize: '0.8rem',
+        padding: 3,
+        width: '60%',
+        margin: '0 auto',
+      }}
+    >
       Tableau
     </div>
   );
@@ -98,18 +110,25 @@ export function SeatPlanTab({ group }: { group: Group }) {
   const { session } = useAuth();
   const rooms = useLiveQuery(() => loadRooms(session!.id), [session?.id], [] as Room[]);
   const usual = useLiveQuery(async () => (await timetableRooms(session!.id, group, await db.groups.toArray())).usual, [session?.id, group.id]);
-  const allStudents = useLiveQuery(async () => {
-    const ms = await db.memberships.where('groupId').equals(group.id).toArray();
-    return ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort(
-      (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName),
-    );
-  }, [group.id], [] as Student[]);
+  const allStudents = useLiveQuery(
+    async () => {
+      const ms = await db.memberships.where('groupId').equals(group.id).toArray();
+      return ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort(
+        (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName),
+      );
+    },
+    [group.id],
+    [] as Student[],
+  );
   const plans = group.seatPlans ?? [];
   // ?salle= : arrivée depuis la page Élèves (plan de cette classe dans cette salle)
   const [params] = useSearchParams();
   const wantedRoom = params.get('salle');
   const [planId, setPlanId] = useState<string | null>(null);
-  const plan = plans.find((p) => p.id === planId) ?? (wantedRoom && !planId ? plans.find((p) => p.roomId === wantedRoom) : undefined) ?? (wantedRoom && !planId ? undefined : plans[0]);
+  const plan =
+    plans.find((p) => p.id === planId) ??
+    (wantedRoom && !planId ? plans.find((p) => p.roomId === wantedRoom) : undefined) ??
+    (wantedRoom && !planId ? undefined : plans[0]);
   const room = rooms.find((r) => r.id === plan?.roomId);
   const [pick, setPick] = useState<Pick>(null);
   const [flip, setFlip] = useState(false);
@@ -121,17 +140,27 @@ export function SeatPlanTab({ group }: { group: Group }) {
   const students = sub ? allStudents.filter((s) => sub.studentIds.includes(s.id)) : allStudents;
   const byId = new Map(students.map((s) => [s.id, s]));
   const validSeats = new Set(room?.seats ?? []);
-  const placed = new Set(Object.entries(plan?.seats ?? {}).filter(([k, id]) => validSeats.has(k) && byId.has(id)).map(([, id]) => id));
+  const placed = new Set(
+    Object.entries(plan?.seats ?? {})
+      .filter(([k, id]) => validSeats.has(k) && byId.has(id))
+      .map(([, id]) => id),
+  );
   const unplaced = students.filter((s) => !placed.has(s.id));
 
-  const setSeats = (seats: Record<string, string>) => plan && savePlans(group, plans.map((p) => (p.id === plan.id ? { ...p, seats } : p)));
+  const setSeats = (seats: Record<string, string>) =>
+    plan &&
+    savePlans(
+      group,
+      plans.map((p) => (p.id === plan.id ? { ...p, seats } : p)),
+    );
 
   async function createPlan(roomId?: string) {
     if (!rooms.length) return;
     const defaultRoom = rooms.find((r) => r.id === roomId) ?? rooms.find((r) => r.name === usual) ?? rooms[0];
     const name = prompt('Nom du plan (ex. Cours, TP, Demi-groupe 1)', plans.length ? `Plan ${plans.length + 1}` : 'Plan');
     if (!name) return;
-    const roomName = rooms.length > 1 && !roomId ? prompt(`Salle : ${rooms.map((r) => r.name).join(', ')}`, defaultRoom.name)?.trim() : defaultRoom.name;
+    const roomName =
+      rooms.length > 1 && !roomId ? prompt(`Salle : ${rooms.map((r) => r.name).join(', ')}`, defaultRoom.name)?.trim() : defaultRoom.name;
     const r = rooms.find((x) => x.name.toLowerCase() === roomName?.toLowerCase()) ?? defaultRoom;
     const p: SeatPlan = { id: uid(), name, roomId: r.id, seats: {} };
     await savePlans(group, [...plans, p]);
@@ -183,7 +212,11 @@ export function SeatPlanTab({ group }: { group: Group }) {
         <div className="row" style={{ gap: 6 }}>
           {plans.map((p) => (
             <button key={p.id} className={'btn small' + (p.id === plan?.id ? ' primary' : ' ghost')} onClick={() => setPlanId(p.id)}>
-              {p.name} <span className="muted">· {rooms.find((r) => r.id === p.roomId)?.name ?? '?'}{p.subgroupId ? ` · ${group.subgroups?.find((x) => x.id === p.subgroupId)?.name ?? ''}` : ''}</span>
+              {p.name}{' '}
+              <span className="muted">
+                · {rooms.find((r) => r.id === p.roomId)?.name ?? '?'}
+                {p.subgroupId ? ` · ${group.subgroups?.find((x) => x.id === p.subgroupId)?.name ?? ''}` : ''}
+              </span>
             </button>
           ))}
           <button className="btn small" onClick={() => createPlan()}>
@@ -196,7 +229,12 @@ export function SeatPlanTab({ group }: { group: Group }) {
               <select
                 value={plan.subgroupId ?? ''}
                 title="Élèves de ce plan"
-                onChange={(e) => savePlans(group, plans.map((p) => (p.id === plan.id ? { ...p, subgroupId: e.target.value || undefined } : p)))}
+                onChange={(e) =>
+                  savePlans(
+                    group,
+                    plans.map((p) => (p.id === plan.id ? { ...p, subgroupId: e.target.value || undefined } : p)),
+                  )
+                }
               >
                 <option value="">Toute la classe</option>
                 {group.subgroups!.map((sg) => (
@@ -219,12 +257,25 @@ export function SeatPlanTab({ group }: { group: Group }) {
               className="btn small ghost"
               onClick={() => {
                 const name = prompt('Nom du plan', plan.name);
-                if (name) savePlans(group, plans.map((p) => (p.id === plan.id ? { ...p, name } : p)));
+                if (name)
+                  savePlans(
+                    group,
+                    plans.map((p) => (p.id === plan.id ? { ...p, name } : p)),
+                  );
               }}
             >
               Renommer
             </button>
-            <button className="btn small danger" onClick={() => confirm(`Supprimer le plan « ${plan.name} » ?`) && savePlans(group, plans.filter((p) => p.id !== plan.id))}>
+            <button
+              className="btn small danger"
+              onClick={() =>
+                confirm(`Supprimer le plan « ${plan.name} » ?`) &&
+                savePlans(
+                  group,
+                  plans.filter((p) => p.id !== plan.id),
+                )
+              }
+            >
               Supprimer
             </button>
           </div>
@@ -249,54 +300,63 @@ export function SeatPlanTab({ group }: { group: Group }) {
           <div className="panel" style={{ overflowX: 'auto' }}>
             <PlanGrid room={room} plan={plan} students={byId} pick={pick} onSeat={onSeat} flip={flip} cell={76} />
           </div>
-          <div className="panel stack" style={{ gap: 6 }}>
-            <b>
-              {placed.size}/{students.length} placés · {room.seats.length} places
-            </b>
-            <div className="row" style={{ gap: 4 }}>
-              <button className="btn small" onClick={() => confirm('Placer toute la classe par ordre alphabétique ?') && setSeats(autoPlace(room, students, 'alpha'))}>
-                A → Z
-              </button>
-              <button className="btn small" onClick={() => confirm('Placer toute la classe au hasard ?') && setSeats(autoPlace(room, students, 'random'))}>
-                🎲 Au hasard
-              </button>
-              <button className="btn small ghost" onClick={() => confirm('Retirer tous les élèves du plan ?') && setSeats({})}>
-                Vider
-              </button>
-            </div>
-            {pick && 'seat' in pick && plan.seats[pick.seat] && (
-              <div className="notice small">
-                {byId.get(plan.seats[pick.seat])?.firstName} : cliquez sur une autre place pour échanger, ou{' '}
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const seats = { ...plan.seats };
-                    delete seats[pick.seat];
-                    setSeats(seats);
-                    setPick(null);
-                  }}
-                >
-                  retirer du plan
-                </a>
-                .
-              </div>
-            )}
-            <span className="small muted">Cliquez sur un élève puis sur une place. Cliquez sur deux places pour les échanger.</span>
-            {unplaced.map((s) => {
-              const on = pick && 'student' in pick && pick.student === s.id;
-              return (
+          <div className="stack" style={{ gap: 12 }}>
+            <div className="panel stack" style={{ gap: 6 }}>
+              <b>
+                {placed.size}/{students.length} placés · {room.seats.length} places
+              </b>
+              <div className="row" style={{ gap: 4 }}>
                 <button
-                  key={s.id}
-                  className={'btn small' + (on ? ' primary' : ' ghost')}
-                  style={{ justifyContent: 'flex-start', display: 'flex', gap: 6 }}
-                  onClick={() => setPick(on ? null : { student: s.id })}
+                  className="btn small"
+                  onClick={() => confirm('Placer toute la classe par ordre alphabétique ?') && setSeats(autoPlace(room, students, 'alpha'))}
                 >
-                  <Avatar student={s} size={24} zoom /> {s.firstName} {s.lastName} <FlagBadges flags={flags.get(s.id)} />
+                  A → Z
                 </button>
-              );
-            })}
-            {!unplaced.length && <span className="small">✓ Tout le monde est placé.</span>}
+                <button
+                  className="btn small"
+                  onClick={() => confirm('Placer toute la classe au hasard ?') && setSeats(autoPlace(room, students, 'random'))}
+                >
+                  🎲 Au hasard
+                </button>
+                <button className="btn small ghost" onClick={() => confirm('Retirer tous les élèves du plan ?') && setSeats({})}>
+                  Vider
+                </button>
+              </div>
+              {pick && 'seat' in pick && plan.seats[pick.seat] && (
+                <div className="notice small">
+                  {byId.get(plan.seats[pick.seat])?.firstName} : cliquez sur une autre place pour échanger, ou{' '}
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const seats = { ...plan.seats };
+                      delete seats[pick.seat];
+                      setSeats(seats);
+                      setPick(null);
+                    }}
+                  >
+                    retirer du plan
+                  </a>
+                  .
+                </div>
+              )}
+              <span className="small muted">Cliquez sur un élève puis sur une place. Cliquez sur deux places pour les échanger.</span>
+              {unplaced.map((s) => {
+                const on = pick && 'student' in pick && pick.student === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    className={'btn small' + (on ? ' primary' : ' ghost')}
+                    style={{ justifyContent: 'flex-start', display: 'flex', gap: 6 }}
+                    onClick={() => setPick(on ? null : { student: s.id })}
+                  >
+                    <Avatar student={s} size={24} zoom /> {s.firstName} {s.lastName} <FlagBadges flags={flags.get(s.id)} />
+                  </button>
+                );
+              })}
+              {!unplaced.length && <span className="small">✓ Tout le monde est placé.</span>}
+            </div>
+            <SavedPlans group={group} plans={plans} plan={plan} />
           </div>
         </div>
       )}
@@ -311,10 +371,74 @@ export function SeatPlanTab({ group }: { group: Group }) {
               </h2>
               <span className="small muted">Cliquez pour fermer</span>
             </div>
-            <PlanGrid room={room} plan={plan} students={byId} pick={null} flip={flip} cell={Math.max(70, Math.min(120, Math.floor((window.innerWidth - 80) / room.cols)))} />
+            <PlanGrid
+              room={room}
+              plan={plan}
+              students={byId}
+              pick={null}
+              flip={flip}
+              cell={Math.max(70, Math.min(120, Math.floor((window.innerWidth - 80) / room.cols)))}
+            />
           </div>,
           document.body,
         )}
+    </div>
+  );
+}
+
+// Versions sauvegardées d'un plan (date automatique, commentaire facultatif), la plus récente en haut
+function SavedPlans({ group, plans, plan }: { group: Group; plans: SeatPlan[]; plan: SeatPlan }) {
+  const saved = plan.saved ?? [];
+  const update = (p: Partial<SeatPlan>) =>
+    savePlans(
+      group,
+      plans.map((x) => (x.id === plan.id ? { ...x, ...p } : x)),
+    );
+  const when = (t: number) =>
+    new Date(t).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return (
+    <div className="panel stack" style={{ gap: 6 }}>
+      <div className="spread">
+        <b>Plans sauvegardés</b>
+        <button
+          className="btn small primary"
+          onClick={() => {
+            const comment = prompt('Commentaire (facultatif) : ex. « après le conseil de classe », « contrôle »', '');
+            if (comment === null) return;
+            update({ saved: [{ id: uid(), at: Date.now(), comment: comment.trim() || undefined, seats: { ...plan.seats } }, ...saved] });
+          }}
+        >
+          💾 Sauvegarder
+        </button>
+      </div>
+      {saved.map((v) => (
+        <div key={v.id} className="stack" style={{ gap: 2, borderTop: '1px solid var(--muted-line)', paddingTop: 6 }}>
+          <div className="spread" style={{ flexWrap: 'nowrap' }}>
+            <span className="small" style={{ fontWeight: 700 }}>
+              {when(v.at)}
+            </span>
+            <span className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
+              <button
+                className="btn small ghost"
+                title="Remettre les élèves aux places de cette version"
+                onClick={() => confirm(`Remettre le plan tel qu'il était le ${when(v.at)} ?`) && update({ seats: { ...v.seats } })}
+              >
+                Restaurer
+              </button>
+              <button
+                className="btn small ghost"
+                title="Supprimer cette sauvegarde"
+                onClick={() => confirm('Supprimer cette sauvegarde ?') && update({ saved: saved.filter((x) => x.id !== v.id) })}
+              >
+                ✕
+              </button>
+            </span>
+          </div>
+          {v.comment && <span className="small muted">{v.comment}</span>}
+          <span className="small muted">{Object.keys(v.seats).length} élève(s) placé(s)</span>
+        </div>
+      ))}
+      {!saved.length && <span className="small muted">Aucune sauvegarde. Sauvegardez le plan avant de le modifier pour pouvoir y revenir.</span>}
     </div>
   );
 }
