@@ -9,7 +9,17 @@ import { RateBar, ThemeChip } from './widgets';
 
 const THEME_LIST = Object.values(THEMES);
 
-function FaceEditor({ label, html, onChange }: { label: string; html: string; onChange: (h: string) => void }) {
+// Image déjà présente dans FoxBox (même nom et même taille) : on la réutilise au lieu d'en créer un doublon
+async function storeImage(name: string, blob: Blob) {
+  const same = await db.media.where('name').equals(name).filter((m) => m.blob?.size === blob.size).first();
+  if (same) return same.id;
+  const id = uid();
+  await db.media.put({ id, name, blob });
+  return id;
+}
+
+// onImage : une image insérée est enregistrée tout de suite (sans attendre « Enregistrer »)
+function FaceEditor({ label, html, onChange, onImage }: { label: string; html: string; onChange: (h: string) => void; onImage: (h: string) => void }) {
   const ta = useRef<HTMLTextAreaElement>(null);
   // Entoure la sélection (ou insère des marques vides) puis replace le curseur
   function wrap(before: string, after: string) {
@@ -32,23 +42,17 @@ function FaceEditor({ label, html, onChange }: { label: string; html: string; on
     try {
       const r = await fetch(url);
       const blob = r.ok ? await r.blob() : null;
-      if (blob && blob.type.startsWith('image/')) {
-        const id = uid();
-        await db.media.put({ id, name: url.split('/').pop()?.split('?')[0] || 'image', blob });
-        tag = `<img src="media:${id}">`;
-      }
+      if (blob && blob.type.startsWith('image/')) tag = `<img src="media:${await storeImage(url.split('/').pop()?.split('?')[0] || 'image', blob)}">`;
     } catch {
       /* le site refuse la copie : on garde le lien */
     }
-    onChange(html + tag);
+    onImage(html + tag);
   }
 
   async function addImage(f: File | undefined, replace: boolean) {
     if (!f) return;
-    const id = uid();
-    await db.media.put({ id, name: f.name, blob: await fileBlob(f) });
-    const tag = `<img src="media:${id}">`;
-    onChange(replace ? tag : html + tag);
+    const tag = `<img src="media:${await storeImage(f.name, await fileBlob(f))}">`;
+    onImage(replace ? tag : html + tag);
   }
   return (
     <div className="stack" style={{ gap: 8 }}>
@@ -286,10 +290,20 @@ export function CardDetail({
         ) : (
           <div className="stack">
             <div className="panel stack">
-              <FaceEditor label="Recto" html={edit.front} onChange={(front) => setEdit({ ...edit, front })} />
+              <FaceEditor
+                label="Recto"
+                html={edit.front}
+                onChange={(front) => setEdit({ ...edit, front })}
+                onImage={(front) => (setEdit({ ...edit, front }), db.cards.update(card.id, { front, ocrDone: false, updatedAt: Date.now() }))}
+              />
             </div>
             <div className="panel stack">
-              <FaceEditor label="Verso" html={edit.back} onChange={(back) => setEdit({ ...edit, back })} />
+              <FaceEditor
+                label="Verso"
+                html={edit.back}
+                onChange={(back) => setEdit({ ...edit, back })}
+                onImage={(back) => (setEdit({ ...edit, back }), db.cards.update(card.id, { back, ocrDone: false, updatedAt: Date.now() }))}
+              />
             </div>
             <div className="panel stack">
               <div className="row">

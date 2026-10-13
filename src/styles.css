@@ -142,7 +142,7 @@ button.chip { cursor: pointer; font-family: inherit; color: var(--ink); }
 
 /* Rendu d'une face */
 .cardface { font-size: 1.15rem; text-align: center; }
-.cardface img { max-width: 100%; height: auto; max-height: 340px; object-fit: contain; } /* mise à l'échelle automatique */
+.cardface img { display: block; margin: 8px auto; max-width: 100%; height: auto; max-height: 340px; object-fit: contain; } /* centrée, mise à l'échelle automatique */
 .cardface.full img { max-height: 58vh; }
 
 /* Tableau */
