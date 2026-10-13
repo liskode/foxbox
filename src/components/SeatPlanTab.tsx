@@ -2,7 +2,7 @@
 // Un clic sur un élève puis sur une place l'y installe ; un clic sur deux places les échange.
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, type Group, type Student, shortName } from '../lib/db';
 import { useAuth } from '../lib/auth';
@@ -105,8 +105,11 @@ export function SeatPlanTab({ group }: { group: Group }) {
     );
   }, [group.id], [] as Student[]);
   const plans = group.seatPlans ?? [];
+  // ?salle= : arrivée depuis la page Élèves (plan de cette classe dans cette salle)
+  const [params] = useSearchParams();
+  const wantedRoom = params.get('salle');
   const [planId, setPlanId] = useState<string | null>(null);
-  const plan = plans.find((p) => p.id === planId) ?? plans[0];
+  const plan = plans.find((p) => p.id === planId) ?? (wantedRoom && !planId ? plans.find((p) => p.roomId === wantedRoom) : undefined) ?? (wantedRoom && !planId ? undefined : plans[0]);
   const room = rooms.find((r) => r.id === plan?.roomId);
   const [pick, setPick] = useState<Pick>(null);
   const [flip, setFlip] = useState(false);
@@ -123,12 +126,12 @@ export function SeatPlanTab({ group }: { group: Group }) {
 
   const setSeats = (seats: Record<string, string>) => plan && savePlans(group, plans.map((p) => (p.id === plan.id ? { ...p, seats } : p)));
 
-  async function createPlan() {
+  async function createPlan(roomId?: string) {
     if (!rooms.length) return;
-    const defaultRoom = rooms.find((r) => r.name === usual) ?? rooms[0];
+    const defaultRoom = rooms.find((r) => r.id === roomId) ?? rooms.find((r) => r.name === usual) ?? rooms[0];
     const name = prompt('Nom du plan (ex. Cours, TP, Demi-groupe 1)', plans.length ? `Plan ${plans.length + 1}` : 'Plan');
     if (!name) return;
-    const roomName = rooms.length > 1 ? prompt(`Salle : ${rooms.map((r) => r.name).join(', ')}`, defaultRoom.name)?.trim() : defaultRoom.name;
+    const roomName = rooms.length > 1 && !roomId ? prompt(`Salle : ${rooms.map((r) => r.name).join(', ')}`, defaultRoom.name)?.trim() : defaultRoom.name;
     const r = rooms.find((x) => x.name.toLowerCase() === roomName?.toLowerCase()) ?? defaultRoom;
     const p: SeatPlan = { id: uid(), name, roomId: r.id, seats: {} };
     await savePlans(group, [...plans, p]);
@@ -183,7 +186,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
               {p.name} <span className="muted">· {rooms.find((r) => r.id === p.roomId)?.name ?? '?'}{p.subgroupId ? ` · ${group.subgroups?.find((x) => x.id === p.subgroupId)?.name ?? ''}` : ''}</span>
             </button>
           ))}
-          <button className="btn small" onClick={createPlan}>
+          <button className="btn small" onClick={() => createPlan()}>
             + Nouveau plan
           </button>
         </div>
@@ -229,7 +232,16 @@ export function SeatPlanTab({ group }: { group: Group }) {
       </div>
 
       {!plan ? (
-        <div className="notice">Créez un plan pour cette classe{usual ? ` (salle habituelle : ${usual})` : ''}.</div>
+        wantedRoom && rooms.some((r) => r.id === wantedRoom) ? (
+          <div className="notice row">
+            Pas encore de plan de {shortName(group.name)} en {rooms.find((r) => r.id === wantedRoom)!.name}.
+            <button className="btn small primary" onClick={() => createPlan(wantedRoom)}>
+              Créer ce plan
+            </button>
+          </div>
+        ) : (
+          <div className="notice">Créez un plan pour cette classe{usual ? ` (salle habituelle : ${usual})` : ''}.</div>
+        )
       ) : !room ? (
         <div className="notice">La salle de ce plan a été supprimée.</div>
       ) : (

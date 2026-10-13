@@ -4,6 +4,9 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Group } from '../../lib/db';
 import { StudentSearch, useAllStudents } from '../../components/StudentSearch';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useAuth } from '../../lib/auth';
+import { loadRooms } from '../../lib/rooms';
 
 function Line({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
@@ -26,6 +29,8 @@ const Chip = ({ g, to, prefix = '' }: { g: Group; to: string; prefix?: string })
 export function Students() {
   const data = useAllStudents();
   const groups = data?.groups ?? [];
+  const { session } = useAuth();
+  const rooms = useLiveQuery(() => loadRooms(session!.id), [session?.id], []);
 
   return (
     <div className="page stack" style={{ gap: 12 }}>
@@ -51,14 +56,30 @@ export function Students() {
           Toutes les classes
         </Link>
       </Line>
-      <Line title="🪑 Plans de classe">
-        {groups.map((g) => (
-          <Chip key={g.id} g={g} to={`/prof/classes/${g.id}?onglet=plan`} />
-        ))}
-        <Link to="/prof/reglages" className="btn small ghost" title="Créer une classe et importer ses élèves (⚙️ Réglages)">
-          + Ajouter une classe
+      {rooms.map((r) => (
+        <Line key={r.id} title={`🪑 Plans · ${r.name}`}>
+          {groups.map((g) => {
+            const has = (g.seatPlans ?? []).some((p) => p.roomId === r.id);
+            return (
+              <Link
+                key={g.id}
+                to={`/prof/classes/${g.id}?onglet=plan&salle=${r.id}`}
+                className={'chip cchip' + (has ? '' : ' off')}
+                title={has ? `Plan de ${shortName(g.name)} en ${r.name}` : `Pas encore de plan de ${shortName(g.name)} en ${r.name} : cliquer pour le créer`}
+                style={{ background: g.color ?? 'var(--paper)', textDecoration: 'none', padding: '4px 12px' }}
+              >
+                {shortName(g.name)}
+              </Link>
+            );
+          })}
+        </Line>
+      ))}
+      <div className="row" style={{ gap: 8, paddingLeft: 16 }}>
+        <Link to="/prof/salles" className="btn small ghost">
+          + Ajouter une salle
         </Link>
-      </Line>
+        {!rooms.length && <span className="small muted">Dessinez d'abord une salle pour faire des plans de classe.</span>}
+      </div>
       <Line title="🖨 Fiches identifiants">
         {groups.map((g) => (
           <Chip key={g.id} g={g} to={`/prof/classes/${g.id}/fiches`} />
