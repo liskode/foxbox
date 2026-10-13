@@ -10,6 +10,7 @@ import { Timetable } from './pages/prof/Timetable';
 import { Competences } from './pages/prof/Competences';
 import { Settings } from './pages/prof/Settings';
 import { Rooms } from './pages/prof/Rooms';
+import { Family } from './pages/prof/Family';
 import { Flashcards } from './pages/prof/Flashcards';
 import { Students } from './pages/prof/Students';
 import { Dashboard } from './pages/prof/Dashboard';
@@ -159,6 +160,7 @@ export function App() {
           <Route path="/prof/classes" element={<Navigate to="/prof/reglages" replace />} />
           <Route path="/prof/classes/:id" element={<Shell role="prof"><GroupPage /></Shell>} />
           <Route path="/prof/classes/:id/fiches" element={<Shell role="prof"><Tickets /></Shell>} />
+          <Route path="/prof/eleves/:id/famille" element={<Shell role="prof"><Family /></Shell>} />
           <Route path="/prof/eleves/:id" element={<Shell role="prof"><StudentPage /></Shell>} />
           <Route path="/prof/correction" element={<Shell role="prof"><Correction /></Shell>} />
           <Route path="/prof/correction/:id" element={<Shell role="prof"><EvaluationPage /></Shell>} />

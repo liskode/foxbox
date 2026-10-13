@@ -160,7 +160,14 @@ export interface Note {
   studentId: string;
   text: string;
   flags?: StudentFlags; // aménagements (privés, comme la note)
+  family?: { contacts: FamilyContact[]; notes?: string }; // coordonnées de la famille (privées)
   updatedAt: number;
+}
+export interface FamilyContact {
+  id: string;
+  name: string; // Mère, Père, Mme Dupont…
+  email?: string;
+  phone?: string;
 }
 export interface StudentFlags {
   tiersTemps?: boolean;
@@ -232,7 +239,8 @@ export interface ParentMessage {
   studentId: string;
   evaluationId?: string;
   date: string;
-  to: string;
+  kind?: 'mail' | 'tel' | 'entretien'; // mail par défaut (anciennes traces)
+  to: string; // destinataire(s) ou interlocuteur
   subject: string;
   message: string;
 }
