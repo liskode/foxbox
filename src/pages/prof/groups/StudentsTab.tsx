@@ -131,13 +131,11 @@ export function StudentsTab({ group }: { group: Group }) {
           <thead>
             <tr>
               <th>Élève</th>
-              <th>Identifiant</th>
-              <th>Mot de passe</th>
-              <th>Objectif / jour</th>
-              <th>Règle d'erreur</th>
-              <th></th>
+              <th>Identifiant · mot de passe</th>
+              <th title="Objectif de flashcards par jour et règle en cas d'erreur">Révisions</th>
               <th>Aménagements</th>
               <th>Note</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -146,10 +144,10 @@ export function StudentsTab({ group }: { group: Group }) {
                 <td>
                   <span className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
                     <Avatar student={s} size={40} editable zoom />
-                    <Link to={`/prof/eleves/${s.id}?classe=${group.id}`}>
-                      <b>
-                        {s.lastName} {s.firstName}
-                      </b>
+                    <Link to={`/prof/eleves/${s.id}?classe=${group.id}`} style={{ lineHeight: 1.15, minWidth: 150 }}>
+                      <b>{s.lastName}</b>
+                      <br />
+                      {s.firstName}
                     </Link>
                     {!s.firstName && (
                       <Link to={`/prof/eleves/${s.id}?classe=${group.id}`} className="chip" style={{ background: '#f6c9c3', textDecoration: 'none' }}>
@@ -158,39 +156,54 @@ export function StudentsTab({ group }: { group: Group }) {
                     )}
                   </span>
                 </td>
-                <td className="code">{s.login}</td>
-                <td className="code">{s.password}</td>
-                <td>
+                <td style={{ maxWidth: 230 }}>
+                  <div className="code" title={s.login} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
+                    {s.login}
+                  </div>
+                  <div className="code">{s.password}</div>
+                </td>
+                <td style={{ whiteSpace: 'nowrap' }}>
                   <input
                     type="number"
                     min={1}
                     max={200}
-                    style={{ width: 70 }}
+                    style={{ width: 62 }}
+                    title="Objectif de flashcards par jour"
                     value={s.goals[group.subject] ?? DEFAULT_GOAL}
                     onChange={(e) => db.students.update(s.id, { goals: { ...s.goals, [group.subject]: Math.max(1, Number(e.target.value)) } })}
-                  />
+                  />{' '}
+                  <select
+                    value={s.rule}
+                    title="Règle d'erreur : stricte = retour en boîte 1 ; douce = une boîte en arrière"
+                    onChange={(e) => db.students.update(s.id, { rule: e.target.value as Rule })}
+                  >
+                    <option value="strict">Stricte</option>
+                    <option value="douce">Douce</option>
+                  </select>
                 </td>
                 <td>
-                  <select value={s.rule} onChange={(e) => db.students.update(s.id, { rule: e.target.value as Rule })}>
-                    <option value="strict">Stricte (retour boîte 1)</option>
-                    <option value="douce">Douce (−1 boîte)</option>
-                  </select>
+                  <FlagChecks studentId={s.id} compact />
+                </td>
+                <td>
+                  <NoteButton student={s} />
                 </td>
                 <td style={{ whiteSpace: 'nowrap' }}>
                   <button
                     className="btn small ghost"
+                    title="Nouveau mot de passe"
                     onClick={() => confirm(`Nouveau mot de passe pour ${s.firstName} ?`) && resetPassword(s.id).catch((e) => alert(e.message))}
                   >
-                    Nouveau mdp
+                    🔑
                   </button>{' '}
                   <button
                     className="btn small ghost"
+                    title="Retirer de la classe (le compte et les flashcards sont conservés)"
                     onClick={() =>
                       confirm(`Retirer ${s.firstName} ${s.lastName} de ${group.name} ? (son compte et ses flashcards sont conservés)`) &&
                       db.memberships.delete(`${group.id}|${s.id}`)
                     }
                   >
-                    Retirer
+                    ⤴
                   </button>{' '}
                   <button
                     className="btn small danger"
@@ -203,12 +216,6 @@ export function StudentsTab({ group }: { group: Group }) {
                   >
                     🗑
                   </button>
-                </td>
-                <td>
-                  <FlagChecks studentId={s.id} compact />
-                </td>
-                <td>
-                  <NoteButton student={s} />
                 </td>
               </tr>
             ))}
