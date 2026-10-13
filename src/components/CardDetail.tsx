@@ -23,6 +23,26 @@ function FaceEditor({ label, html, onChange }: { label: string; html: string; on
       el.setSelectionRange(a + before.length, b + before.length);
     });
   }
+  // Image par lien : copiée dans FoxBox si le site le permet (fonctionne hors ligne), sinon simple lien
+  async function addImageUrl() {
+    const url = prompt("Adresse de l'image (clic droit sur l'image › « Copier l'adresse de l'image »)")?.trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) return alert("L'adresse doit commencer par http:// ou https://");
+    let tag = `<img src="${url.replace(/"/g, '%22')}">`;
+    try {
+      const r = await fetch(url);
+      const blob = r.ok ? await r.blob() : null;
+      if (blob && blob.type.startsWith('image/')) {
+        const id = uid();
+        await db.media.put({ id, name: url.split('/').pop()?.split('?')[0] || 'image', blob });
+        tag = `<img src="media:${id}">`;
+      }
+    } catch {
+      /* le site refuse la copie : on garde le lien */
+    }
+    onChange(html + tag);
+  }
+
   async function addImage(f: File | undefined, replace: boolean) {
     if (!f) return;
     const id = uid();
@@ -39,6 +59,9 @@ function FaceEditor({ label, html, onChange }: { label: string; html: string; on
             Remplacer par une image
             <input type="file" accept="image/*" hidden onChange={(e) => addImage(e.target.files?.[0], true)} />
           </label>
+          <button type="button" className="btn small ghost" onClick={addImageUrl} title="Insérer une image à partir de son adresse internet">
+            🔗 Image par lien
+          </button>
           <label className="btn small ghost">
             + Insérer une image
             <input type="file" accept="image/*" hidden onChange={(e) => addImage(e.target.files?.[0], false)} />
