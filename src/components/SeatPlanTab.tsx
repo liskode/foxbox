@@ -402,9 +402,27 @@ export function SeatPlanTab({ group }: { group: Group }) {
           </div>
           <div className="stack" style={{ gap: 12 }}>
             <div className="panel stack" style={{ gap: 6, borderColor: appel ? 'var(--forgot)' : undefined }}>
-              <button className={'btn' + (appel ? ' danger' : '')} onClick={() => (setAppel(!appel), setPick(null))}>
-                {appel ? '✓ Terminer l’appel' : '📋 Appel'}
-              </button>
+              <div className="spread" style={{ flexWrap: 'nowrap' }}>
+                <b>Appel</b>
+                {/* Coche verte : lancer l'appel ; croix rouge : terminer */}
+                <button
+                  onClick={() => (setAppel(!appel), setPick(null))}
+                  title={appel ? "Terminer l'appel" : "Faire l'appel : cliquer ensuite sur les élèves absents"}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1.1rem',
+                    fontWeight: 900,
+                    color: '#fff',
+                    background: appel ? 'var(--forgot)' : 'var(--easy)',
+                  }}
+                >
+                  {appel ? '✕' : '✓'}
+                </button>
+              </div>
               {(appel || absentToday.size > 0) && (
                 <span className="small">
                   {appel && (
