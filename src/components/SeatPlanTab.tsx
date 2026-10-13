@@ -201,12 +201,20 @@ export function SeatPlanTab({ group }: { group: Group }) {
     } else if (occupant) setPick({ seat: k });
   }
 
+  // Impression : une page A4 en portrait, plan mis à l'échelle de la page
+  const [printing, setPrinting] = useState(false);
   function printPlan() {
+    const style = document.createElement('style');
+    style.textContent = '@page { size: A4 portrait; margin: 10mm; }';
+    document.head.appendChild(style);
     document.body.classList.add('printing-plan');
+    setPrinting(true);
     setTimeout(() => {
       window.print();
       document.body.classList.remove('printing-plan');
-    }, 300);
+      style.remove();
+      setPrinting(false);
+    }, 400);
   }
 
   if (!rooms.length)
@@ -434,9 +442,15 @@ export function SeatPlanTab({ group }: { group: Group }) {
         createPortal(
           <div className={'plan-overlay' + (big ? ' show' : '')} onClick={() => setBig(false)}>
             <div className="spread noprint-inner" style={{ marginBottom: 8 }}>
-              <h2 style={{ margin: 0 }}>
-                {shortName(group.name)} — {plan.name} ({room.name})
-              </h2>
+              <div>
+                <h2 style={{ margin: 0 }}>
+                  Plan de classe — {shortName(group.name)} · {plan.name}
+                </h2>
+                <div style={{ fontWeight: 700 }}>
+                  Salle {room.name} · {plan.subgroupId ? (group.subgroups?.find((x) => x.id === plan.subgroupId)?.name ?? '') : 'classe entière'} ·{' '}
+                  {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+              </div>
               <span className="small muted">Cliquez pour fermer</span>
             </div>
             <PlanGrid
@@ -445,13 +459,22 @@ export function SeatPlanTab({ group }: { group: Group }) {
               students={byId}
               pick={null}
               flip={flip}
-              cell={Math.max(70, Math.min(120, Math.floor((window.innerWidth - 80) / room.cols)))}
+              cell={printing ? printCell(room) : Math.max(70, Math.min(120, Math.floor((window.innerWidth - 80) / room.cols)))}
             />
           </div>,
           document.body,
         )}
     </div>
   );
+}
+
+// Taille des places pour tenir sur une page A4 portrait (≈ 690 × 940 px utiles sous le titre)
+function printCell(room: Room) {
+  const seats = new Set(room.seats);
+  const rows = Array.from({ length: room.rows }, (_, r) => r);
+  const full = rows.filter((r) => Array.from({ length: room.cols }, (_, c) => c).some((c) => seats.has(seatKey(r, c)))).length;
+  const units = full + (room.rows - full) / 5;
+  return Math.max(48, Math.min(120, Math.floor(Math.min(690 / room.cols, 900 / Math.max(1, units)))));
 }
 
 // Versions sauvegardées d'un plan (date automatique, commentaire facultatif), la plus récente en haut
