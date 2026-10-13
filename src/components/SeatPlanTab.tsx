@@ -13,7 +13,7 @@ import { FlagBadges, useAllFlags } from './StudentNote';
 
 type Pick = { student: string } | { seat: string } | null;
 
-// hideFlags : pas de pastilles d'aménagement (affichage au tableau, devant la classe)
+// hideFlags : affichage au tableau, devant la classe (pas de pastilles d'aménagement, petite photo, prénom en grand)
 export function PlanGrid({
   room,
   plan,
@@ -100,10 +100,13 @@ export function PlanGrid({
               >
                 {s ? (
                   <>
-                    <Avatar student={s} size={Math.round(cell * 0.5)} zoom={!!onSeat} />
-                    <b>{s.firstName}</b>
+                    {/* Affichage au tableau (hideFlags) : petite photo comme simple repère, prénom en grand */}
+                    <Avatar student={s} size={Math.round(cell * (hideFlags ? 0.3 : 0.5))} zoom={!!onSeat} />
+                    <b style={hideFlags ? { fontSize: Math.max(14, Math.round(cell * 0.17)), lineHeight: 1.05 } : undefined}>{s.firstName}</b>
                     {!hideFlags && <FlagBadges flags={flags.get(s.id)} />}
-                    <span className="muted">{s.lastName.slice(0, 12)}</span>
+                    <span className="muted" style={hideFlags ? { fontSize: Math.max(11, Math.round(cell * 0.09)) } : undefined}>
+                      {s.lastName.slice(0, 12)}
+                    </span>
                   </>
                 ) : (
                   <span className="muted">+</span>
