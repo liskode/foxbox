@@ -164,6 +164,9 @@ table.list tr.click:hover td { background: #faf7ef; }
 .boxes .fill { width: 100%; border: 2px solid var(--line); border-radius: 6px 6px 2px 2px; background: var(--turquoise); min-height: 3px; }
 .boxes .lbl { font-weight: 800; font-size: 0.8rem; }
 .boxes .n { font-size: 0.8rem; color: var(--ink-soft); }
+.boxes.compact { height: 92px; gap: 4px; min-width: 230px; }
+.boxes.compact .fill { border-width: 1.5px; }
+.boxes.compact .lbl, .boxes.compact .n { font-size: 0.7rem; }
 
 /* Barre de réussite */
 .rate { display: flex; height: 12px; border: 2px solid var(--line); border-radius: 6px; overflow: hidden; min-width: 90px; }

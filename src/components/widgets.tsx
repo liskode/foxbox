@@ -64,11 +64,11 @@ export function Heatmap({ counts, weeks = 20 }: { counts: Map<string, number>; w
   );
 }
 
-export function Boxes({ dist }: { dist: number[] }) {
+export function Boxes({ dist, compact = false }: { dist: number[]; compact?: boolean }) {
   const max = Math.max(1, ...dist);
   const labels = ['Nouv.', '1', '2', '3', '4', '5', '6', '7'];
   return (
-    <div className="boxes">
+    <div className={'boxes' + (compact ? ' compact' : '')}>
       {dist.map((n, i) => (
         <div key={i} className="b" title={i === 0 ? 'Flashcards jamais vues' : `Boîte ${i}`}>
           <div className="n">{n}</div>
