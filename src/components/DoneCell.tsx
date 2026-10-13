@@ -1,5 +1,6 @@
 // Case « classe × séance » : date prévisionnelle (grise) ou date où la séance a été faite (noire).
 // Un clic ouvre un petit choix : faite lors de l'un des derniers cours, à une autre date, ou décocher.
+import { shortName } from '../lib/db';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -106,7 +107,7 @@ export function DoneCell({
                 padding: 12,
               }}
             >
-              <b className="small">{g.name} — faite le :</b>
+              <b className="small">{shortName(g.name)} — faite le :</b>
               {recent.map((d) => (
                 <button
                   key={d}

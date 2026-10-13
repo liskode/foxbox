@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type FamilyContact, type ParentMessage } from '../../lib/db';
+import { db, uid, type FamilyContact, type ParentMessage, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { score } from '../../lib/grading';
 import { frDate, today } from '../../lib/dates';
@@ -104,8 +104,8 @@ export function Family() {
           </h1>
           <div className="row" style={{ gap: 6 }}>
             {groups.map((g) => (
-              <span key={g!.id} className="chip" style={{ background: g!.color }}>
-                {g!.name}
+              <span key={g!.id} className="chip cchip" style={{ background: g!.color }}>
+                {shortName(g!.name)}
               </span>
             ))}
             <FlagBadges flags={flags} />

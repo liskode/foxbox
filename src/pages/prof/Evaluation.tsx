@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, SUBJECTS, type Criterion, type Evaluation, type Result, type Student } from '../../lib/db';
+import { db, uid, SUBJECTS, type Criterion, type Evaluation, type Result, type Student, shortName } from '../../lib/db';
 import {
   LEVELS,
   LEVEL_KEYS,
@@ -198,12 +198,12 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
                   return (
                     <button
                       key={g.id}
-                      className={'chip' + (on ? '' : ' off')}
+                      className={'chip cchip' + (on ? '' : ' off')}
                       style={{ background: g.color ?? 'var(--paper)' }}
                       onClick={() => assignClass(ev, g.id, !on)}
                     >
                       {on ? '✓ ' : ''}
-                      {g.name}
+                      {shortName(g.name)}
                     </button>
                   );
                 })}
@@ -216,7 +216,7 @@ function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluat
                   .map((g) => (
                     <label key={g.id} className="field" style={{ fontSize: '0.85rem' }}>
                       <span>
-                        Date en <span style={{ background: g.color, borderRadius: 6, padding: '0 6px' }}>{g.name}</span>
+                        Date en <span style={{ background: g.color, borderRadius: 6, padding: '0 6px' }}>{shortName(g.name)}</span>
                       </span>
                       <input
                         type="date"
@@ -435,8 +435,8 @@ function CurFlags({ id }: { id: string }) {
 function GroupChip({ id }: { id: string }) {
   const g = useLiveQuery(() => db.groups.get(id), [id]);
   return g ? (
-    <span className="chip" style={{ background: g.color ?? 'var(--paper)', fontSize: '0.9rem', verticalAlign: 'middle' }}>
-      {g.name}
+    <span className="chip cchip" style={{ background: g.color ?? 'var(--paper)', fontSize: '0.9rem', verticalAlign: 'middle' }}>
+      {shortName(g.name)}
     </span>
   ) : null;
 }
@@ -881,7 +881,7 @@ function ResultatsTab({ ev }: { ev: Evaluation }) {
           <div key={gid} className="panel stack">
             <div className="spread">
               <h2 style={{ margin: 0 }}>
-                <span style={{ background: g?.color, borderRadius: 10, padding: '0 8px' }}>{g?.name}</span>{' '}
+                <span style={{ background: g?.color, borderRadius: 10, padding: '0 8px' }}>{shortName(g?.name ?? '')}</span>{' '}
                 <span className="small muted" style={{ fontWeight: 600 }}>
                   {frDate(dateFor(ev, gid))}
                 </span>
@@ -891,7 +891,7 @@ function ResultatsTab({ ev }: { ev: Evaluation }) {
                 title="Notes sur 20, une par ligne, dans l'ordre alphabétique : cliquez dans la première case de la colonne Pronote puis collez (Cmd+V)"
                 onClick={async () => {
                   await navigator.clipboard.writeText(pronoteColumn(ev, list, results, gid));
-                  setMsg(`Notes de ${g?.name} copiées (${members.length} élèves, ordre alphabétique, sur 20, « Abs » pour les absents). Dans Pronote, cliquez sur la case du premier élève puis collez.`);
+                  setMsg(`Notes de ${shortName(g?.name ?? '')} copiées (${members.length} élèves, ordre alphabétique, sur 20, « Abs » pour les absents). Dans Pronote, cliquez sur la case du premier élève puis collez.`);
                 }}
               >
                 📋 Copier les notes pour Pronote

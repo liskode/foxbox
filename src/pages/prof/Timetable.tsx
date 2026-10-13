@@ -2,7 +2,7 @@
 // calendrier de l'année (semaines A / B, vacances, jours fériés).
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth';
-import { uid } from '../../lib/db';
+import { uid, shortName } from '../../lib/db';
 import { addDays, fromISO, today } from '../../lib/dates';
 import {
   AUDIN_2026,
@@ -139,7 +139,7 @@ function SlotEditor({ slot, onSave, onDelete, onClose }: { slot: Slot; onSave: (
             <option value="">—</option>
             {groups.map((g) => (
               <option key={g.id} value={g.id}>
-                {g.name}
+                {shortName(g.name)}
               </option>
             ))}
           </select>

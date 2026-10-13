@@ -1,7 +1,7 @@
 // Compétences : référentiel (APP, ANA, REA, VAL, COM et sous-compétences) et niveau atteint par les élèves d'une classe.
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Student } from '../../lib/db';
+import { db, type Student, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import {
   MASTERY,
@@ -132,8 +132,8 @@ export function Competences() {
         </div>
         <div className="row" style={{ gap: 4 }}>
           {groups.map((g) => (
-            <button key={g.id} className={'chip' + (g.id === gid ? '' : ' off')} style={{ background: g.color ?? 'var(--paper)' }} onClick={() => set({ classe: g.id })}>
-              {g.name}
+            <button key={g.id} className={'chip cchip' + (g.id === gid ? '' : ' off')} style={{ background: g.color ?? 'var(--paper)' }} onClick={() => set({ classe: g.id })}>
+              {shortName(g.name)}
             </button>
           ))}
         </div>

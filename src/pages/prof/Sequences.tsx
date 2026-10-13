@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, nextCardCode, SUBJECTS, type Group, type Unit } from '../../lib/db';
+import { db, uid, nextCardCode, SUBJECTS, type Group, type Unit, shortName } from '../../lib/db';
 import { THEMES as CARD_THEMES } from '../../lib/apkg';
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
@@ -358,8 +358,8 @@ function EvalLinks({ unit }: { unit: Unit }) {
           {e.groupIds.map((id) => {
             const g = groups.find((x) => x.id === id);
             return g ? (
-              <span key={id} className="chip" style={{ background: g.color }}>
-                {g.name}
+              <span key={id} className="chip cchip" style={{ background: g.color }}>
+                {shortName(g.name)}
               </span>
             ) : null;
           })}

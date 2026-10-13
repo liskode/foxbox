@@ -1,4 +1,5 @@
 // Tableau de bord : cours du jour (ou du prochain jour de présence) et grille de la semaine A/B.
+import { shortName } from '../lib/db';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Group } from '../lib/db';
@@ -132,13 +133,13 @@ function ClassChips({ groups }: { groups: Group[] }) {
         <Link
           key={g.id}
           to={`/prof/classes/${g.id}?onglet=apercu`}
-          className="chip"
+          className="chip cchip"
           style={{
             background: g.color ?? 'var(--paper)',
             textDecoration: 'none',
           }}
         >
-          {g.name}
+          {shortName(g.name)}
         </Link>
       ))}
     </div>

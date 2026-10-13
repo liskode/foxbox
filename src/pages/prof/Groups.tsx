@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { SeatPlanTab } from '../../components/SeatPlanTab';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, SUBJECTS, CLASS_COLORS, type Group, type Rule } from '../../lib/db';
+import { db, uid, SUBJECTS, CLASS_COLORS, type Group, type Rule, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { groupOverview } from '../../lib/stats';
 import { parseCsv, importStudents, resetPassword, deleteStudent, deleteGroup, type ParsedRow } from '../../lib/students';
@@ -70,7 +70,7 @@ export function Groups({ embedded = false }: { embedded?: boolean }) {
           .map((g) => (
             <div key={g.id} className="panel stack" style={{ background: g.color ?? 'var(--paper)', gap: 8 }}>
               <Link to={`/prof/classes/${g.id}`} className="stack" style={{ textDecoration: 'none', gap: 8 }}>
-                <h2 style={{ margin: 0 }}>{g.name}</h2>
+                <h2 style={{ margin: 0 }}>{shortName(g.name)}</h2>
                 <div className="muted">
                   {g.subject} · {g.schoolYear}
                 </div>
@@ -127,7 +127,7 @@ export function Groups({ embedded = false }: { embedded?: boolean }) {
             {archived.map((g) => (
               <li key={g.id}>
                 <Link to={`/prof/classes/${g.id}`}>
-                  {g.name} ({g.schoolYear})
+                  {shortName(g.name)} ({g.schoolYear})
                 </Link>
               </li>
             ))}
@@ -601,7 +601,7 @@ export function GroupPage() {
             ← Accueil
           </Link>
           <h1 className="title" style={{ margin: 0 }}>
-            <span style={{ background: group.color, borderRadius: 12, padding: '0 10px' }}>{group.name}</span>
+            <span style={{ background: group.color, borderRadius: 12, padding: '0 10px' }}>{shortName(group.name)}</span>
           </h1>
           <div className="muted">
             {group.subject} · {group.schoolYear} {group.archived && '· archivée'}

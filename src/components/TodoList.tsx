@@ -1,7 +1,7 @@
 // To-do list personnelle : tâches générales ou liées à une classe, avec échéance facultative.
 import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type Todo } from '../lib/db';
+import { db, uid, type Todo, shortName } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { addDays, frDate, today } from '../lib/dates';
 
@@ -62,7 +62,7 @@ export function TodoList({ groupId }: { groupId?: string }) {
               .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }))
               .map((g) => (
                 <option key={g.id} value={g.id}>
-                  {g.name}
+                  {shortName(g.name)}
                 </option>
               ))}
           </select>
@@ -118,8 +118,8 @@ function TodoRow({ t, showGroup }: { t: Todo; showGroup: boolean }) {
       />
       <span style={{ flex: 1, textDecoration: t.done ? 'line-through' : 'none' }}>{t.text}</span>
       {showGroup && g && (
-        <span className="chip" style={{ background: g.color ?? 'var(--paper)' }}>
-          {g.name}
+        <span className="chip cchip" style={{ background: g.color ?? 'var(--paper)' }}>
+          {shortName(g.name)}
         </span>
       )}
       {t.due && <span className="small muted" style={{ whiteSpace: 'nowrap' }}>{frDate(t.due)}</span>}

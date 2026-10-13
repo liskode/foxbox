@@ -1,7 +1,7 @@
 // Flashcards : flashcards (recherche, création), import, statistiques de révision par classe, fiches de connexion.
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../lib/db';
+import { db, shortName } from '../../lib/db';
 import { Cards } from './Cards';
 import { ImportPage } from './Import';
 import { StatsTab } from './Groups';
@@ -29,11 +29,11 @@ export function Flashcards() {
       {groups.map((g) => (
         <button
           key={g.id}
-          className={'chip' + (g.id === gid ? '' : ' off')}
+          className={'chip cchip' + (g.id === gid ? '' : ' off')}
           style={{ background: g.color ?? 'var(--paper)' }}
           onClick={() => setParams({ onglet: tab, classe: g.id }, { replace: true })}
         >
-          {g.name}
+          {shortName(g.name)}
         </button>
       ))}
     </div>
@@ -67,7 +67,7 @@ export function Flashcards() {
           <div className="row" style={{ gap: 6 }}>
             {groups.map((g) => (
               <Link key={g.id} to={`/prof/classes/${g.id}/fiches`} className="btn" style={{ background: g.color ?? 'var(--paper)' }}>
-                🖨 {g.name}
+                🖨 {shortName(g.name)}
               </Link>
             ))}
           </div>

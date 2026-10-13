@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Group, type Student } from '../lib/db';
+import { db, type Group, type Student, shortName } from '../lib/db';
 import { StudentName } from './Avatar';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -56,8 +56,8 @@ export function StudentSearch({ autoFocus = false, max = 8 }: { autoFocus?: bool
               }}
             >
               <StudentName student={student} size={26} />
-              <span className="chip" style={{ background: group.color }}>
-                {group.name}
+              <span className="chip cchip" style={{ background: group.color }}>
+                {shortName(group.name)}
               </span>
             </button>
           ))}

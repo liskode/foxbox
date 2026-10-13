@@ -1,7 +1,7 @@
 // Trombinoscope imprimable d'une classe, tenant sur une page A4 (Imprimer › Enregistrer au format PDF).
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Student } from '../../lib/db';
+import { db, type Student, shortName } from '../../lib/db';
 import { useFixedPhoto } from '../../components/Avatar';
 
 function Cell({ s }: { s: Student }) {
@@ -54,7 +54,7 @@ export function TrombiPrint() {
         <div className="tp-head">
           <img src="./logo.png" alt="" />
           <div>
-            <div className="tp-title">Trombinoscope — {group.name}</div>
+            <div className="tp-title">Trombinoscope — {shortName(group.name)}</div>
             <div className="tp-sub">
               {group.subject} · {group.schoolYear} · {students.length} élèves
             </div>

@@ -1,4 +1,5 @@
 // Élèves : recherche rapide et accès directs par classe (vue d'ensemble, trombis, plans de classe, fiches identifiants).
+import { shortName } from '../../lib/db';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Group } from '../../lib/db';
@@ -16,9 +17,9 @@ function Line({ title, children }: { title: ReactNode; children: ReactNode }) {
 }
 
 const Chip = ({ g, to, prefix = '' }: { g: Group; to: string; prefix?: string }) => (
-  <Link to={to} className="chip" style={{ background: g.color ?? 'var(--paper)', textDecoration: 'none', padding: '4px 12px' }}>
+  <Link to={to} className="chip cchip" style={{ background: g.color ?? 'var(--paper)', textDecoration: 'none', padding: '4px 12px' }}>
     {prefix}
-    {g.name}
+    {shortName(g.name)}
   </Link>
 );
 

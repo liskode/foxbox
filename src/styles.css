@@ -269,3 +269,6 @@ table.list tr.click:hover td { background: #faf7ef; }
   body.printing-plan .plan-overlay { display: block; position: static; padding: 0; }
   body.printing-plan .plan-overlay .small.muted { display: none; }
 }
+
+/* Pastille de classe : nom court, forme carrée */
+.chip.cchip { border-radius: 7px; min-width: 2.6em; justify-content: center; text-align: center; font-weight: 900; }

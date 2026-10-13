@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type Group, type Student } from '../lib/db';
+import { db, uid, type Group, type Student, shortName } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { autoPlace, loadRooms, savePlans, seatKey, timetableRooms, type Room, type SeatPlan } from '../lib/rooms';
 import { Avatar } from './Avatar';
@@ -98,7 +98,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
   const { session } = useAuth();
   const rooms = useLiveQuery(() => loadRooms(session!.id), [session?.id], [] as Room[]);
   const usual = useLiveQuery(async () => (await timetableRooms(session!.id, group, await db.groups.toArray())).usual, [session?.id, group.id]);
-  const students = useLiveQuery(async () => {
+  const allStudents = useLiveQuery(async () => {
     const ms = await db.memberships.where('groupId').equals(group.id).toArray();
     return ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort(
       (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName),
@@ -113,6 +113,9 @@ export function SeatPlanTab({ group }: { group: Group }) {
   const [big, setBig] = useState(false);
 
   const flags = useAllFlags();
+  // Plan d'un sous-groupe : seuls ses élèves
+  const sub = group.subgroups?.find((x) => x.id === plan?.subgroupId);
+  const students = sub ? allStudents.filter((s) => sub.studentIds.includes(s.id)) : allStudents;
   const byId = new Map(students.map((s) => [s.id, s]));
   const validSeats = new Set(room?.seats ?? []);
   const placed = new Set(Object.entries(plan?.seats ?? {}).filter(([k, id]) => validSeats.has(k) && byId.has(id)).map(([, id]) => id));
@@ -177,7 +180,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
         <div className="row" style={{ gap: 6 }}>
           {plans.map((p) => (
             <button key={p.id} className={'btn small' + (p.id === plan?.id ? ' primary' : ' ghost')} onClick={() => setPlanId(p.id)}>
-              {p.name} <span className="muted">· {rooms.find((r) => r.id === p.roomId)?.name ?? '?'}</span>
+              {p.name} <span className="muted">· {rooms.find((r) => r.id === p.roomId)?.name ?? '?'}{p.subgroupId ? ` · ${group.subgroups?.find((x) => x.id === p.subgroupId)?.name ?? ''}` : ''}</span>
             </button>
           ))}
           <button className="btn small" onClick={createPlan}>
@@ -186,6 +189,20 @@ export function SeatPlanTab({ group }: { group: Group }) {
         </div>
         {plan && (
           <div className="row" style={{ gap: 6 }}>
+            {(group.subgroups?.length ?? 0) > 0 && (
+              <select
+                value={plan.subgroupId ?? ''}
+                title="Élèves de ce plan"
+                onChange={(e) => savePlans(group, plans.map((p) => (p.id === plan.id ? { ...p, subgroupId: e.target.value || undefined } : p)))}
+              >
+                <option value="">Toute la classe</option>
+                {group.subgroups!.map((sg) => (
+                  <option key={sg.id} value={sg.id}>
+                    {sg.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <label className="row small" style={{ gap: 4 }}>
               <input type="checkbox" checked={flip} onChange={(e) => setFlip(e.target.checked)} /> Vue depuis le bureau
             </label>
@@ -278,7 +295,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
           <div className={'plan-overlay' + (big ? ' show' : '')} onClick={() => setBig(false)}>
             <div className="spread noprint-inner" style={{ marginBottom: 8 }}>
               <h2 style={{ margin: 0 }}>
-                {group.name} — {plan.name} ({room.name})
+                {shortName(group.name)} — {plan.name} ({room.name})
               </h2>
               <span className="small muted">Cliquez pour fermer</span>
             </div>

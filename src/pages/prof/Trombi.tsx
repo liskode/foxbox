@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, type Rating, type Student, type TrombiCard } from '../../lib/db';
+import { db, type Rating, type Student, type TrombiCard, shortName } from '../../lib/db';
 import { INTERVALS, nextBox } from '../../lib/leitner';
 import { addDays, frDate, today } from '../../lib/dates';
 import { useFixedPhoto } from '../../components/Avatar';
@@ -236,8 +236,8 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
         <h1 className="title" style={{ margin: 0 }}>Trombi</h1>
         <div className="row">
           {groups.map((g) => (
-            <button key={g.id} className={'chip' + (sel.has(g.id) ? '' : ' off')} style={{ background: g.color ?? 'var(--matiere)' }} onClick={() => toggle(g.id)}>
-              {g.name}
+            <button key={g.id} className={'chip cchip' + (sel.has(g.id) ? '' : ' off')} style={{ background: g.color ?? 'var(--matiere)' }} onClick={() => toggle(g.id)}>
+              {shortName(g.name)}
             </button>
           ))}
         </div>
@@ -290,7 +290,7 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
         <b>🖨 Imprimer le trombi (1 page A4) :</b>
         {groups.filter((g) => !groupId || g.id === groupId).map((g) => (
           <Link key={g.id} to={`/prof/trombi/imprimer/${g.id}`} className="btn small" style={{ background: g.color }}>
-            {g.name}
+            {shortName(g.name)}
           </Link>
         ))}
       </div>

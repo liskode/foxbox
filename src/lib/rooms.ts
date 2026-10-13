@@ -16,6 +16,7 @@ export interface SeatPlan {
   name: string; // Plan, TP, demi-groupe 1…
   roomId: string;
   seats: Record<string, string>; // place → élève
+  subgroupId?: string; // plan d'un sous-groupe (demi-groupe…) : seuls ses élèves sont proposés
 }
 
 export const seatKey = (r: number, c: number) => `${r}-${c}`;

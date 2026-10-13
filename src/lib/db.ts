@@ -52,7 +52,17 @@ export interface Group {
   color?: string; // couleur de repérage (palette CLASS_COLORS)
   sequenceIds?: string[]; // séquences suivies par la classe (Progression), dans l'ordre
   seatPlans?: import('./rooms').SeatPlan[]; // plans de classe
+  subgroups?: Subgroup[]; // demi-groupes, îlots… (un élève est dans un seul sous-groupe)
 }
+
+export interface Subgroup {
+  id: string;
+  name: string;
+  color: string;
+  studentIds: string[];
+}
+// Couleurs des sous-groupes (cerclage des photos)
+export const SUBGROUP_COLORS = ['#e05a4f', '#3b82f6', '#16a34a', '#f59e0b', '#9333ea', '#0891b2', '#db2777', '#65a30d'];
 
 // Couleurs de classe : déclinaisons claires de la charte physifox, lisibles avec du texte noir
 // Ordre arc-en-ciel (du rose au violet), le neutre en dernier
@@ -380,3 +390,6 @@ export async function resetAll() {
 export async function fileBlob(f: File): Promise<Blob> {
   return new Blob([await f.arrayBuffer()], { type: f.type || 'application/octet-stream' });
 }
+
+// Nom court d'une classe pour les pastilles : « 3C_2627 » → « 3C »
+export const shortName = (name: string) => name.split('_')[0];
