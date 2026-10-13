@@ -188,6 +188,7 @@ export function CardDetail({
     } else setEdit(null);
   }
 
+  // La flashcard est seulement marquée supprimée : ses images restent (une autre flashcard peut les utiliser)
   async function remove() {
     if (!confirm(`Supprimer la flashcard ${card!.code} ? Elle disparaîtra des révisions des élèves (leur historique est conservé).`)) return;
     await db.cards.update(card!.id, { deleted: true, updatedAt: Date.now() });
@@ -196,8 +197,8 @@ export function CardDetail({
 
   return (
     <>
-      <div className="drawer-bg" onClick={onClose} />
-      <aside className="drawer stack">
+      <div className="drawer-bg light" onClick={onClose} />
+      <aside className="drawer left stack">
         <div className="spread">
           <div className="row">
             <h2 style={{ margin: 0 }}>{card.code}</h2>
