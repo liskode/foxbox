@@ -161,8 +161,8 @@ export function SeatPlanTab({ group }: { group: Group }) {
       plans.map((p) => (p.id === plan.id ? { ...p, seats } : p)),
     );
 
-  // Nouveau plan : on choisit d'abord la salle (parmi celles dessinées), puis le nom
-  const [creating, setCreating] = useState<{ roomId: string; name: string } | null>(null);
+  // Nouveau plan : élèves (classe entière ou sous-groupe), salle (parmi celles dessinées), puis nom
+  const [creating, setCreating] = useState<{ roomId: string; name: string; subgroupId?: string } | null>(null);
   function createPlan(roomId?: string) {
     if (!rooms.length) return;
     const r = rooms.find((x) => x.id === roomId) ?? rooms.find((x) => x.name === usual) ?? rooms[0];
@@ -170,7 +170,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
   }
   async function confirmCreate() {
     if (!creating?.name.trim()) return;
-    const p: SeatPlan = { id: uid(), name: creating.name.trim(), roomId: creating.roomId, seats: {} };
+    const p: SeatPlan = { id: uid(), name: creating.name.trim(), roomId: creating.roomId, subgroupId: creating.subgroupId, seats: {} };
     await savePlans(group, [...plans, p]);
     setPlanId(p.id);
     setCreating(null);
@@ -221,10 +221,12 @@ export function SeatPlanTab({ group }: { group: Group }) {
         <div className="row" style={{ gap: 6 }}>
           {plans.map((p) => (
             <button key={p.id} className={'btn small' + (p.id === plan?.id ? ' primary' : ' ghost')} onClick={() => setPlanId(p.id)}>
-              {p.name}{' '}
-              <span className="muted">
-                · {rooms.find((r) => r.id === p.roomId)?.name ?? '?'}
-                {p.subgroupId ? ` · ${group.subgroups?.find((x) => x.id === p.subgroupId)?.name ?? ''}` : ''}
+              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
+                <span>{p.name}</span>
+                <span className="muted" style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                  {shortName(group.name)} · {rooms.find((r) => r.id === p.roomId)?.name ?? '?'} ·{' '}
+                  {p.subgroupId ? group.subgroups?.find((x) => x.id === p.subgroupId)?.name ?? 'groupe supprimé' : 'classe entière'}
+                </span>
               </span>
             </button>
           ))}
@@ -296,7 +298,26 @@ export function SeatPlanTab({ group }: { group: Group }) {
           <b>Nouveau plan de {shortName(group.name)}</b>
           <div className="row" style={{ gap: 6 }}>
             <span className="small" style={{ fontWeight: 700 }}>
-              1. Salle :
+              1. Élèves :
+            </span>
+            <button className={'btn small' + (!creating.subgroupId ? ' primary' : ' ghost')} onClick={() => setCreating({ ...creating, subgroupId: undefined })}>
+              Classe entière
+            </button>
+            {(group.subgroups ?? []).map((sg) => (
+              <button
+                key={sg.id}
+                className={'btn small' + (creating.subgroupId === sg.id ? ' primary' : ' ghost')}
+                style={{ borderColor: sg.color }}
+                onClick={() => setCreating({ ...creating, subgroupId: sg.id, name: creating.name.startsWith('Plan ') || creating.name === 'Cours' ? sg.name : creating.name })}
+              >
+                {sg.name} <span className="muted">({sg.studentIds.length})</span>
+              </button>
+            ))}
+            {!group.subgroups?.length && <span className="small muted">(pas de sous-groupe : créez-en dans la vue d'ensemble de la classe)</span>}
+          </div>
+          <div className="row" style={{ gap: 6 }}>
+            <span className="small" style={{ fontWeight: 700 }}>
+              2. Salle :
             </span>
             {rooms.map((r) => (
               <button key={r.id} className={'btn small' + (creating.roomId === r.id ? ' primary' : ' ghost')} onClick={() => setCreating({ ...creating, roomId: r.id })}>
@@ -309,7 +330,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
           </div>
           <div className="row" style={{ gap: 6 }}>
             <span className="small" style={{ fontWeight: 700 }}>
-              2. Nom :
+              3. Nom :
             </span>
             <input
               autoFocus
