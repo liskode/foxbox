@@ -161,17 +161,19 @@ export function SeatPlanTab({ group }: { group: Group }) {
       plans.map((p) => (p.id === plan.id ? { ...p, seats } : p)),
     );
 
-  async function createPlan(roomId?: string) {
+  // Nouveau plan : on choisit d'abord la salle (parmi celles dessinées), puis le nom
+  const [creating, setCreating] = useState<{ roomId: string; name: string } | null>(null);
+  function createPlan(roomId?: string) {
     if (!rooms.length) return;
-    const defaultRoom = rooms.find((r) => r.id === roomId) ?? rooms.find((r) => r.name === usual) ?? rooms[0];
-    const name = prompt('Nom du plan (ex. Cours, TP, Demi-groupe 1)', plans.length ? `Plan ${plans.length + 1}` : 'Plan');
-    if (!name) return;
-    const roomName =
-      rooms.length > 1 && !roomId ? prompt(`Salle : ${rooms.map((r) => r.name).join(', ')}`, defaultRoom.name)?.trim() : defaultRoom.name;
-    const r = rooms.find((x) => x.name.toLowerCase() === roomName?.toLowerCase()) ?? defaultRoom;
-    const p: SeatPlan = { id: uid(), name, roomId: r.id, seats: {} };
+    const r = rooms.find((x) => x.id === roomId) ?? rooms.find((x) => x.name === usual) ?? rooms[0];
+    setCreating({ roomId: r.id, name: plans.length ? `Plan ${plans.length + 1}` : 'Cours' });
+  }
+  async function confirmCreate() {
+    if (!creating?.name.trim()) return;
+    const p: SeatPlan = { id: uid(), name: creating.name.trim(), roomId: creating.roomId, seats: {} };
     await savePlans(group, [...plans, p]);
     setPlanId(p.id);
+    setCreating(null);
   }
 
   function onSeat(k: string) {
@@ -289,6 +291,43 @@ export function SeatPlanTab({ group }: { group: Group }) {
         )}
       </div>
 
+      {creating && (
+        <div className="panel stack" style={{ gap: 10, borderColor: 'var(--matiere)' }}>
+          <b>Nouveau plan de {shortName(group.name)}</b>
+          <div className="row" style={{ gap: 6 }}>
+            <span className="small" style={{ fontWeight: 700 }}>
+              1. Salle :
+            </span>
+            {rooms.map((r) => (
+              <button key={r.id} className={'btn small' + (creating.roomId === r.id ? ' primary' : ' ghost')} onClick={() => setCreating({ ...creating, roomId: r.id })}>
+                {r.name} <span className="muted">({r.seats.length} places)</span>
+              </button>
+            ))}
+            <Link to="/prof/salles" className="btn small ghost">
+              + Ajouter une salle
+            </Link>
+          </div>
+          <div className="row" style={{ gap: 6 }}>
+            <span className="small" style={{ fontWeight: 700 }}>
+              2. Nom :
+            </span>
+            <input
+              autoFocus
+              value={creating.name}
+              onChange={(e) => setCreating({ ...creating, name: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && confirmCreate()}
+              placeholder="Cours, TP, Demi-groupe 1…"
+              style={{ width: 220 }}
+            />
+            <button className="btn small primary" disabled={!creating.name.trim()} onClick={confirmCreate}>
+              Créer le plan
+            </button>
+            <button className="btn small ghost" onClick={() => setCreating(null)}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
       {!plan ? (
         wantedRoom && rooms.some((r) => r.id === wantedRoom) ? (
           <div className="notice row">
