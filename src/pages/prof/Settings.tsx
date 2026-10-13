@@ -1,4 +1,5 @@
 // Réglages : ce qu'on modifie rarement (emploi du temps, classes et élèves, couleurs, compétences, compte).
+import { askForm } from '../../components/Dialog';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
@@ -13,7 +14,6 @@ export function Settings() {
     ['/prof/edt', '🗓 Emploi du temps et calendrier', 'PDF Pronote, semaines A / B, vacances, jours de présence, cours hors progression'],
     ['/prof/competences', '🎯 Référentiel de compétences', 'APP, ANA, REA, VAL, COM et leurs sous-compétences'],
     ['/prof/salles', '🪑 Salles', 'Disposition des places, pour les plans de classe'],
-    ['/prof/trombi', '📷 Trombi toutes classes', 'Entraînement à la mémorisation des prénoms'],
   ];
   return (
     <div className="page stack">
@@ -70,13 +70,16 @@ function OriginsPanel() {
       <div>
         <button
           className="btn small"
-          onClick={() => {
-            const code = prompt('Code de l’origine (2 lettres, ex. MM)')?.trim().toUpperCase();
-            if (!code) return;
+          onClick={async () => {
+            const r = await askForm('Nouvelle origine de flashcards', [
+              { key: 'code', label: 'Code (2 lettres)', placeholder: 'MM' },
+              { key: 'name', label: 'Nom complet', placeholder: 'Mme Dupont – cours de 4e', optional: true },
+            ]);
+            if (!r) return;
+            const code = r.code.toUpperCase();
             if (!/^[A-Z]{2}$/.test(code)) return alert('Le code doit faire exactement 2 lettres.');
             if (origins.some((o) => o.code === code)) return alert('Ce code existe déjà.');
-            const name = prompt('Nom complet (ex. Mme Dupont – cours de 4e)') ?? '';
-            save([...origins, { code, name }]);
+            save([...origins, { code, name: r.name }]);
           }}
         >
           + Ajouter une origine

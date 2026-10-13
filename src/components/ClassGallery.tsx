@@ -1,5 +1,6 @@
 // Galerie des élèves d'une classe (photo et prénom, autant de lignes que nécessaire) et sous-groupes (demi-groupes, îlots…).
 // Un sous-groupe choisi comme « pinceau » : un clic sur un élève l'y affecte (ou l'en retire).
+import { ask } from './Dialog';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -27,8 +28,8 @@ export function ClassGallery({ group }: { group: Group }) {
   const active = subs.find((s) => s.id === brush);
   const save = (list: Subgroup[]) => db.groups.update(group.id, { subgroups: list });
 
-  function add() {
-    const name = prompt('Nom du sous-groupe (ex. Groupe 1, Îlot A)', `Groupe ${subs.length + 1}`);
+  async function add() {
+    const name = await ask('Nouveau sous-groupe', { label: 'Nom', value: `Groupe ${subs.length + 1}`, placeholder: 'Groupe 1, Îlot A…' });
     if (!name?.trim()) return;
     const sg: Subgroup = { id: uid(), name: name.trim(), color: SUBGROUP_COLORS[subs.length % SUBGROUP_COLORS.length], studentIds: [] };
     save([...subs, sg]);
@@ -72,8 +73,8 @@ export function ClassGallery({ group }: { group: Group }) {
           <div className="row" style={{ gap: 6 }}>
             <button
               className="btn small ghost"
-              onClick={() => {
-                const name = prompt('Nom du sous-groupe', active.name);
+              onClick={async () => {
+                const name = await ask('Renommer le sous-groupe', { label: 'Nom', value: active.name });
                 if (name?.trim()) save(subs.map((s) => (s.id === active.id ? { ...s, name: name.trim() } : s)));
               }}
             >

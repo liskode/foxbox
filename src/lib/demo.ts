@@ -15,10 +15,6 @@ const LAST = ['Martin', 'Bernard', 'Thomas', 'Petit', 'Robert', 'Richard', 'Dura
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 const SUBJECT = 'Physique-Chimie';
 
-export async function hasDemo() {
-  return !!(await db.meta.get('demo'));
-}
-
 export async function generateDemo() {
   const cards = (await db.cards.orderBy('code').toArray()).filter((c) => !c.deleted && c.subject === SUBJECT);
   if (!cards.length) throw new Error("Importez d'abord votre paquet Anki : la démonstration utilise vos cartes.");

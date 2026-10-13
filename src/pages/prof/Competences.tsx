@@ -1,4 +1,5 @@
 // Compétences : référentiel (APP, ANA, REA, VAL, COM et sous-compétences) et niveau atteint par les élèves d'une classe.
+import { ask } from '../../components/Dialog';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Student, shortName } from '../../lib/db';
@@ -53,8 +54,8 @@ function Referential({ list, selected, onSelect }: { list: Competence[]; selecte
             <button
               className="btn small ghost"
               title="Ajouter une sous-compétence"
-              onClick={() => {
-                const name = prompt(`Nouvelle sous-compétence de ${cat.code} (${cat.name}) :`);
+              onClick={async () => {
+                const name = await ask(`Nouvelle sous-compétence de ${cat.code} (${cat.name})`, { label: 'Intitulé' });
                 if (name?.trim()) save([...list, newSubCompetence(list, cat, name.trim())]);
               }}
             >
@@ -64,8 +65,8 @@ function Referential({ list, selected, onSelect }: { list: Competence[]; selecte
           {childrenOf(list, cat.id).map((k) => (
             <div key={k.id} className="row small" style={{ gap: 6, paddingLeft: 22, flexWrap: 'nowrap' }}>
               <CompetenceChip c={k} small />
-              <span style={{ flex: 1, cursor: 'pointer' }} title="Cliquer pour renommer" onClick={() => {
-                const name = prompt('Nom de la sous-compétence', k.name);
+              <span style={{ flex: 1, cursor: 'pointer' }} title="Cliquer pour renommer" onClick={async () => {
+                const name = await ask('Renommer la sous-compétence', { label: 'Intitulé', value: k.name });
                 if (name?.trim()) save(list.map((x) => (x.id === k.id ? { ...x, name: name.trim() } : x)));
               }}>
                 {k.name}

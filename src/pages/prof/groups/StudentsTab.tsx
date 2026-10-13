@@ -1,0 +1,220 @@
+// Classe : onglet Élèves (import CSV, photos, identifiants, objectifs, aménagements).
+import { useState } from 'react';
+import { askForm } from '../../../components/Dialog';
+import { Link } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, type Group, type Rule } from '../../../lib/db';
+import { parseCsv, importStudents, resetPassword, deleteStudent, type ParsedRow } from '../../../lib/students';
+import { DEFAULT_GOAL } from '../../../lib/leitner';
+import { Avatar } from '../../../components/Avatar';
+import { importPhotos } from '../../../lib/photos';
+import { TrombiImport } from '../../../components/TrombiImport';
+import { NoteButton, FlagChecks } from '../../../components/StudentNote';
+
+export function StudentsTab({ group }: { group: Group }) {
+  const students = useLiveQuery(
+    async () => {
+      const ms = await db.memberships.where('groupId').equals(group.id).toArray();
+      const s = await db.students.bulkGet(ms.map((m) => m.studentId));
+      return s
+        .filter(Boolean)
+        .map((x) => x!)
+        .sort((a, b) => a.lastName.localeCompare(b.lastName));
+    },
+    [group.id],
+    [],
+  );
+  const [preview, setPreview] = useState<ParsedRow[] | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function onCsv(f?: File) {
+    if (!f) return;
+    const buf = await f.arrayBuffer();
+    let text = new TextDecoder('utf-8').decode(buf);
+    if (text.includes('�')) text = new TextDecoder('windows-1252').decode(buf); // export Excel/ENT
+    setPreview(parseCsv(text));
+  }
+
+  async function confirmImport() {
+    if (!preview) return;
+    setMsg('Création des comptes…');
+    let r;
+    try {
+      r = await importStudents(preview, group.id, group.subject);
+    } catch (e) {
+      return setMsg('Erreur : ' + (e as Error).message);
+    }
+    setMsg(`${r.created} élève(s) créé(s), ${r.reused} déjà connu(s) ajouté(s) à la classe.`);
+    setPreview(null);
+  }
+
+  async function onPhotos(list: FileList | null) {
+    if (!list?.length) return;
+    const r = await importPhotos([...list], students);
+    setMsg(
+      `${r.matched} photo(s) associée(s).` +
+        (r.unmatched.length ? ` Non reconnue(s) : ${r.unmatched.join(', ')} — ajoutez-les à la main en cliquant sur l'avatar.` : ''),
+    );
+  }
+
+  async function addOne() {
+    const r = await askForm(`Ajouter un élève à ${group.name}`, [
+      { key: 'firstName', label: 'Prénom' },
+      { key: 'lastName', label: 'Nom' },
+    ]);
+    if (!r) return;
+    try {
+      await importStudents([{ firstName: r.firstName, lastName: r.lastName }], group.id, group.subject);
+    } catch (e) {
+      setMsg('Erreur : ' + (e as Error).message);
+    }
+  }
+
+  return (
+    <div className="stack">
+      <div className="panel stack">
+        <div className="spread">
+          <h3 style={{ margin: 0 }}>{students.length} élève(s)</h3>
+          <div className="row">
+            <label className="btn">
+              Importer un CSV
+              <input type="file" accept=".csv,.txt" hidden onChange={(e) => onCsv(e.target.files?.[0])} />
+            </label>
+            <button className="btn" onClick={() => setPdfOpen(true)}>
+              📄 Trombinoscope PDF
+            </button>
+            <label className="btn">
+              📷 Photos (fichiers)
+              <input type="file" accept="image/*" multiple hidden onChange={(e) => onPhotos(e.target.files)} />
+            </label>
+            <button className="btn ghost" onClick={addOne}>
+              + Élève
+            </button>
+            <Link className="btn primary" to={`/prof/classes/${group.id}/fiches`}>
+              🖨 Fiches identifiants
+            </Link>
+          </div>
+        </div>
+        <span className="small muted">
+          CSV accepté : colonnes « Nom ; Prénom » (avec ou sans en-tête), ou export ENT/Pronote avec une colonne « Élève ». Un élève déjà connu de
+          FoxBox est réutilisé (pas de doublon, il garde ses flashcards).
+          <br />
+          Photos : sélectionnez plusieurs fichiers nommés avec le nom et le prénom (ex. « DUPONT Marie.jpg », « marie.dupont.png ») ; ils sont
+          associés automatiquement. Un clic sur l'avatar change une photo.
+        </span>
+        {msg && <div className="notice">{msg}</div>}
+        {pdfOpen && <TrombiImport group={group} students={students} onClose={() => setPdfOpen(false)} />}
+        {preview && (
+          <div className="notice stack">
+            <b>{preview.length} élève(s) trouvé(s) dans le fichier :</b>
+            <div className="small">
+              {preview
+                .slice(0, 12)
+                .map((r) => `${r.firstName} ${r.lastName}`)
+                .join(' · ')}
+              {preview.length > 12 && ' …'}
+            </div>
+            <div className="row">
+              <button className="btn primary" onClick={confirmImport}>
+                Importer dans {group.name}
+              </button>
+              <button className="btn ghost" onClick={() => setPreview(null)}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="panel" style={{ overflowX: 'auto' }}>
+        <table className="list">
+          <thead>
+            <tr>
+              <th>Élève</th>
+              <th>Identifiant</th>
+              <th>Mot de passe</th>
+              <th>Objectif / jour</th>
+              <th>Règle d'erreur</th>
+              <th></th>
+              <th>Aménagements</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((s) => (
+              <tr key={s.id}>
+                <td>
+                  <span className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+                    <Avatar student={s} size={40} editable zoom />
+                    <Link to={`/prof/eleves/${s.id}?classe=${group.id}`}>
+                      <b>
+                        {s.lastName} {s.firstName}
+                      </b>
+                    </Link>
+                    {!s.firstName && (
+                      <Link to={`/prof/eleves/${s.id}?classe=${group.id}`} className="chip" style={{ background: '#f6c9c3', textDecoration: 'none' }}>
+                        prénom à compléter
+                      </Link>
+                    )}
+                  </span>
+                </td>
+                <td className="code">{s.login}</td>
+                <td className="code">{s.password}</td>
+                <td>
+                  <input
+                    type="number"
+                    min={1}
+                    max={200}
+                    style={{ width: 70 }}
+                    value={s.goals[group.subject] ?? DEFAULT_GOAL}
+                    onChange={(e) => db.students.update(s.id, { goals: { ...s.goals, [group.subject]: Math.max(1, Number(e.target.value)) } })}
+                  />
+                </td>
+                <td>
+                  <select value={s.rule} onChange={(e) => db.students.update(s.id, { rule: e.target.value as Rule })}>
+                    <option value="strict">Stricte (retour boîte 1)</option>
+                    <option value="douce">Douce (−1 boîte)</option>
+                  </select>
+                </td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button
+                    className="btn small ghost"
+                    onClick={() => confirm(`Nouveau mot de passe pour ${s.firstName} ?`) && resetPassword(s.id).catch((e) => alert(e.message))}
+                  >
+                    Nouveau mdp
+                  </button>{' '}
+                  <button
+                    className="btn small ghost"
+                    onClick={() =>
+                      confirm(`Retirer ${s.firstName} ${s.lastName} de ${group.name} ? (son compte et ses flashcards sont conservés)`) &&
+                      db.memberships.delete(`${group.id}|${s.id}`)
+                    }
+                  >
+                    Retirer
+                  </button>{' '}
+                  <button
+                    className="btn small danger"
+                    title="Supprimer définitivement l'élève"
+                    onClick={() =>
+                      confirm(
+                        `Supprimer définitivement ${s.firstName} ${s.lastName} ?\n\nSon compte, sa photo, sa progression et son historique seront effacés, dans toutes ses classes. Cette action est irréversible.`,
+                      ) && deleteStudent(s.id).catch((e) => alert(e.message))
+                    }
+                  >
+                    🗑
+                  </button>
+                </td>
+                <td>
+                  <FlagChecks studentId={s.id} compact />
+                </td>
+                <td>
+                  <NoteButton student={s} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

@@ -4,7 +4,7 @@
 //  - origine : 2 lettres (ER, MM…), voir Réglages
 //  - numéro : 3 chiffres, compté pour chaque combinaison niveau + thème + origine
 import { db, type Card } from './db';
-import { THEMES } from './apkg';
+import { THEMES } from './themes';
 
 export const LEVEL_DIGIT: Record<string, string> = { '6e': '6', '5e': '5', '4e': '4', '3e': '3', '2nde': '2', '1re': '1', Tle: '0' };
 

@@ -1,4 +1,5 @@
 // Salles : on coche les cases d'un quadrillage pour placer les places (des cases voisines forment une table).
+import { ask } from '../../components/Dialog';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -76,7 +77,7 @@ export function Rooms() {
   const update = (p: Partial<Room>) => sel && save(rooms.map((r) => (r.id === sel.id ? { ...r, ...p } : r)));
 
   async function add(name?: string) {
-    const n = name ?? prompt('Nom de la salle (ex. SC102)')?.trim();
+    const n = name ?? (await ask('Nouvelle salle', { label: 'Nom', placeholder: 'SC102' }))?.trim();
     if (!n) return;
     const r = newRoom(n);
     await save([...rooms, r]);

@@ -1,7 +1,7 @@
 // Base de données locale (navigateur). Les tables reprennent le futur schéma Supabase
 // pour que la migration se limite à remplacer ce fichier et les fonctions d'accès.
 import Dexie, { type Table } from 'dexie';
-import { ONLINE, supabase } from './supabase';
+import { ONLINE } from './supabase';
 
 export type Rating = 'easy' | 'hard' | 'forgot';
 export type Rule = 'strict' | 'douce';
@@ -53,7 +53,6 @@ export interface Group {
   teacherIds: string[];
   archived?: boolean;
   color?: string; // couleur de repérage (palette CLASS_COLORS)
-  sequenceIds?: string[]; // séquences suivies par la classe (Progression), dans l'ordre
   seatPlans?: import('./rooms').SeatPlan[]; // plans de classe
   subgroups?: Subgroup[]; // demi-groupes, îlots… (un élève est dans un seul sous-groupe)
 }

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
-import { groupOverview } from '../../lib/stats';
+import { addDays, today } from '../../lib/dates';
 import { levelPlans } from '../../lib/forecast';
 import { TodoList } from '../../components/TodoList';
 import { TimetableWidget } from '../../components/TimetableWidget';
@@ -30,11 +30,16 @@ function useAlerts() {
   return useLiveQuery(async () => {
     const plans = await levelPlans(session!.id);
     const late = plans.levels.flatMap((l) => l.groups.filter((g) => l.plans.get(g.id)?.overflowWeeks).map((g) => g.name.replace(/_.*/, '')));
-    let relancer = 0;
-    for (const g of await db.groups.filter((g) => !g.archived).toArray()) {
-      const ov = await groupOverview(g.id);
-      relancer += ov?.rows.filter((r) => r.inactiveDays === null || r.inactiveDays >= 5).length ?? 0;
-    }
+    // Élèves sans révision depuis 5 jours : une seule lecture des révisions (et non une par élève)
+    const groups = await db.groups.filter((g) => !g.archived).toArray();
+    const ids = new Set(groups.map((g) => g.id));
+    const students = new Set((await db.memberships.toArray()).filter((m) => ids.has(m.groupId)).map((m) => m.studentId));
+    const last = new Map<string, string>();
+    await db.reviews.each((r) => {
+      if (students.has(r.studentId) && r.date > (last.get(r.studentId) ?? '')) last.set(r.studentId, r.date);
+    });
+    const limit = addDays(today(), -5);
+    const relancer = [...students].filter((id) => !last.has(id) || last.get(id)! <= limit).length;
     return { late, relancer };
   }, [session?.id]);
 }

@@ -28,7 +28,6 @@ export async function saveCompetences(teacherId: string, list: Competence[]) {
 
 export const categories = (list: Competence[]) => list.filter((c) => !c.parentId);
 export const childrenOf = (list: Competence[], id: string) => list.filter((c) => c.parentId === id);
-export const categoryOf = (list: Competence[], c: Competence) => (c.parentId ? list.find((x) => x.id === c.parentId) ?? c : c);
 
 export function newSubCompetence(list: Competence[], parent: Competence, name: string): Competence {
   const n = childrenOf(list, parent.id).length + 1;

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { ask } from './Dialog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, fileBlob, type Card } from '../lib/db';
 import { cardCode, codePrefix, loadOrigins, rememberOrigin, DEFAULT_ORIGINS } from '../lib/cardCodes';
 import { useAuth } from '../lib/auth';
-import { THEMES } from '../lib/apkg';
+import { THEMES } from '../lib/themes';
 import { cardByGroup } from '../lib/stats';
 import { CardFace } from './CardFace';
 import { unitLabel } from '../lib/units';
@@ -51,7 +52,7 @@ function FaceEditor({
   }
   // Image par lien : copiée dans FoxBox si le site le permet (fonctionne hors ligne), sinon simple lien
   async function addImageUrl() {
-    const url = prompt("Adresse de l'image (clic droit sur l'image › « Copier l'adresse de l'image »)")?.trim();
+    const url = (await ask("Insérer une image par lien", { label: "Adresse de l'image (clic droit sur l'image › « Copier l'adresse de l'image »)", placeholder: 'https://…' }))?.trim();
     if (!url) return;
     if (!/^https?:\/\//i.test(url)) return alert("L'adresse doit commencer par http:// ou https://");
     let tag = `<img src="${url.replace(/"/g, '%22')}">`;

@@ -5,13 +5,8 @@ import initSqlJs, { type Database } from 'sql.js';
 import { db, uid, type Card, type CardSnapshot } from './db';
 import { cardCode, defaultOrigin } from './cardCodes';
 
-export const THEMES: Record<string, string> = {
-  '1': 'Matière',
-  '2': 'Mouvement',
-  '3': 'Énergie',
-  '4': 'Signaux',
-  '9': 'Outils mathématiques',
-};
+export { THEMES } from './themes';
+import { THEMES } from './themes';
 
 export interface ImportReport {
   importId: string;

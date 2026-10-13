@@ -1,5 +1,5 @@
 // Lecture automatique du texte des images (pour la recherche), en arrière-plan.
-import { createWorker, type Worker } from 'tesseract.js';
+import type { Worker } from 'tesseract.js'; // la bibliothèque n'est chargée qu'au lancement de la lecture
 import { db } from './db';
 
 type Listener = (s: OcrState) => void;
@@ -47,7 +47,7 @@ export async function runOcr() {
   if (!todo.length) return;
   state = { running: true, done: 0, total: todo.length };
   emit();
-  const worker = await createWorker('fra');
+  const worker = await (await import('tesseract.js')).createWorker('fra');
   try {
     for (const c of todo) {
       const ocrFront = await readFace(worker, c.front);

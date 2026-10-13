@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { HashRouter, Navigate, NavLink, Route, Routes, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
 import { runOcr, subscribeOcr, type OcrState } from './lib/ocr';
@@ -6,27 +6,30 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { subscribeSync, retryFailed, type SyncState } from './lib/sync';
 import { ONLINE } from './lib/supabase';
-import { Timetable } from './pages/prof/Timetable';
-import { Competences } from './pages/prof/Competences';
-import { Settings } from './pages/prof/Settings';
-import { Rooms } from './pages/prof/Rooms';
-import { Family } from './pages/prof/Family';
-import { Flashcards } from './pages/prof/Flashcards';
-import { Students } from './pages/prof/Students';
-import { Dashboard } from './pages/prof/Dashboard';
-import { Sequences } from './pages/prof/Sequences';
-import { GroupPage } from './pages/prof/Groups';
-import { Tickets } from './pages/prof/Tickets';
-import { StudentPage } from './pages/prof/StudentPage';
-import { Trombi } from './pages/prof/Trombi';
 import { UpdateBanner } from './components/UpdateBanner';
-import { TrombiPrint } from './pages/prof/TrombiPrint';
-import { Correction } from './pages/prof/Correction';
-import { EvaluationPage } from './pages/prof/Evaluation';
-import { StudentHome } from './pages/eleve/Home';
-import { ReviewSession } from './pages/eleve/Review';
-import { MyStats } from './pages/eleve/MyStats';
-import { StudentDocuments } from './pages/eleve/Documents';
+import { DialogHost } from './components/Dialog';
+
+// Pages chargées à la demande : un élève ne télécharge pas la partie professeur (ni les outils d'import)
+const Timetable = lazy(() => import('./pages/prof/Timetable').then((m) => ({ default: m.Timetable })));
+const Competences = lazy(() => import('./pages/prof/Competences').then((m) => ({ default: m.Competences })));
+const Settings = lazy(() => import('./pages/prof/Settings').then((m) => ({ default: m.Settings })));
+const Rooms = lazy(() => import('./pages/prof/Rooms').then((m) => ({ default: m.Rooms })));
+const Family = lazy(() => import('./pages/prof/Family').then((m) => ({ default: m.Family })));
+const Flashcards = lazy(() => import('./pages/prof/Flashcards').then((m) => ({ default: m.Flashcards })));
+const Students = lazy(() => import('./pages/prof/Students').then((m) => ({ default: m.Students })));
+const Dashboard = lazy(() => import('./pages/prof/Dashboard').then((m) => ({ default: m.Dashboard })));
+const Sequences = lazy(() => import('./pages/prof/Sequences').then((m) => ({ default: m.Sequences })));
+const GroupPage = lazy(() => import('./pages/prof/Groups').then((m) => ({ default: m.GroupPage })));
+const Tickets = lazy(() => import('./pages/prof/Tickets').then((m) => ({ default: m.Tickets })));
+const StudentPage = lazy(() => import('./pages/prof/StudentPage').then((m) => ({ default: m.StudentPage })));
+const Trombi = lazy(() => import('./pages/prof/Trombi').then((m) => ({ default: m.Trombi })));
+const TrombiPrint = lazy(() => import('./pages/prof/TrombiPrint').then((m) => ({ default: m.TrombiPrint })));
+const Correction = lazy(() => import('./pages/prof/Correction').then((m) => ({ default: m.Correction })));
+const EvaluationPage = lazy(() => import('./pages/prof/Evaluation').then((m) => ({ default: m.EvaluationPage })));
+const StudentHome = lazy(() => import('./pages/eleve/Home').then((m) => ({ default: m.StudentHome })));
+const ReviewSession = lazy(() => import('./pages/eleve/Review').then((m) => ({ default: m.ReviewSession })));
+const MyStats = lazy(() => import('./pages/eleve/MyStats').then((m) => ({ default: m.MyStats })));
+const StudentDocuments = lazy(() => import('./pages/eleve/Documents').then((m) => ({ default: m.StudentDocuments })));
 
 function OcrBadge() {
   const [s, setS] = useState<OcrState | null>(null);
@@ -144,8 +147,10 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
 export function App() {
   return (
     <AuthProvider>
+      <DialogHost />
       <HashRouter>
         <UpdateBanner />
+        <Suspense fallback={<div className="page muted">Chargement…</div>}>
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/inscription" element={<Signup />} />
@@ -177,6 +182,7 @@ export function App() {
           <Route path="/eleve/documents" element={<Shell role="eleve"><StudentDocuments /></Shell>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </HashRouter>
     </AuthProvider>
   );

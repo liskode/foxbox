@@ -5,7 +5,7 @@ import { db, type Card } from '../lib/db';
 import { CardFace } from './CardFace';
 import { themeClass, themeColor } from './widgets';
 import { normalize } from '../lib/students';
-import { THEMES } from '../lib/apkg';
+import { THEMES } from '../lib/themes';
 
 const strip = (h: string) => h.replace(/<[^>]*>/g, ' ');
 

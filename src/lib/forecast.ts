@@ -126,15 +126,39 @@ export interface LevelPlan {
   plans: Map<string, ClassPlan>; // groupId → plan
 }
 
+// Cache : le calcul (dates prévues de chaque classe sur toute l'année) est partagé par toutes les vues ouvertes
+// et refait seulement quand une séquence, une publication, une classe ou l'emploi du temps change (ou le jour).
+let version = 0;
+let hooked = false;
+let cache: { key: string; value: { tt: Timetable; units: Unit[]; levels: LevelPlan[] } } | null = null;
+function watchChanges() {
+  if (hooked) return;
+  hooked = true;
+  const bump = () => {
+    version++;
+  };
+  for (const t of [db.units, db.publications, db.groups, db.teachers]) {
+    t.hook('creating', bump);
+    t.hook('updating', bump);
+    t.hook('deleting', bump);
+  }
+}
+
 export async function levelPlans(teacherId: string): Promise<{ tt: Timetable; units: Unit[]; levels: LevelPlan[] }> {
+  watchChanges();
+  // Les lectures sont faites à chaque fois : elles abonnent l'affichage aux changements (useLiveQuery)
   const [tt, units, allGroups, pubs] = await Promise.all([loadTimetable(teacherId), db.units.toArray(), db.groups.toArray(), db.publications.toArray()]);
+  const key = `${teacherId}|${version}|${today()}`;
+  if (cache?.key === key) return cache.value;
   const active = allGroups.filter((g) => !g.archived);
   const levels = LEVELS.map((level) => {
     const groups = groupsOfLevel(active, level);
     const items = itemsOf(units, level);
     return { level, groups, items, plans: new Map(groups.map((g) => [g.id, planClass(tt, g, active, items, pubs)])) };
   });
-  return { tt, units, levels };
+  const value = { tt, units, levels };
+  cache = { key, value };
+  return value;
 }
 
 // Une unité (séance, ou séquence sans séance) est-elle faite par la classe ?

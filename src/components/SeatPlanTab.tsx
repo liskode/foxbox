@@ -1,5 +1,6 @@
 // Plan de classe : les élèves de la classe placés sur les places d'une salle.
 // Un clic sur un élève puis sur une place l'y installe ; un clic sur deux places les échange.
+import { ask } from './Dialog';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -275,8 +276,8 @@ export function SeatPlanTab({ group }: { group: Group }) {
             </button>
             <button
               className="btn small ghost"
-              onClick={() => {
-                const name = prompt('Nom du plan', plan.name);
+              onClick={async () => {
+                const name = await ask('Renommer le plan', { label: 'Nom', value: plan.name });
                 if (name)
                   savePlans(
                     group,
@@ -493,8 +494,8 @@ function SavedPlans({ group, plans, plan }: { group: Group; plans: SeatPlan[]; p
         <b>Plans sauvegardés</b>
         <button
           className="btn small primary"
-          onClick={() => {
-            const comment = prompt('Commentaire (facultatif) : ex. « après le conseil de classe », « contrôle »', '');
+          onClick={async () => {
+            const comment = await ask('Sauvegarder le plan', { label: 'Commentaire (facultatif)', placeholder: 'après le conseil de classe, contrôle…', optional: true });
             if (comment === null) return;
             update({ saved: [{ id: uid(), at: Date.now(), comment: comment.trim() || undefined, seats: { ...plan.seats } }, ...saved] });
           }}

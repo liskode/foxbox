@@ -9,7 +9,6 @@ import { TodoList } from './TodoList';
 import { ClassNotes } from './ClassNotes';
 import { ClassGallery } from './ClassGallery';
 import { useProgressSummary } from './Progression';
-import { StudentName } from './Avatar';
 import { DoneCell } from './DoneCell';
 import { useAuth } from '../lib/auth';
 import { levelPlans, courseDays, doneDate, dm, yearEnd } from '../lib/forecast';
@@ -158,22 +157,9 @@ export function ClassOverview({ group, goTab }: { group: Group; goTab: (t: strin
               </a>
             </div>
             {dropped.length > 0 && (
-              <>
-                <b className="small">⚠️ À relancer (aucune révision depuis 5 jours)</b>
-                <div className="row" style={{ gap: 6 }}>
-                  {dropped.slice(0, 12).map((r) => (
-                    <Link
-                      key={r.student.id}
-                      to={`/prof/eleves/${r.student.id}?classe=${group.id}`}
-                      className="chip"
-                      style={{ textDecoration: 'none', padding: '2px 10px 2px 2px', background: 'var(--paper)' }}
-                    >
-                      <StudentName student={r.student} size={24} short />
-                    </Link>
-                  ))}
-                  {dropped.length > 12 && <span className="small muted">+{dropped.length - 12}</span>}
-                </div>
-              </>
+              <a href="#" className="small" style={{ fontWeight: 700 }} onClick={(e) => (e.preventDefault(), goTab('suivi'))}>
+                ⚠️ {dropped.length} élève(s) à relancer (aucune révision depuis 5 jours) →
+              </a>
             )}
           </div>
 
