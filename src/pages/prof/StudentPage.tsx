@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { showInfo } from '../../components/Dialog';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { renameStudent, deleteStudent, resetPassword } from '../../lib/students';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -155,7 +156,7 @@ export function StudentPage() {
                   try {
                     await resetPassword(student.id);
                     const s2 = await db.students.get(student.id);
-                    setMsg(`Nouveau mot de passe de ${student.firstName} : ${s2?.password ?? '(voir la fiche de connexion)'}`);
+                    await showInfo(`Nouveau mot de passe de ${student.firstName} ${student.lastName}`, `Identifiant : ${student.login}\nMot de passe : ${s2?.password ?? '?'}`);
                   } catch (e) {
                     alert((e as Error).message);
                   }

@@ -12,6 +12,7 @@ export interface Field {
 }
 interface Request {
   title: string;
+  message?: string;
   fields: Field[];
   ok?: string;
   resolve: (v: Record<string, string> | null) => void;
@@ -23,6 +24,14 @@ export function askForm(title: string, fields: Field[], ok = 'Valider'): Promise
   return new Promise((resolve) => {
     if (!open) return resolve(null);
     open({ title, fields, ok, resolve });
+  });
+}
+
+// Simple message (ex. nouveau mot de passe), avec un bouton OK
+export async function showInfo(title: string, message: string) {
+  await new Promise<void>((resolve) => {
+    if (!open) return resolve();
+    open({ title, message, fields: [], ok: 'OK', resolve: () => resolve() });
   });
 }
 
@@ -70,6 +79,7 @@ export function DialogHost() {
         }}
       >
         <b style={{ fontSize: '1.05rem' }}>{req.title}</b>
+        {req.message && <div style={{ whiteSpace: 'pre-wrap', fontSize: '1.05rem' }}>{req.message}</div>}
         {req.fields.map((f) => {
           const isFirst = !f.options && firstText;
           if (!f.options) firstText = false;
@@ -102,9 +112,11 @@ export function DialogHost() {
           );
         })}
         <div className="row" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn ghost" onClick={() => done(null)}>
-            Annuler
-          </button>
+          {req.fields.length > 0 && (
+            <button className="btn ghost" onClick={() => done(null)}>
+              Annuler
+            </button>
+          )}
           <button className="btn primary" disabled={!valid} onClick={submit}>
             {req.ok}
           </button>

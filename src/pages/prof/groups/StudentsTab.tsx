@@ -1,4 +1,5 @@
 // Classe : onglet Élèves (import CSV, photos, identifiants, objectifs, aménagements).
+import { showInfo } from '../../../components/Dialog';
 import { useState } from 'react';
 import { askForm } from '../../../components/Dialog';
 import { Link } from 'react-router-dom';
@@ -191,7 +192,16 @@ export function StudentsTab({ group }: { group: Group }) {
                   <button
                     className="btn small ghost"
                     title="Nouveau mot de passe"
-                    onClick={() => confirm(`Nouveau mot de passe pour ${s.firstName} ?`) && resetPassword(s.id).catch((e) => alert(e.message))}
+                    onClick={async () => {
+                      if (!confirm(`Nouveau mot de passe pour ${s.firstName} ?`)) return;
+                      try {
+                        await resetPassword(s.id);
+                        const s2 = await db.students.get(s.id);
+                        await showInfo(`Nouveau mot de passe de ${s.firstName} ${s.lastName}`, `Identifiant : ${s.login}\nMot de passe : ${s2?.password ?? '?'}`);
+                      } catch (e) {
+                        alert((e as Error).message);
+                      }
+                    }}
                   >
                     🔑
                   </button>{' '}
