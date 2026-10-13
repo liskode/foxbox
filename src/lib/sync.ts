@@ -37,6 +37,7 @@ const SPECS: Record<string, TableSpec> = {
   parentMessages: { remote: 'parent_messages', cols: (m) => ({ teacher_id: m.teacherId, student_id: m.studentId }) },
   todos: { remote: 'todos', cols: (t) => ({ teacher_id: t.teacherId }) },
   classNotes: { remote: 'class_notes', cols: (n) => ({ teacher_id: n.teacherId }) },
+  absences: { remote: 'absences', cols: (a) => ({ teacher_id: a.teacherId, student_id: a.studentId }) },
 };
 
 // ---------- Envoi ----------

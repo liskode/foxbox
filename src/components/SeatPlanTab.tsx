@@ -1,5 +1,7 @@
 // Plan de classe : les élèves de la classe placés sur les places d'une salle.
 // Un clic sur un élève puis sur une place l'y installe ; un clic sur deux places les échange.
+import { toggleAbsence } from '../lib/absences';
+import { today } from '../lib/dates';
 import { ask } from './Dialog';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -23,6 +25,7 @@ export function PlanGrid({
   flip,
   cell,
   hideFlags = false,
+  absent,
 }: {
   room: Room;
   plan: SeatPlan;
@@ -32,6 +35,7 @@ export function PlanGrid({
   flip: boolean;
   cell: number;
   hideFlags?: boolean;
+  absent?: Set<string>; // élèves absents (grisés)
 }) {
   const flags = useAllFlags();
   const seats = new Set(room.seats);
@@ -84,7 +88,8 @@ export function PlanGrid({
                 style={{
                   border: `1.5px solid ${picked ? 'var(--ink)' : '#00000033'}`,
                   outline: picked ? '3px solid var(--matiere)' : undefined,
-                  background: s ? '#fff8e6' : '#f6f4ef',
+                  background: s ? (absent?.has(s.id) ? '#e4e2dd' : '#fff8e6') : '#f6f4ef',
+                  ...(s && absent?.has(s.id) ? { opacity: 0.45, filter: 'grayscale(1)' } : {}),
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -153,6 +158,12 @@ export function SeatPlanTab({ group }: { group: Group }) {
   const sub = group.subgroups?.find((x) => x.id === plan?.subgroupId);
   const students = sub ? allStudents.filter((s) => sub.studentIds.includes(s.id)) : allStudents;
   const byId = new Map(students.map((s) => [s.id, s]));
+  const [appel, setAppel] = useState(false);
+  const absentToday = useLiveQuery(
+    async () => new Set((await db.absences.where('groupId').equals(group.id).toArray()).filter((a) => a.date === today()).map((a) => a.studentId)),
+    [group.id],
+    new Set<string>(),
+  );
   const validSeats = new Set(room?.seats ?? []);
   const placed = new Set(
     Object.entries(plan?.seats ?? {})
@@ -185,6 +196,12 @@ export function SeatPlanTab({ group }: { group: Group }) {
 
   function onSeat(k: string) {
     if (!plan) return;
+    // Appel : un clic sur un élève le note absent (ou l'annule)
+    if (appel) {
+      const id = plan.seats[k];
+      if (id && byId.has(id)) toggleAbsence(session!.id, group.id, id, today());
+      return;
+    }
     const seats = { ...plan.seats };
     const occupant = seats[k];
     if (pick && 'student' in pick) {
@@ -381,9 +398,26 @@ export function SeatPlanTab({ group }: { group: Group }) {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(200px, 260px)', gap: 16, alignItems: 'start' }}>
           <div className="panel" style={{ overflowX: 'auto' }}>
-            <PlanGrid room={room} plan={plan} students={byId} pick={pick} onSeat={onSeat} flip={flip} cell={76} />
+            <PlanGrid room={room} plan={plan} students={byId} pick={pick} onSeat={onSeat} flip={flip} cell={76} absent={absentToday} />
           </div>
           <div className="stack" style={{ gap: 12 }}>
+            <div className="panel stack" style={{ gap: 6, borderColor: appel ? 'var(--forgot)' : undefined }}>
+              <button className={'btn' + (appel ? ' danger' : '')} onClick={() => (setAppel(!appel), setPick(null))}>
+                {appel ? '✓ Terminer l’appel' : '📋 Appel'}
+              </button>
+              {(appel || absentToday.size > 0) && (
+                <span className="small">
+                  {appel && (
+                    <>
+                      Cliquez sur les élèves absents (un second clic annule).
+                      <br />
+                    </>
+                  )}
+                  <b>{absentToday.size} absent(s)</b> aujourd'hui
+                  {absentToday.size ? ' : ' + students.filter((x) => absentToday.has(x.id)).map((x) => x.firstName).join(', ') : ''}
+                </span>
+              )}
+            </div>
             <div className="panel stack" style={{ gap: 6 }}>
               <b>
                 {placed.size}/{students.length} placés · {room.seats.length} places

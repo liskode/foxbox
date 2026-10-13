@@ -1,4 +1,8 @@
 // Fiche élève (professeur) : ses évaluations, et le suivi des messages envoyés aux parents.
+import { useCompetences } from './CompetencePicker';
+import { CompetenceHisto } from './CompetenceHisto';
+import { categories, competenceScores, type Competence } from '../lib/competences';
+import { absencesOf } from '../lib/absences';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Student } from '../lib/db';
@@ -53,6 +57,89 @@ export function StudentEvaluations({ student }: { student: Student }) {
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// Compétences de l'élève sur toutes ses évaluations : histogramme (hauteur = points du barème, vert = réussi)
+export function StudentCompetenceHisto({ student }: { student: Student }) {
+  const list = useStudentEvals(student.id);
+  const comps = useCompetences();
+  const sums = new Map<string, { c: Competence; note: number; total: number }>();
+  for (const { ev, r } of list) {
+    for (const sc of competenceScores(comps, ev!, r)) {
+      const cur = sums.get(sc.c.id) ?? { c: sc.c, note: 0, total: 0 };
+      cur.note += sc.note;
+      cur.total += sc.total;
+      sums.set(sc.c.id, cur);
+    }
+  }
+  const bars = categories(comps)
+    .map((c) => sums.get(c.id))
+    .filter((x): x is NonNullable<typeof x> => !!x);
+  return (
+    <div className="panel stack" style={{ gap: 8 }}>
+      <div className="spread">
+        <h3 style={{ margin: 0 }}>🎯 Compétences</h3>
+        <Link to="/prof/competences" className="small">
+          détail →
+        </Link>
+      </div>
+      {bars.length ? (
+        <>
+          <CompetenceHisto bars={bars} height={110} />
+          <span className="small muted">Toutes évaluations confondues · hauteur : points du barème · vert : réussi.</span>
+        </>
+      ) : (
+        <span className="muted small">Pas encore de critère rattaché à une compétence.</span>
+      )}
+    </div>
+  );
+}
+
+// Absences relevées à l'appel : date, séance du jour, motif (note libre)
+export function StudentAbsences({ student }: { student: Student }) {
+  const list = useLiveQuery(() => absencesOf(student.id), [student.id], []);
+  return (
+    <div className="panel stack" style={{ gap: 6 }}>
+      <h3 style={{ margin: 0 }}>🚪 Absences ({list.length})</h3>
+      {list.length ? (
+        <table className="list">
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'left' }}>Date</th>
+              <th style={{ textAlign: 'left' }}>Séance</th>
+              <th style={{ textAlign: 'left' }}>Motif</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((a) => (
+              <tr key={a.id}>
+                <td className="small" style={{ whiteSpace: 'nowrap' }}>
+                  {frDate(a.date)}
+                </td>
+                <td className="small">{a.seance || <span className="muted">— (aucune séance cochée ce jour-là)</span>}</td>
+                <td style={{ width: '40%' }}>
+                  <input
+                    defaultValue={a.reason ?? ''}
+                    placeholder="motif, justificatif…"
+                    onBlur={(e) => e.target.value !== (a.reason ?? '') && db.absences.update(a.id, { reason: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </td>
+                <td>
+                  <button className="btn small ghost" title="Supprimer cette absence" onClick={() => confirm('Supprimer cette absence ?') && db.absences.delete(a.id)}>
+                    ✕
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <span className="muted small">Aucune absence relevée. L'appel se fait sur le plan de classe (bouton 📋 Appel).</span>
+      )}
     </div>
   );
 }

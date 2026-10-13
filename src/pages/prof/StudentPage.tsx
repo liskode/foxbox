@@ -9,8 +9,7 @@ import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar } from '../../components/Avatar';
 import { removePhoto } from '../../lib/photos';
 import { NoteEditor, FlagChecks } from '../../components/StudentNote';
-import { StudentEvaluations } from '../../components/StudentEvaluations';
-import { StudentCompetences } from './Competences';
+import { StudentEvaluations, StudentCompetenceHisto, StudentAbsences } from '../../components/StudentEvaluations';
 
 export function StudentPage() {
   const { id } = useParams();
@@ -174,8 +173,11 @@ export function StudentPage() {
         <FlagChecks studentId={student.id} />
         <NoteEditor key={student.id} studentId={student.id} />
       </div>
-      <StudentEvaluations student={student} />
-      <StudentCompetences student={student} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, alignItems: 'start' }}>
+        <StudentEvaluations student={student} />
+        <StudentCompetenceHisto student={student} />
+      </div>
+      <StudentAbsences student={student} />
       <section className="stack" style={{ gap: 12, borderTop: '3px solid var(--line)', paddingTop: 12 }}>
         <h2 style={{ margin: 0 }}>🃏 Flashcards</h2>
         <StudentReport

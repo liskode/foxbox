@@ -186,6 +186,16 @@ export interface StudentFlags {
   ulis?: boolean;
   ordinateur?: boolean; // ordinateur en évaluation
 }
+// Absence relevée à l'appel (privée, comme les notes)
+export interface Absence {
+  id: string; // groupId|studentId|date
+  teacherId: string;
+  studentId: string;
+  groupId: string;
+  date: string; // AAAA-MM-JJ
+  reason?: string; // motif (note libre)
+  createdAt: number;
+}
 // Notes du professeur sur une classe (privées)
 export interface ClassNote {
   id: string; // teacherId|groupId
@@ -315,6 +325,7 @@ class FoxBoxDB extends Dexie {
   reviews!: Table<Review, string>;
   outbox!: Table<Outbox, string>;
   classNotes!: Table<ClassNote, string>;
+  absences!: Table<Absence, string>;
   imports!: Table<ImportRecord, string>;
   notes!: Table<Note, string>;
   evaluations!: Table<Evaluation, string>;
@@ -354,6 +365,7 @@ class FoxBoxDB extends Dexie {
     });
     this.version(6).stores({ todos: 'id, groupId' });
     this.version(7).stores({ classNotes: 'id' });
+    this.version(8).stores({ absences: 'id, studentId, groupId, date' });
   }
 }
 
