@@ -57,7 +57,14 @@ function PlanGrid({
   return (
     <div className="stack" style={{ gap: 8 }}>
       {!flip && board}
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${room.cols}, ${cell}px)`, gridAutoRows: `${cell}px`, justifyContent: 'center' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${room.cols}, ${cell}px)`, // Rangées sans place (allées) réduites pour un plan plus compact ; la largeur des colonnes ne change pas
+          gridTemplateRows: rows.map((r) => (cols.some((c) => seats.has(seatKey(r, c))) ? `${cell}px` : `${Math.round(cell / 5)}px`)).join(' '),
+          justifyContent: 'center',
+        }}
+      >
         {rows.flatMap((r) =>
           cols.map((c) => {
             const k = seatKey(r, c);
