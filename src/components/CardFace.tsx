@@ -35,6 +35,8 @@ async function resolve(html: string): Promise<string> {
   const ids = [...new Set([...html.matchAll(/src="media:([^"]+)"/g)].map((m) => m[1]))];
   // **mot** → gras
   let out = html.replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
+  // Retours à la ligne tapés au clavier (sauf contenu HTML déjà mis en forme, ex. import Anki)
+  if (!/<(br|div|p|li|tr)\b/i.test(out)) out = out.replace(/\n/g, '<br>');
   for (const id of ids) {
     const u = await mediaUrl(id);
     // data-mid : permet de recharger l'image si l'affichage échoue
