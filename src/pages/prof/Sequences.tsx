@@ -28,6 +28,8 @@ function SequenceScreen({ seqId }: { seqId: string }) {
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
+  const [siblings, setSiblings] = useState<string[]>([]);
+  const [editNext, setEditNext] = useState<string | null>(null);
   const unit = units.find((u) => u.id === sel);
 
   const cardsInUnit = useLiveQuery(async () => {
@@ -271,7 +273,7 @@ function SequenceScreen({ seqId }: { seqId: string }) {
                       ids.forEach((i) => (on ? n.add(i) : n.delete(i)));
                       setPicked(n);
                     }}
-                    onOpen={(c) => setOpen(c.id)}
+                    onOpen={(c, ids) => (setSiblings(ids), setOpen(c.id))}
                     exclude={new Set(cardsInUnit?.filter((x) => x.own).map((x) => x.card.id))}
                   />
                 </div>
@@ -290,7 +292,7 @@ function SequenceScreen({ seqId }: { seqId: string }) {
                   </div>
                   <div className="cardgrid">
                     {cardsInUnit?.map(({ card, own }) => (
-                      <div key={card.id} className="thumb" onClick={() => setOpen(card.id)}>
+                      <div key={card.id} className="thumb" onClick={() => (setSiblings(cardsInUnit?.map((x) => x.card.id) ?? []), setOpen(card.id))}>
                         <div className="bar" style={{ background: themeColor(card.theme) }} />
                         <div className="face">
                           <CardFace html={card.front} />
@@ -321,7 +323,16 @@ function SequenceScreen({ seqId }: { seqId: string }) {
           )}
         </div>
       </div>
-      {open && <CardDetail cardId={open} startEditing={creating === open} onClose={() => (setOpen(null), setCreating(null))} />}
+      {open && (
+        <CardDetail
+          key={open}
+          cardId={open}
+          startEditing={creating === open || editNext === open}
+          siblings={siblings}
+          onNavigate={(id, edit) => (setEditNext(edit ? id : null), setOpen(id))}
+          onClose={() => (setOpen(null), setCreating(null), setEditNext(null))}
+        />
+      )}
     </div>
   );
 }

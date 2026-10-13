@@ -4,7 +4,7 @@ import { CardDetail } from '../../components/CardDetail';
 import { db, uid, nextCardCode, SUBJECTS } from '../../lib/db';
 
 export function Cards({ embedded = false }: { embedded?: boolean }) {
-  const [open, setOpen] = useState<{ id: string; edit: boolean } | null>(null);
+  const [open, setOpen] = useState<{ id: string; edit: boolean; ids?: string[] } | null>(null);
 
   async function create() {
     const now = Date.now();
@@ -31,8 +31,17 @@ export function Cards({ embedded = false }: { embedded?: boolean }) {
           + Nouvelle flashcard
         </button>
       </div>
-      <CardBrowser onOpen={(c) => setOpen({ id: c.id, edit: false })} onCreate={create} />
-      {open && <CardDetail cardId={open.id} startEditing={open.edit} onClose={() => setOpen(null)} />}
+      <CardBrowser onOpen={(c, ids) => setOpen({ id: c.id, edit: false, ids })} onCreate={create} />
+      {open && (
+        <CardDetail
+          key={open.id}
+          cardId={open.id}
+          startEditing={open.edit}
+          siblings={open.ids}
+          onNavigate={(id, edit) => setOpen({ ...open, id, edit })}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </div>
   );
 }

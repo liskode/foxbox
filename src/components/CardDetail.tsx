@@ -82,7 +82,19 @@ function FaceEditor({ label, html, onChange }: { label: string; html: string; on
   );
 }
 
-export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: string; onClose: () => void; startEditing?: boolean }) {
+export function CardDetail({
+  cardId,
+  onClose,
+  startEditing = false,
+  siblings,
+  onNavigate,
+}: {
+  cardId: string;
+  onClose: () => void;
+  startEditing?: boolean;
+  siblings?: string[]; // flashcards de la liste d'origine, pour passer à la suivante (← →)
+  onNavigate?: (id: string, editing: boolean) => void;
+}) {
   const card = useLiveQuery(() => db.cards.get(cardId), [cardId]);
   const stats = useLiveQuery(() => cardByGroup(cardId), [cardId]);
   const units = useLiveQuery(async () => {
@@ -106,6 +118,25 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
   useEffect(() => {
     if (startEditing && card && !edit) setEdit({ ...card });
   }, [card, startEditing]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Flashcard précédente / suivante : enregistrement automatique si on est en train de modifier
+  const idx = siblings?.indexOf(cardId) ?? -1;
+  const go = async (d: number) => {
+    const next = siblings?.[idx + d];
+    if (!next || !onNavigate) return;
+    const editing = !!edit;
+    if (edit) await save();
+    onNavigate(next, editing);
+  };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement)?.tagName ?? '')) return;
+      if (e.key === 'ArrowRight') go(1);
+      else if (e.key === 'ArrowLeft') go(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   if (!card) return null;
 
@@ -148,6 +179,19 @@ export function CardDetail({ cardId, onClose, startEditing = false }: { cardId: 
             {card.level && <span className="chip">{card.level}</span>}
           </div>
           <div className="row">
+            {siblings && siblings.length > 1 && idx >= 0 && (
+              <span className="row" style={{ gap: 4 }}>
+                <button className="btn small ghost" disabled={idx === 0} onClick={() => go(-1)} title="Flashcard précédente (←)">
+                  ◀
+                </button>
+                <span className="small muted">
+                  {idx + 1}/{siblings.length}
+                </span>
+                <button className="btn small ghost" disabled={idx === siblings.length - 1} onClick={() => go(1)} title="Flashcard suivante (→)">
+                  ▶
+                </button>
+              </span>
+            )}
             {!edit && (
               <button className="btn primary" onClick={() => setEdit({ ...card })}>
                 Modifier

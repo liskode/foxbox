@@ -41,7 +41,7 @@ export function CardBrowser({
   selected?: Set<string>;
   onToggle?: (id: string) => void;
   onToggleMany?: (ids: string[], on: boolean) => void;
-  onOpen?: (c: Card) => void;
+  onOpen?: (c: Card, ids: string[]) => void; // ids : flashcards affichées, dans l'ordre
   exclude?: Set<string>;
   onCreate?: () => void; // tuile « + » en fin de liste pour créer une flashcard
 }) {
@@ -158,7 +158,7 @@ export function CardBrowser({
           <button
             key={c.id}
             className={'thumb' + (selected?.has(c.id) ? ' selected' : '')}
-            onClick={() => (onToggle ? onToggle(c.id) : onOpen?.(c))}
+            onClick={() => (onToggle ? onToggle(c.id) : onOpen?.(c, list.map((x) => x.id)))}
             title={c.ocrFront || undefined}
           >
             <div className="bar" style={{ background: themeColor(c.theme) }} />
@@ -175,7 +175,7 @@ export function CardBrowser({
                   style={{ textDecoration: 'underline' }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onOpen(c);
+                    onOpen(c, list.map((x) => x.id));
                   }}
                 >
                   voir
