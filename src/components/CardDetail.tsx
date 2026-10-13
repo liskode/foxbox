@@ -51,6 +51,28 @@ function FaceEditor({ label, html, onChange, onImage }: { label: string; html: s
     onImage(html + tag);
   }
 
+  // Image collée (Cmd+V) ou glissée dans le champ : insérée à la position du curseur, enregistrée aussitôt
+  async function insertBlobAtCursor(blob: Blob, name: string) {
+    const el = ta.current;
+    const pos = el ? el.selectionStart : html.length;
+    const tag = `<img src="media:${await storeImage(name, blob)}">`;
+    onImage(html.slice(0, pos) + tag + html.slice(pos));
+  }
+  function onPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const item = [...e.clipboardData.items].find((i) => i.type.startsWith('image/'));
+    const f = item?.getAsFile();
+    if (!f) return; // texte collé normalement
+    e.preventDefault();
+    // Une capture d'écran collée n'a pas de nom : on lui en donne un d'après sa taille, pour reconnaître les doublons
+    fileBlob(f).then((b) => insertBlobAtCursor(b, f.name && f.name !== 'image.png' ? f.name : `collage-${b.size}.png`));
+  }
+  function onDrop(e: React.DragEvent<HTMLTextAreaElement>) {
+    const f = [...e.dataTransfer.files].find((x) => x.type.startsWith('image/'));
+    if (!f) return;
+    e.preventDefault();
+    fileBlob(f).then((b) => insertBlobAtCursor(b, f.name));
+  }
+
   async function addImage(f: File | undefined, replace: boolean) {
     if (!f) return;
     const tag = `<img src="media:${await storeImage(f.name, await fileBlob(f))}">`;
@@ -92,6 +114,9 @@ function FaceEditor({ label, html, onChange, onImage }: { label: string; html: s
         ref={ta}
         value={html}
         onChange={(e) => onChange(e.target.value)}
+        onPaste={onPaste}
+        onDrop={onDrop}
+        placeholder="Texte, formule… ou collez une image (⌘V) / glissez un fichier image ici"
         onKeyDown={(e) => {
           if (!(e.metaKey || e.ctrlKey)) return;
           const k = e.key.toLowerCase();
