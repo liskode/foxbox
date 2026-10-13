@@ -13,6 +13,7 @@ import { DialogHost } from './components/Dialog';
 const Timetable = lazy(() => import('./pages/prof/Timetable').then((m) => ({ default: m.Timetable })));
 const Competences = lazy(() => import('./pages/prof/Competences').then((m) => ({ default: m.Competences })));
 const Settings = lazy(() => import('./pages/prof/Settings').then((m) => ({ default: m.Settings })));
+const PlanScreen = lazy(() => import('./pages/prof/PlanScreen').then((m) => ({ default: m.PlanScreen })));
 const Rooms = lazy(() => import('./pages/prof/Rooms').then((m) => ({ default: m.Rooms })));
 const Family = lazy(() => import('./pages/prof/Family').then((m) => ({ default: m.Family })));
 const Flashcards = lazy(() => import('./pages/prof/Flashcards').then((m) => ({ default: m.Flashcards })));
@@ -76,6 +77,14 @@ function SyncBadge() {
       ✓
     </span>
   );
+}
+
+// Page sans bandeau (ex. plan de classe projeté au tableau), réservée au rôle indiqué
+function Bare({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode }) {
+  const { session, ready } = useAuth();
+  if (!ready) return null;
+  if (!session || session.role !== role) return <Navigate to="/" replace />;
+  return <>{children}</>;
 }
 
 function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode }) {
@@ -172,6 +181,7 @@ export function App() {
           <Route path="/prof/trombi" element={<Shell role="prof"><Trombi /></Shell>} />
           <Route path="/prof/trombi/imprimer/:id" element={<Shell role="prof"><TrombiPrint /></Shell>} />
           <Route path="/prof/competences" element={<Shell role="prof"><Competences /></Shell>} />
+          <Route path="/prof/plan/:groupId/:planId" element={<Bare role="prof"><PlanScreen /></Bare>} />
           <Route path="/prof/salles" element={<Shell role="prof"><Rooms /></Shell>} />
           <Route path="/prof/edt" element={<Shell role="prof"><Timetable /></Shell>} />
           <Route path="/prof/import" element={<Navigate to="/prof/flashcards?onglet=import" replace />} />
