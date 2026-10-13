@@ -8,8 +8,10 @@ export type Rule = 'strict' | 'douce';
 
 export interface Card {
   id: string;
-  code: string; // code unique FoxBox, ex. C0042
+  code: string; // code unique FoxBox, ex. 43MM-012 (voir cardCodes.ts)
   sourceRef?: string; // référence d'origine, ex. 410FC01
+  origin?: string; // origine (2 lettres : ER, MM…)
+  aliases?: string[]; // anciens codes (restent trouvables par la recherche)
   ankiGuid?: string;
   subject: string;
   level?: string; // ex. "4e"
@@ -40,6 +42,7 @@ export interface Teacher {
   timetable?: import('./timetable').Timetable; // emploi du temps et calendrier A/B
   competences?: import('./competences').Competence[]; // référentiel de compétences
   rooms?: import('./rooms').Room[]; // salles (places cochées sur un quadrillage)
+  origins?: import('./cardCodes').Origin[]; // origines des flashcards (ER, MM…)
 }
 
 export interface Group {
@@ -368,17 +371,6 @@ export async function ensureSeed() {
   if (!ONLINE && !(await db.teachers.get(DEMO_TEACHER.id))) await db.teachers.put(DEMO_TEACHER);
 }
 
-export async function nextCardCode(): Promise<string> {
-  if (ONLINE) {
-    const { data, error } = await supabase.rpc('next_card_code');
-    if (error) throw error;
-    return data as string;
-  }
-  const m = await db.meta.get('cardCounter');
-  const n = ((m?.value as number) ?? 0) + 1;
-  await db.meta.put({ key: 'cardCounter', value: n });
-  return 'C' + String(n).padStart(4, '0');
-}
 
 export async function resetAll() {
   await db.delete();

@@ -21,12 +21,12 @@ export function wildcard(token: string): RegExp {
 }
 function wildcardTargets(c: Card): string[] {
   const words = [strip(c.front), strip(c.back), c.ocrFront ?? '', c.ocrBack ?? ''].join(' ').split(/[\s,;:.!?()«»"']+/);
-  return [c.code, c.sourceRef ?? '', (c.sourceRef ?? '').replace(/-/g, ''), ...c.tags, ...words].filter(Boolean).map(fold);
+  return [c.code, c.code.replace(/-/g, ''), ...(c.aliases ?? []), c.sourceRef ?? '', (c.sourceRef ?? '').replace(/-/g, ''), ...c.tags, ...words].filter(Boolean).map(fold);
 }
 
 export function searchText(c: Card) {
   return normalize(
-    [c.code, c.sourceRef, c.tags.join(' '), c.theme, strip(c.front), strip(c.back), c.ocrFront, c.ocrBack].join(' '),
+    [c.code, ...(c.aliases ?? []), c.sourceRef, c.tags.join(' '), c.theme, strip(c.front), strip(c.back), c.ocrFront, c.ocrBack].join(' '),
   );
 }
 

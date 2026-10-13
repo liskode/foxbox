@@ -1,6 +1,7 @@
 // Import de planches de flashcards en PDF (faites pour l'impression) : pages recto / verso alternées,
 // grille de cartes séparées par des traits ; le verso est en miroir (impression recto-verso bord long).
-import { db, uid, nextCardCode, type Card } from './db';
+import { db, uid, type Card } from './db';
+import { cardCode, defaultOrigin } from './cardCodes';
 
 export interface Cell {
   blob: Blob;
@@ -168,7 +169,8 @@ export async function importPairs(pl: Planche, pairs: PlanchePair[], subject: st
     } else {
       const card: Card = {
         id: uid(),
-        code: await nextCardCode(),
+        code: await cardCode({ level: pl.level, origin: defaultOrigin() }),
+        origin: defaultOrigin(),
         sourceRef: p.ref,
         ankiGuid: p.key,
         subject,

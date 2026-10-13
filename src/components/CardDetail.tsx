@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, fileBlob, type Card } from '../lib/db';
+import { cardCode, codePrefix, loadOrigins, rememberOrigin, DEFAULT_ORIGINS } from '../lib/cardCodes';
+import { useAuth } from '../lib/auth';
 import { THEMES } from '../lib/apkg';
 import { cardByGroup } from '../lib/stats';
 import { CardFace } from './CardFace';
@@ -123,6 +125,8 @@ export function CardDetail({
   onNavigate?: (id: string, editing: boolean) => void;
 }) {
   const card = useLiveQuery(() => db.cards.get(cardId), [cardId]);
+  const { session } = useAuth();
+  const origins = useLiveQuery(() => (session ? loadOrigins(session.id) : DEFAULT_ORIGINS), [session?.id], DEFAULT_ORIGINS);
   const stats = useLiveQuery(() => cardByGroup(cardId), [cardId]);
   const units = useLiveQuery(async () => {
     const links = await db.unitCards.where('cardId').equals(cardId).toArray();
@@ -170,8 +174,18 @@ export function CardDetail({
   async function save() {
     if (!edit) return;
     const contentChanged = edit.front !== card!.front || edit.back !== card!.back;
+    // Niveau, thème ou origine modifiés : nouveau code (l'ancien reste trouvable)
+    let code = edit.code;
+    let aliases = edit.aliases ?? [];
+    if (codePrefix(edit) !== codePrefix(card!) || !/^\d\d[A-Z]{2}-\d{3}$/.test(edit.code)) {
+      code = await cardCode(edit);
+      aliases = [...new Set([...aliases, edit.code])];
+    }
+    if (edit.origin) rememberOrigin(edit.origin);
     await db.cards.put({
       ...edit,
+      code,
+      aliases,
       tags: [...new Set([edit.level, edit.theme, ...tagsText.split(',').map((t) => t.trim())].filter(Boolean) as string[])],
       updatedAt: Date.now(),
       ocrDone: contentChanged && /src="media:/.test(edit.front + edit.back) ? false : edit.ocrDone,
@@ -334,6 +348,17 @@ export function CardDetail({
                     <option value="">—</option>
                     {THEME_LIST.map((t) => (
                       <option key={t}>{t}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  Origine
+                  <select value={edit.origin ?? 'ER'} onChange={(e) => setEdit({ ...edit, origin: e.target.value })}>
+                    {[...origins, ...(origins.some((o) => o.code === (edit.origin ?? 'ER')) ? [] : [{ code: edit.origin ?? 'ER', name: '' }])].map((o) => (
+                      <option key={o.code} value={o.code}>
+                        {o.code}
+                        {o.name ? ` – ${o.name}` : ''}
+                      </option>
                     ))}
                   </select>
                 </label>

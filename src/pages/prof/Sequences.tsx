@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, nextCardCode, SUBJECTS, type Group, type Unit, shortName } from '../../lib/db';
+import { db, uid, SUBJECTS, type Group, type Unit, shortName } from '../../lib/db';
 import { THEMES as CARD_THEMES } from '../../lib/apkg';
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
@@ -11,6 +11,7 @@ import { unitLabel, nextSequenceCode, nextSeanceCode, themesFor, themeLabel, lev
 import { levelPlans, sequencesOf, finishedByAll, doneDate, durationOf, dm, type ClassPlan, type LevelPlan } from '../../lib/forecast';
 import type { Timetable } from '../../lib/timetable';
 import { DoneCell } from '../../components/DoneCell';
+import { cardCode, defaultOrigin } from '../../lib/cardCodes';
 import { createEvalSeance, variantOf } from '../../lib/grading';
 import { useAuth } from '../../lib/auth';
 import { UnitDetails } from '../../components/UnitDetails';
@@ -93,7 +94,8 @@ function SequenceScreen({ seqId }: { seqId: string }) {
     const theme = u.level !== '6e' && u.theme ? CARD_THEMES[u.theme] : undefined;
     await db.cards.put({
       id,
-      code: await nextCardCode(),
+      code: await cardCode({ level: u.level, theme, origin: defaultOrigin() }),
+      origin: defaultOrigin(),
       subject: u.subject,
       level: u.level,
       theme,

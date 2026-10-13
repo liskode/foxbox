@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
-import { db, uid, nextCardCode, SUBJECTS } from '../../lib/db';
+import { db, uid, SUBJECTS } from '../../lib/db';
+import { cardCode, defaultOrigin } from '../../lib/cardCodes';
 
 export function Cards({ embedded = false }: { embedded?: boolean }) {
   const [open, setOpen] = useState<{ id: string; edit: boolean; ids?: string[] } | null>(null);
@@ -11,7 +12,8 @@ export function Cards({ embedded = false }: { embedded?: boolean }) {
     const id = uid();
     await db.cards.put({
       id,
-      code: await nextCardCode(),
+      code: await cardCode({ origin: defaultOrigin() }),
+      origin: defaultOrigin(),
       subject: SUBJECTS[0],
       tags: [],
       front: '',

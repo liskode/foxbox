@@ -2,7 +2,8 @@
 import JSZip from 'jszip';
 import { decompress } from 'fzstd';
 import initSqlJs, { type Database } from 'sql.js';
-import { db, uid, nextCardCode, type Card, type CardSnapshot } from './db';
+import { db, uid, type Card, type CardSnapshot } from './db';
+import { cardCode, defaultOrigin } from './cardCodes';
 
 export const THEMES: Record<string, string> = {
   '1': 'Matière',
@@ -212,7 +213,8 @@ export async function importApkg(
     } else {
       const card: Card = {
         id: uid(),
-        code: await nextCardCode(),
+        code: await cardCode({ level, theme, origin: defaultOrigin() }),
+        origin: defaultOrigin(),
         sourceRef,
         ankiGuid: guid,
         subject,
