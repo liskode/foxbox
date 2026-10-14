@@ -8,3 +8,4 @@ supabase/.temp
 public/_test.*
 *.pdf
 Synthese/
+*.tsbuildinfo
