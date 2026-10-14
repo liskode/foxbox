@@ -37,6 +37,7 @@ export function CardBrowser({
   onOpen,
   exclude,
   onCreate,
+  onExport,
 }: {
   selected?: Set<string>;
   onToggle?: (id: string) => void;
@@ -44,6 +45,7 @@ export function CardBrowser({
   onOpen?: (c: Card, ids: string[]) => void; // ids : flashcards affichées, dans l'ordre
   exclude?: Set<string>;
   onCreate?: () => void; // tuile « + » en fin de liste pour créer une flashcard
+  onExport?: (cards: Card[]) => void; // export des flashcards affichées (filtres appliqués)
 }) {
   const cards = useLiveQuery(() => db.cards.filter((c) => !c.deleted).toArray(), [], []);
   const linked = useLiveQuery(async () => new Set((await db.unitCards.toArray()).map((u) => u.cardId)), [], new Set<string>());
@@ -145,6 +147,11 @@ export function CardBrowser({
           <span className="muted small" style={{ marginLeft: 'auto' }}>
             {list.length} flashcard(s)
           </span>
+          {onExport && (
+            <button className="btn small" onClick={() => onExport(list)} disabled={!list.length} title="Exporte les flashcards affichées (filtres compris) en paquet Anki">
+              Exporter pour Anki (.apkg)
+            </button>
+          )}
           {onToggleMany && (
             <button className="btn small" onClick={() => onToggleMany(list.map((c) => c.id), !allSelected)} disabled={!list.length}>
               {allSelected ? 'Tout décocher' : `Tout cocher (${list.length})`}

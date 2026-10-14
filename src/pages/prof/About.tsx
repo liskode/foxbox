@@ -75,7 +75,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
   },
   {
     title: 'Flashcards',
-    text: 'Les flashcards de révision : création, recherche, import et codification.',
+    text: 'Les flashcards de révision : création, recherche, import, export et codification.',
     details: [
       'code niveau + thème + origine + numéro (ex. 43MM-012)',
       'recherche par mot, code ou joker (43MM*, ??ER*)',
@@ -86,6 +86,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'images : fichier, lien internet, collage ou glisser-déposer, sans doublon',
       'flashcard précédente ou suivante avec ← →',
       'import de paquets Anki et de planches PDF recto / verso, avec annulation',
+      'export pour Anki (.apkg) des flashcards affichées, rangées par niveau › thème › origine ou par niveau › séquence › séance',
       'lecture automatique du texte des images pour la recherche',
       'statistiques par classe : flashcards difficiles, régularité, classement',
     ],
