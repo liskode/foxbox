@@ -10,6 +10,8 @@ import { subscribeSync, retryFailed, type SyncState } from './lib/sync';
 import { ONLINE } from './lib/supabase';
 import { UpdateBanner } from './components/UpdateBanner';
 import { DialogHost } from './components/Dialog';
+import { ToastHost } from './components/Toast';
+import { Icon } from './components/Icon';
 
 // Pages chargées à la demande : un élève ne télécharge pas la partie professeur (ni les outils d'import)
 const Timetable = lazy(() => import('./pages/prof/Timetable').then((m) => ({ default: m.Timetable })));
@@ -63,21 +65,25 @@ function SyncBadge() {
   if (s.error)
     return (
       <button
-        className="chip"
-        style={{ background: '#f6c9c3', cursor: 'pointer' }}
+        className="tag bad"
+        style={{ border: 'none', cursor: 'pointer', font: 'inherit', fontWeight: 800, fontSize: '0.8rem' }}
         title={s.error}
         onClick={() => {
           if (confirm(`Problème d'enregistrement en ligne :\n\n${s.error}\n\nRéessayer maintenant ?`)) retryFailed();
         }}
       >
-        ⚠ {s.failed ? `${s.failed} non enregistré(s)` : 'Hors ligne'}
+        <Icon name="alert" size={14} /> {s.failed ? `${s.failed} non enregistré(s)` : 'Hors ligne'}
       </button>
     );
   if (s.syncing || s.pending)
-    return <span className="chip" title="Enregistrement en ligne">⟳ {s.pending || ''}</span>;
+    return (
+      <span className="tag plain" title="Enregistrement en ligne">
+        <Icon name="sync" size={14} /> {s.pending || ''}
+      </span>
+    );
   return (
-    <span className="chip" style={{ background: 'var(--paper)' }} title="Tout est enregistré en ligne">
-      ✓
+    <span className="tag" style={{ color: 'var(--ok)', padding: 0 }} title="Tout est enregistré en ligne">
+      <Icon name="check" size={14} stroke={2.5} /> Enregistré
     </span>
   );
 }
@@ -108,9 +114,9 @@ function TopClassChips() {
           <Link
             key={g.id}
             to={`/prof/classes/${g.id}?onglet=apercu`}
-            className="chip cchip nav-class"
+            className={'chip cchip nav-class' + (active ? ' on' : '')}
             title={g.name}
-            style={{ background: g.color ?? 'var(--paper)', outline: active ? '3px solid var(--ink)' : undefined }}
+            style={{ background: g.color ?? 'var(--paper)' }}
           >
             {shortName(g.name)}
           </Link>
@@ -122,6 +128,7 @@ function TopClassChips() {
 
 function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode }) {
   const { session, ready, logout } = useAuth();
+  const { pathname } = useLocation();
   useEffect(() => {
     // Reprend la lecture des images interrompue (fermeture de l'onglet…)
     if (session?.role === 'prof') runOcr();
@@ -143,8 +150,9 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           ['/eleve/notes', 'Notes'],
           ['/eleve/documents', 'Documents de cours'],
         ];
+  const icons: Record<string, string> = { '/eleve': 'cards', '/eleve/notes': 'bars', '/eleve/documents': 'file' };
   return (
-    <>
+    <div className={role === 'eleve' ? 'eleve-shell' + (pathname.startsWith('/eleve/revision') ? ' reviewing' : '') : undefined}>
       <header className={'topbar noprint' + (role === 'prof' ? ' thin' : '')}>
         <Link to={role === 'prof' ? '/prof/about' : '/eleve'} className="brand" title={role === 'prof' ? 'À propos de FoxBox' : 'Accueil'}>
           <img src="./logo.png" alt="FoxBox" />
@@ -171,10 +179,10 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
         {role === 'prof' ? (
           <>
             <NavLink to="/prof/reglages" className="icon-btn" title="Réglages : emploi du temps, classes, couleurs, compétences">
-              ⚙️
+              <Icon name="settings" />
             </NavLink>
             <button className="icon-btn" onClick={logout} title="Déconnexion">
-              ⏻
+              <Icon name="logout" />
             </button>
           </>
         ) : (
@@ -184,7 +192,21 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
         )}
       </header>
       {children}
-    </>
+      {role === 'eleve' && (
+        <nav className="bottom-nav noprint">
+          {links.map(([to, label]) => (
+            <NavLink key={to} to={to} end={to === '/eleve'}>
+              <Icon name={icons[to]} size={22} />
+              {label.replace(' de cours', '')}
+            </NavLink>
+          ))}
+          <button onClick={logout}>
+            <Icon name="logout" size={22} />
+            Quitter
+          </button>
+        </nav>
+      )}
+    </div>
   );
 }
 
@@ -192,6 +214,7 @@ export function App() {
   return (
     <AuthProvider>
       <DialogHost />
+      <ToastHost />
       <HashRouter>
         <UpdateBanner />
         <Suspense fallback={<div className="page muted">Chargement…</div>}>

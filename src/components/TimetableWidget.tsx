@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { addDays, today } from '../lib/dates';
 import { isPresent, dayOf, mondayOf, nextSchoolWeek, nextTeachingDay, slotsOn, weekType } from '../lib/timetable';
 import { DayList, WeekGrid, longDate, useGroups, useTimetable } from './TimetableView';
+import { Icon } from './Icon';
 
 const WeekChip = ({ w }: { w: 'A' | 'B' | null }) => (
   <span
@@ -78,7 +79,7 @@ export function TimetableWidget() {
         <div className="stack" style={{ gap: 8 }}>
           {vacation && (
             <div className="notice">
-              🌴 Vacances
+              <Icon name="sun" size={16} /> Vacances
               {resume ? ` — reprise le ${longDate(resume)} (semaine ${tt.weeks[resume]})` : ''}
             </div>
           )}

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type FamilyContact, type Student, type StudentFlags } from '../lib/db';
 import { useAuth } from '../lib/auth';
+import { Icon } from './Icon';
 
 export function useNote(studentId: string) {
   const { session } = useAuth();
@@ -38,7 +39,7 @@ export function NoteEditor({ studentId, onDone, autoFocus = false }: { studentId
       />
       <div className="spread">
         <span className="small muted">
-          🔒 Visible par vous seul{updatedAt ? ` · modifiée le ${new Date(updatedAt).toLocaleDateString('fr-FR')}` : ''}
+          <Icon name="lock" size={13} /> Visible par vous seul{updatedAt ? ` · modifiée le ${new Date(updatedAt).toLocaleDateString('fr-FR')}` : ''}
         </span>
         <div className="row">
           {onDone && (
@@ -80,7 +81,7 @@ export function NoteButton({ student }: { student: Student }) {
           opacity: has ? 1 : 0.55,
         }}
       >
-        📝
+        <Icon name="edit" size={16} />
       </button>
       {open && (
         <>
@@ -104,7 +105,7 @@ export function NoteButton({ student }: { student: Student }) {
 export const FLAGS: { key: keyof StudentFlags; label: string; short: string }[] = [
   { key: 'tiersTemps', label: 'Tiers temps', short: '⅓T' },
   { key: 'ulis', label: 'ULIS', short: 'ULIS' },
-  { key: 'ordinateur', label: 'Ordinateur en évaluation', short: '💻' },
+  { key: 'ordinateur', label: 'Ordinateur en évaluation', short: 'Ordi' },
 ];
 
 export function FlagChecks({ studentId, compact = false }: { studentId: string; compact?: boolean }) {

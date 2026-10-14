@@ -62,7 +62,7 @@ export function TeachersTab({ group }: { group: Group }) {
         <span className="chip" style={{ background: group.color ?? 'var(--paper)' }}>
           {levelOfName(group.name) ?? 'niveau inconnu'}
         </span>{' '}
-        — modifiable dans <Link to="/prof/reglages">⚙️ Réglages › Couleurs des niveaux</Link>.
+        — modifiable dans <Link to="/prof/reglages">Réglages › Couleurs des niveaux</Link>.
       </div>
       <h3 style={{ margin: '8px 0 0' }}>Co-enseignants</h3>
       <span className="small muted">

@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, type Todo, shortName } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { addDays, frDate, today } from '../lib/dates';
+import { Icon } from './Icon';
 
 export function TodoList({ groupId }: { groupId?: string }) {
   const { session } = useAuth();
@@ -50,7 +51,7 @@ export function TodoList({ groupId }: { groupId?: string }) {
     <div className="panel stack">
       <div className="spread">
         <h2 style={{ margin: 0 }}>À faire</h2>
-        <span className="small muted">🔒 visible par vous seul</span>
+        <span className="small muted"><Icon name="lock" size={13} /> visible par vous seul</span>
       </div>
       <form className="row" onSubmit={add}>
         <input style={{ flex: 1, minWidth: 200 }} placeholder="Nouvelle tâche…" value={text} onChange={(e) => setText(e.target.value)} />
@@ -72,7 +73,7 @@ export function TodoList({ groupId }: { groupId?: string }) {
           Ajouter
         </button>
       </form>
-      {!open.length && <span className="muted small">Rien à faire 🎉</span>}
+      {!open.length && <span className="muted small">Rien à faire.</span>}
       {sections.map(
         ([title, list]) =>
           list.length > 0 && (

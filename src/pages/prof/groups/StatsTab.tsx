@@ -11,6 +11,7 @@ import { Heatmap, Pct, RateBar } from '../../../components/widgets';
 import { heatmapCounts } from '../../../lib/stats';
 import { StudentName } from '../../../components/Avatar';
 import { NoteButton } from '../../../components/StudentNote';
+import { Icon } from '../../../components/Icon';
 
 export function StatsTab({ groupId }: { groupId: string }) {
   const data = useLiveQuery(() => groupOverview(groupId), [groupId]);
@@ -28,7 +29,7 @@ export function StatsTab({ groupId }: { groupId: string }) {
           <Heatmap counts={heatmapCounts(data.reviews)} weeks={16} />
         </div>
         <div className="panel stack">
-          <h3 style={{ margin: 0 }}>⚠️ À relancer ({dropped.length})</h3>
+          <h3 className="panel-title"><Icon name="alert" size={16} /> À relancer ({dropped.length})</h3>
           <span className="small muted">Aucune révision depuis 5 jours ou plus.</span>
           {dropped.length ? (
             <div className="row" style={{ gap: 6 }}>
@@ -44,7 +45,7 @@ export function StatsTab({ groupId }: { groupId: string }) {
               ))}
             </div>
           ) : (
-            <span>Tout le monde révise 🎉</span>
+            <span>Tout le monde révise.</span>
           )}
         </div>
       </div>
@@ -106,7 +107,7 @@ export function StatsTab({ groupId }: { groupId: string }) {
                   <td>{r.summary.total}</td>
                   <td>
                     {r.summary.lastDay ? frDate(r.summary.lastDay) : 'jamais'}
-                    {r.inactiveDays !== null && r.inactiveDays >= 5 && ' ⚠️'}
+                    {r.inactiveDays !== null && r.inactiveDays >= 5 && <span style={{ color: 'var(--bad)' }}> <Icon name="alert" size={14} /></span>}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <NoteButton student={r.student} />

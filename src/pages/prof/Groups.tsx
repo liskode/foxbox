@@ -11,6 +11,7 @@ import { levelOfName, levelColors, applyLevelColors, setLevelColor, LEVELS } fro
 import { StatsTab } from './groups/StatsTab';
 import { StudentsTab } from './groups/StudentsTab';
 import { TeachersTab } from './groups/SettingsTab';
+import { Icon } from '../../components/Icon';
 
 function schoolYear() {
   const d = new Date();
@@ -142,6 +143,7 @@ export function GroupPage() {
   const raw = params.get('onglet');
   const tab = ((raw === 'stats' ? 'suivi' : raw) as Tab) || 'apercu';
   const setTab = (t: string) => setParams({ onglet: t }, { replace: true });
+  const count = useLiveQuery(() => db.memberships.where('groupId').equals(id!).count(), [id]);
   if (group === undefined) return null;
   if (!group) return <div className="page muted">Classe introuvable.</div>;
   const tabs = [
@@ -154,21 +156,33 @@ export function GroupPage() {
     ['suivi', 'Flashcards'],
     ['profs', 'Réglages'],
   ] as const;
+  const plans = group.seatPlans ?? [];
   return (
     <div className="page stack">
-      <div className="spread">
-        <div>
-          <Link to="/prof" className="small muted">
-            ← Accueil
-          </Link>
-          <h1 className="title" style={{ margin: 0 }}>
-            <span style={{ background: group.color, borderRadius: 12, padding: '0 10px' }}>{shortName(group.name)}</span>
-          </h1>
-          <div className="muted">
-            {group.subject} · {group.schoolYear} {group.archived && '· archivée'}
+      {/* Bandeau à la couleur du niveau : identité de la classe ; les deux actions du cours à droite */}
+      <div className="class-band" style={{ background: group.color ?? 'var(--paper)' }}>
+        <div className="row" style={{ alignItems: 'baseline', gap: 14 }}>
+          <h1>{shortName(group.name)}</h1>
+          <span className="muted">
+            {group.subject} · {count ?? 0} élèves · {group.schoolYear} {group.archived && '· archivée'}
+          </span>
+          <div style={{ flex: 1 }} />
+          <div className="row" style={{ gap: 8, alignSelf: 'center' }}>
+            <button className="btn primary" onClick={() => setParams({ onglet: 'plan', appel: '1' }, { replace: true })}>
+              <Icon name="eval" /> Faire l'appel
+            </button>
+            {plans.length > 0 && (
+              <button
+                className="btn"
+                title="Ouvre le plan de classe en grand dans une fenêtre, pour le tableau"
+                onClick={() => window.open(`#/prof/plan/${group.id}/${plans[0].id}`, 'foxbox-plan', 'popup,width=1400,height=900')}
+              >
+                <Icon name="screen" /> Projeter le plan
+              </button>
+            )}
           </div>
         </div>
-        <nav className="nav" style={{ flex: 'none' }}>
+        <nav className="tabs">
           {tabs.map(([k, l]) => (
             <a key={k} href="#" className={tab === k ? 'active' : ''} onClick={(e) => (e.preventDefault(), setTab(k))}>
               {l}

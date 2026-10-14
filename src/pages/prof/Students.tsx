@@ -7,6 +7,7 @@ import { StudentSearch, useAllStudents } from '../../components/StudentSearch';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
 import { loadRooms } from '../../lib/rooms';
+import { Icon } from '../../components/Icon';
 
 function Line({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
@@ -48,7 +49,7 @@ export function Students() {
           ))}
         </div>
       </div>
-      <Line title="📷 Trombis">
+      <Line title={<><Icon name="camera" size={16} /> Trombis</>}>
         {groups.map((g) => (
           <Chip key={g.id} g={g} to={`/prof/classes/${g.id}?onglet=trombi`} />
         ))}
@@ -57,7 +58,7 @@ export function Students() {
         </Link>
       </Line>
       {rooms.map((r) => (
-        <Line key={r.id} title={`🪑 Plans · ${r.name}`}>
+        <Line key={r.id} title={<><Icon name="seat" size={16} /> Plans · {r.name}</>}>
           {groups.map((g) => {
             const has = (g.seatPlans ?? []).some((p) => p.roomId === r.id);
             return (
@@ -80,7 +81,7 @@ export function Students() {
         </Link>
         {!rooms.length && <span className="small muted">Dessinez d'abord une salle pour faire des plans de classe.</span>}
       </div>
-      <Line title="🖨 Fiches identifiants">
+      <Line title={<><Icon name="print" size={16} /> Fiches identifiants</>}>
         {groups.map((g) => (
           <Chip key={g.id} g={g} to={`/prof/classes/${g.id}/fiches`} />
         ))}

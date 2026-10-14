@@ -11,6 +11,7 @@ import { Avatar } from '../../../components/Avatar';
 import { importPhotos } from '../../../lib/photos';
 import { TrombiImport } from '../../../components/TrombiImport';
 import { NoteButton, FlagChecks } from '../../../components/StudentNote';
+import { Icon } from '../../../components/Icon';
 
 export function StudentsTab({ group }: { group: Group }) {
   const students = useLiveQuery(
@@ -83,17 +84,17 @@ export function StudentsTab({ group }: { group: Group }) {
               <input type="file" accept=".csv,.txt" hidden onChange={(e) => onCsv(e.target.files?.[0])} />
             </label>
             <button className="btn" onClick={() => setPdfOpen(true)}>
-              📄 Trombinoscope PDF
+              <Icon name="file" size={16} /> Trombinoscope PDF
             </button>
             <label className="btn">
-              📷 Photos (fichiers)
+              <Icon name="camera" size={16} /> Photos (fichiers)
               <input type="file" accept="image/*" multiple hidden onChange={(e) => onPhotos(e.target.files)} />
             </label>
             <button className="btn ghost" onClick={addOne}>
               + Élève
             </button>
             <Link className="btn primary" to={`/prof/classes/${group.id}/fiches`}>
-              🖨 Fiches identifiants
+              <Icon name="print" size={16} /> Fiches identifiants
             </Link>
           </div>
         </div>
@@ -203,7 +204,7 @@ export function StudentsTab({ group }: { group: Group }) {
                       }
                     }}
                   >
-                    🔑
+                    <Icon name="key" size={16} />
                   </button>{' '}
                   <button
                     className="btn small ghost"
@@ -224,7 +225,7 @@ export function StudentsTab({ group }: { group: Group }) {
                       ) && deleteStudent(s.id).catch((e) => alert(e.message))
                     }
                   >
-                    🗑
+                    <Icon name="trash" size={16} />
                   </button>
                 </td>
               </tr>

@@ -7,6 +7,7 @@ import { today } from '../../lib/dates';
 import { useAuth } from '../../lib/auth';
 import { levelPlans, dm } from '../../lib/forecast';
 import { LEVELS, levelColors, levelOfName } from '../../lib/units';
+import { Icon } from '../../components/Icon';
 
 function useGroups() {
   return useLiveQuery(() => db.groups.toArray(), [], []);
@@ -72,12 +73,12 @@ function EvalCard({ ev, pills }: { ev: Evaluation; pills: Pill[] }) {
   return (
     <Link to={`/prof/correction/${ev.id}`} className="btn" style={{ display: 'block', textAlign: 'left', whiteSpace: 'normal', background: 'var(--paper)' }}>
       <div>
-        {ev.unitId && '📝 '}
+        {ev.unitId && <><Icon name="eval" size={15} /> </>}
         {ev.name}
       </div>
       <div className="small muted" style={{ fontWeight: 600 }}>
         {ev.criteria.length} critère(s)
-        {ev.documents?.length ? ` · 📄${ev.documents.length}` : ''}
+        {ev.documents?.length ? <> · <Icon name="file" size={13} />{ev.documents.length}</> : ''}
       </div>
       <div className="row" style={{ gap: 4, marginTop: 4 }}>
         {pills.map((p) => (
@@ -122,7 +123,7 @@ export function Correction() {
       <div className="spread">
         <h1 className="title" style={{ margin: 0 }}>Évaluations</h1>
         <Link to="/prof/competences" className="btn">
-          🎯 Compétences
+          <Icon name="target" size={16} /> Compétences
         </Link>
 
       </div>
@@ -166,9 +167,9 @@ export function Correction() {
         })}
       </div>
       <div className="small muted">
-        Gris : date prévue · jaune : copies à corriger · vert : corrigée (moyenne). 📝 : évaluation placée dans une séquence de la Progression.
+        Gris : date prévue · jaune : copies à corriger · vert : corrigée (moyenne). <Icon name="eval" size={14} /> : évaluation placée dans une séquence de la Progression.
       </div>
-      {groups.length === 0 && <div className="small muted">Astuce : créez d'abord vos classes dans ⚙️ Réglages.</div>}
+      {groups.length === 0 && <div className="small muted">Astuce : créez d'abord vos classes dans Réglages.</div>}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { createEvalSeance, variantOf } from '../../../lib/grading';
 import { useAuth } from '../../../lib/auth';
 import { UnitDetails } from '../../../components/UnitDetails';
 import { useHideDone, HideDoneToggle, usePlans, createSequence } from './shared';
+import { Icon } from '../../../components/Icon';
 
 export function SequenceScreen({ seqId }: { seqId: string }) {
   const units = useLiveQuery(() => db.units.toArray(), [], []);
@@ -205,7 +206,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                       setPicking(false);
                     }}
                   >
-                    {se.isEval && '📝 '}
+                    {se.isEval && <><Icon name="eval" size={15} /> </>}
                     {unitLabel(se)}
                   </button>
                 ))}
@@ -379,7 +380,7 @@ function EvalLinks({ unit }: { unit: Unit }) {
   return (
     <div className="panel stack" style={{ borderColor: '#e05a4f' }}>
       <div className="spread">
-        <h3 style={{ margin: 0 }}>📝 Évaluation{evs.length > 1 ? 's (variantes)' : ''}</h3>
+        <h3 className="panel-title"><Icon name="eval" size={16} /> Évaluation{evs.length > 1 ? 's (variantes)' : ''}</h3>
         {evs[0] && (
           <button
             className="btn small"

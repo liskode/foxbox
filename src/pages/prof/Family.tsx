@@ -9,11 +9,12 @@ import { frDate, today } from '../../lib/dates';
 import { Avatar } from '../../components/Avatar';
 import { FlagBadges, useNote } from '../../components/StudentNote';
 import { useStudentEvals } from '../../components/StudentEvaluations';
+import { Icon } from '../../components/Icon';
 
 const KINDS: { key: NonNullable<ParentMessage['kind']>; label: string; icon: string }[] = [
-  { key: 'tel', label: 'Téléphone', icon: '📞' },
-  { key: 'mail', label: 'Mail', icon: '✉️' },
-  { key: 'entretien', label: 'Entretien', icon: '🤝' },
+  { key: 'tel', label: 'Téléphone', icon: 'phone' },
+  { key: 'mail', label: 'Mail', icon: 'mail' },
+  { key: 'entretien', label: 'Entretien', icon: 'handshake' },
 ];
 const kindOf = (m: ParentMessage) => KINDS.find((k) => k.key === (m.kind ?? 'mail'))!;
 
@@ -100,7 +101,7 @@ export function Family() {
             ← Fiche de {student.firstName}
           </Link>
           <h1 className="title" style={{ margin: 0 }}>
-            👪 Famille de {student.firstName} {student.lastName}
+            <Icon name="family" size={22} /> Famille de {student.firstName} {student.lastName}
           </h1>
           <div className="row" style={{ gap: 6 }}>
             {groups.map((g) => (
@@ -127,7 +128,7 @@ export function Family() {
             <input type="tel" value={c.phone ?? ''} placeholder="téléphone" onChange={(e) => setContact(c.id, { phone: e.target.value })} onBlur={() => persist()} style={{ width: 150 }} />
             {c.phone && (
               <a className="btn small ghost" href={`tel:${c.phone.replace(/\s/g, '')}`} title="Appeler">
-                📞
+                <Icon name="phone" size={16} />
               </a>
             )}
             <button
@@ -155,7 +156,7 @@ export function Family() {
             style={{ fontFamily: 'var(--font)', minHeight: 80 }}
           />
         </label>
-        <span className="small muted">🔒 Visible par vous seul · enregistré en quittant un champ</span>
+        <span className="small muted"><Icon name="lock" size={13} /> Visible par vous seul · enregistré en quittant un champ</span>
       </div>
 
       <div className="panel stack">
@@ -166,7 +167,7 @@ export function Family() {
               + Nouvelle entrée
             </button>
             <button className="btn small" disabled={!emails.length} title={emails.length ? '' : 'Ajoutez d’abord une adresse e-mail'} onClick={() => prefillMail(evals[0]?.ev!.id ?? '')}>
-              ✉️ Écrire un mail
+              <Icon name="mail" size={16} /> Écrire un mail
             </button>
           </div>
         </div>
@@ -182,7 +183,7 @@ export function Family() {
                 <select value={entry.kind} onChange={(e) => setEntry({ ...entry, kind: e.target.value as typeof entry.kind })}>
                   {KINDS.map((k) => (
                     <option key={k.key} value={k.key}>
-                      {k.icon} {k.label}
+                      <Icon name={k.icon} size={16} /> {k.label}
                     </option>
                   ))}
                 </select>
@@ -240,7 +241,7 @@ export function Family() {
               <span className="small muted" style={{ whiteSpace: 'nowrap', minWidth: 90 }}>
                 {frDate(m.date)}
               </span>
-              <span title={k.label}>{k.icon}</span>
+              <span title={k.label}><Icon name={k.icon} size={16} /></span>
               <div style={{ flex: 1 }}>
                 <b>{m.subject || k.label}</b> {m.to && <span className="small muted">· {m.to}</span>}
                 {m.message && (

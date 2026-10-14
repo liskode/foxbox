@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/auth';
 import { db, type Card, type Rating } from '../../lib/db';
 import { recordAnswer, todaySession } from '../../lib/leitner';
 import { CardFace } from '../../components/CardFace';
+import { Icon } from '../../components/Icon';
 
 export function ReviewSession() {
   const { session } = useAuth();
@@ -66,9 +67,9 @@ export function ReviewSession() {
         <h1 className="title">{total ? 'Bravo !' : 'Rien à revoir'}</h1>
         {total > 0 && (
           <div className="row" style={{ justifyContent: 'center' }}>
-            <span className="chip" style={{ background: 'var(--forgot)', color: '#fff' }}>{tally.forgot} à revoir</span>
-            <span className="chip" style={{ background: 'var(--hard)' }}>{tally.hard} dur</span>
-            <span className="chip" style={{ background: 'var(--easy)', color: '#fff' }}>{tally.easy} facile</span>
+            <span className="tag bad">{tally.forgot} à revoir</span>
+            <span className="tag warn">{tally.hard} dur</span>
+            <span className="tag ok">{tally.easy} facile</span>
           </div>
         )}
         <Link to="/eleve" className="btn primary big">
@@ -81,37 +82,45 @@ export function ReviewSession() {
   return (
     <div className="page">
       <div className="review">
-        <div className="spread">
-          <Link to="/eleve" className="small muted">
-            ✕ Arrêter
+        <div className="review-top">
+          <Link to="/eleve" className="icon-btn" style={{ border: '1.5px solid var(--muted-line)', background: 'var(--paper)' }} title="Arrêter la révision">
+            <Icon name="x" />
           </Link>
-          <span className="small muted">
-            {i + 1} / {queue.length}
-          </span>
-        </div>
-        <div className="progress">
-          <div style={{ width: `${(i / queue.length) * 100}%` }} />
+          <div className="bar">
+            <span>
+              {i + 1} / {queue.length}
+            </span>
+            <div className="track">
+              <div style={{ width: `${(i / queue.length) * 100}%` }} />
+            </div>
+          </div>
         </div>
         <div className="flip" onClick={flip} style={{ cursor: flipped ? 'default' : 'pointer' }}>
           <CardFace html={flipped ? card.back : card.front} full />
         </div>
-        {!flipped ? (
-          <button className="btn primary big" style={{ justifyContent: 'center' }} onClick={flip}>
-            Voir la réponse
-          </button>
-        ) : (
-          <div className="answers">
-            <button className="forgot" onClick={() => answer('forgot')}>
-              Je ne sais pas
+        {/* Sur téléphone, les boutons restent en bas de l'écran, sous le pouce */}
+        <div className="review-actions">
+          {!flipped ? (
+            <button className="btn primary big reveal" style={{ width: '100%' }} onClick={flip}>
+              Voir la réponse
             </button>
-            <button className="hard" onClick={() => answer('hard')}>
-              Dur
-            </button>
-            <button className="easy" onClick={() => answer('easy')}>
-              Facile
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="answers">
+              <button className="forgot" onClick={() => answer('forgot')}>
+                <Icon name="x" size={22} stroke={2.4} />
+                Je ne sais pas
+              </button>
+              <button className="hard" onClick={() => answer('hard')}>
+                <Icon name="minus" size={22} stroke={2.4} />
+                Dur
+              </button>
+              <button className="easy" onClick={() => answer('easy')}>
+                <Icon name="check" size={22} stroke={2.6} />
+                Facile
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

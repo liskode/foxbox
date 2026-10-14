@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Group } from '../lib/db';
 import { useAuth } from '../lib/auth';
+import { Icon } from './Icon';
 
 export function ClassNotes({ group }: { group: Group }) {
   const { session } = useAuth();
@@ -18,8 +19,8 @@ export function ClassNotes({ group }: { group: Group }) {
   }
 
   return (
-    <div className="panel stack" style={{ gap: 6 }}>
-      <h3 style={{ margin: 0 }}>📝 Notes sur la classe</h3>
+    <div className="panel note stack" style={{ gap: 6 }}>
+      <h3 className="panel-title"><Icon name="edit" size={16} /> Notes sur la classe</h3>
       <textarea
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
@@ -28,7 +29,7 @@ export function ClassNotes({ group }: { group: Group }) {
         style={{ minHeight: 110, fontFamily: 'var(--font)', fontSize: '0.95rem' }}
       />
       <span className="small muted">
-        🔒 Visible par vous seul · enregistré en quittant le champ
+        <Icon name="lock" size={13} /> Visible par vous seul · enregistré en quittant le champ
         {note?.updatedAt ? ` · modifié le ${new Date(note.updatedAt).toLocaleDateString('fr-FR')}` : ''}
       </span>
     </div>

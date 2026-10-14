@@ -36,7 +36,7 @@ export function StudentSearch({ autoFocus = false, max = 8 }: { autoFocus?: bool
       <input
         type="search"
         autoFocus={autoFocus}
-        placeholder="🔍 Nom ou prénom…"
+        placeholder="Nom ou prénom…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && hits[0] && open(hits[0].student.id, hits[0].group.id)}

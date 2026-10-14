@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Student, shortName } from '../../lib/db';
 import { useFixedPhoto } from '../../components/Avatar';
+import { Icon } from '../../components/Icon';
 
 function Cell({ s }: { s: Student }) {
   const [url, repair] = useFixedPhoto(s.photoId);
@@ -43,7 +44,7 @@ export function TrombiPrint() {
         <div className="row">
           <span className="small muted">Pour un PDF : Imprimer › « Enregistrer au format PDF »</span>
           <button className="btn primary" onClick={() => print()}>
-            🖨 Imprimer
+            <Icon name="print" size={16} /> Imprimer
           </button>
         </div>
       </div>

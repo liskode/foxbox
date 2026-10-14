@@ -3,7 +3,7 @@
 import { toggleAbsence } from '../lib/absences';
 import { today } from '../lib/dates';
 import { ask } from './Dialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -12,6 +12,7 @@ import { useAuth } from '../lib/auth';
 import { autoPlace, loadRooms, savePlans, seatKey, timetableRooms, type Room, type SeatPlan } from '../lib/rooms';
 import { Avatar } from './Avatar';
 import { FlagBadges, useAllFlags } from './StudentNote';
+import { Icon } from './Icon';
 
 type Pick = { student: string } | { seat: string } | null;
 
@@ -158,7 +159,10 @@ export function SeatPlanTab({ group }: { group: Group }) {
   const sub = group.subgroups?.find((x) => x.id === plan?.subgroupId);
   const students = sub ? allStudents.filter((s) => sub.studentIds.includes(s.id)) : allStudents;
   const byId = new Map(students.map((s) => [s.id, s]));
-  const [appel, setAppel] = useState(false);
+  const [appel, setAppel] = useState(params.get('appel') === '1'); // ?appel=1 : bouton « Faire l'appel » de la classe
+  useEffect(() => {
+    if (params.get('appel') === '1') setAppel(true);
+  }, [params]);
   const absentToday = useLiveQuery(
     async () => new Set((await db.absences.where('groupId').equals(group.id).toArray()).filter((a) => a.date === today()).map((a) => a.studentId)),
     [group.id],
@@ -240,7 +244,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
   if (!rooms.length)
     return (
       <div className="notice">
-        Dessinez d'abord votre salle dans <Link to="/prof/salles">⚙️ Réglages › Salles</Link> (cases cochées sur un quadrillage).
+        Dessinez d'abord votre salle dans <Link to="/prof/salles">Réglages › Salles</Link> (cases cochées sur un quadrillage).
       </div>
     );
 
@@ -292,10 +296,10 @@ export function SeatPlanTab({ group }: { group: Group }) {
               title="Ouvre le plan dans une nouvelle fenêtre, à faire glisser sur l'écran du tableau"
               onClick={() => window.open(`#/prof/plan/${group.id}/${plan.id}${flip ? '?bureau=1' : ''}`, 'foxbox-plan', 'popup,width=1400,height=900')}
             >
-              ⛶ En grand
+              <Icon name="expand" size={16} /> En grand
             </button>
             <button className="btn small ghost" onClick={printPlan}>
-              🖨 Imprimer
+              <Icon name="print" size={16} /> Imprimer
             </button>
             <button
               className="btn small ghost"
@@ -451,7 +455,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
                   className="btn small"
                   onClick={() => confirm('Placer toute la classe au hasard ?') && setSeats(autoPlace(room, students, 'random'))}
                 >
-                  🎲 Au hasard
+                  <Icon name="dice" size={16} /> Au hasard
                 </button>
                 <button className="btn small ghost" onClick={() => confirm('Retirer tous les élèves du plan ?') && setSeats({})}>
                   Vider
@@ -558,7 +562,7 @@ function SavedPlans({ group, plans, plan }: { group: Group; plans: SeatPlan[]; p
             update({ saved: [{ id: uid(), at: Date.now(), comment: comment.trim() || undefined, seats: { ...plan.seats } }, ...saved] });
           }}
         >
-          💾 Sauvegarder
+          <Icon name="save" size={16} /> Sauvegarder
         </button>
       </div>
       {saved.map((v) => (

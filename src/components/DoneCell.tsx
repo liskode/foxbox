@@ -1,6 +1,8 @@
 // Case « classe × séance » : date prévisionnelle (grise) ou date où la séance a été faite (noire).
 // Un clic ouvre un petit choix : faite lors de l'un des derniers cours, à une autre date, ou décocher.
-import { shortName } from '../lib/db';
+import { db, shortName } from '../lib/db';
+import { toast } from './Toast';
+import { unitLabel } from '../lib/units';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -61,9 +63,18 @@ export function DoneCell({
   // Derniers cours de la classe, dans l'ordre chronologique (le plus récent en bas)
   const recent = open ? recentCourseDays(tt, g, groups).reverse() : [];
 
+  // Message de confirmation avec « Annuler » (revient à l'état d'avant)
+  async function confirm(text: string, before?: string) {
+    const u = await db.units.get(unitId);
+    toast(`${u ? unitLabel(u) : 'Séance'} ${text} pour ${shortName(g.name)}`, {
+      undo: () => (before ? markDone(g.id, unitId, before) : unmarkDone(g.id, unitId)),
+    });
+  }
   async function pick(date: string) {
+    const before = done;
     await markDone(g.id, unitId, date);
     setOpen(false);
+    confirm(`faite le ${dm(date)}`, before);
     if (isEval) {
       const ev = await evalDone(unitId, g.id, date);
       if (ev) nav(`/prof/correction/${ev.id}?onglet=copies&classe=${g.id}`);
@@ -97,7 +108,7 @@ export function DoneCell({
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setOpen(false)} />
             <div
-              className="panel stack"
+              className="panel pop stack"
               style={{
                 position: 'fixed',
                 zIndex: 41,
@@ -131,7 +142,7 @@ export function DoneCell({
                 </button>
               </div>
               {done && (
-                <button className="btn small danger" onClick={() => unmarkDone(g.id, unitId).then(() => setOpen(false))}>
+                <button className="btn small danger" onClick={() => unmarkDone(g.id, unitId).then(() => (setOpen(false), confirm('décochée', done)))}>
                   Décocher (pas encore faite)
                 </button>
               )}

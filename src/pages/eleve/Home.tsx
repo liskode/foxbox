@@ -6,6 +6,7 @@ import { studentSubjects, todaySession } from '../../lib/leitner';
 import { Ring } from '../../components/widgets';
 import { Avatar } from '../../components/Avatar';
 import { StudentReport } from '../../components/StudentReport';
+import { Icon } from '../../components/Icon';
 
 export function StudentHome() {
   const { session } = useAuth();
@@ -46,7 +47,7 @@ export function StudentHome() {
                   </button>
                 ) : reached ? (
                   <>
-                    <b>🎉 Objectif atteint ! Reviens demain.</b>
+                    <span className="tag ok" style={{ fontSize: '0.95rem', padding: '6px 10px' }}><Icon name="check" size={16} /> Objectif atteint ! Reviens demain.</span>
                     {s.pending > 0 && (
                       <button className="btn ghost" onClick={() => nav(`/eleve/revision/${encodeURIComponent(s.subject)}?extra=10`)}>
                         Encore 10 flashcards

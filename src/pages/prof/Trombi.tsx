@@ -8,6 +8,7 @@ import { INTERVALS, nextBox } from '../../lib/leitner';
 import { addDays, frDate, today } from '../../lib/dates';
 import { useFixedPhoto } from '../../components/Avatar';
 import { Boxes } from '../../components/widgets';
+import { Icon } from '../../components/Icon';
 
 interface Entry {
   student: Student;
@@ -109,7 +110,7 @@ function Session({ entries, teacherId, onEnd, free = false }: { entries: Entry[]
     return (
       <div className="panel stack" style={{ alignItems: 'center', textAlign: 'center' }}>
         <img src="./logo.png" alt="" style={{ width: 110 }} />
-        <h2>{queue.length ? 'Séance terminée !' : 'Rien à revoir aujourd’hui 🎉'}</h2>
+        <h2>{queue.length ? 'Séance terminée !' : 'Rien à revoir aujourd’hui'}</h2>
         <button className="btn primary" onClick={onEnd}>
           Retour
         </button>
@@ -287,7 +288,7 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
       )}
 
       <div className="panel row">
-        <b>🖨 Imprimer le trombi (1 page A4) :</b>
+        <b><Icon name="print" size={16} /> Imprimer le trombi (1 page A4) :</b>
         {groups.filter((g) => !groupId || g.id === groupId).map((g) => (
           <Link key={g.id} to={`/prof/trombi/imprimer/${g.id}`} className="btn small" style={{ background: g.color }}>
             {shortName(g.name)}

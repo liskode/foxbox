@@ -70,7 +70,7 @@ export function DialogHost() {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(29,29,27,0.35)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '12vh' }} onClick={() => done(null)}>
       <div
-        className="panel stack"
+        className="panel pop stack"
         style={{ width: 'min(520px, 92vw)', gap: 12 }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {

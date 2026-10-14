@@ -9,6 +9,7 @@ import { cardByGroup } from '../lib/stats';
 import { CardFace } from './CardFace';
 import { unitLabel } from '../lib/units';
 import { RateBar, ThemeChip } from './widgets';
+import { Icon } from './Icon';
 
 const THEME_LIST = Object.values(THEMES);
 
@@ -103,7 +104,7 @@ function FaceEditor({
             <input type="file" accept="image/*" hidden onChange={(e) => addImage(e.target.files?.[0], true)} />
           </label>
           <button type="button" className="btn small ghost" onClick={addImageUrl} title="Insérer une image à partir de son adresse internet">
-            🔗 Image par lien
+            <Icon name="link" size={16} /> Image par lien
           </button>
           <label className="btn small ghost">
             + Insérer une image

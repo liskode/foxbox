@@ -14,6 +14,7 @@ import { useAuth } from '../lib/auth';
 import { levelPlans, courseDays, doneDate, dm, yearEnd } from '../lib/forecast';
 import { levelOfName, unitLabel } from '../lib/units';
 import { today, fromISO } from '../lib/dates';
+import { Icon } from './Icon';
 
 // Prochain cours de la classe et séance prévue : on la coche « faite » sans quitter la page
 function NextSession({ group }: { group: Group }) {
@@ -28,9 +29,9 @@ function NextSession({ group }: { group: Group }) {
   const items = lp.items.filter((it) => !doneDate(plan, it)).slice(0, 2);
   const lastDone = [...lp.items].reverse().find((it) => doneDate(plan, it));
   return (
-    <div className="panel stack" style={{ gap: 8, borderColor: 'var(--matiere)' }}>
+    <div className="panel stack" style={{ gap: 8 }}>
       <div className="spread">
-        <h3 style={{ margin: 0 }}>
+        <h3 className="panel-title">
           {next
             ? next === today()
               ? "Cours d'aujourd'hui"
@@ -38,11 +39,13 @@ function NextSession({ group }: { group: Group }) {
             : 'Séances'}
         </h3>
         {plan.overflowWeeks ? (
-          <b className="small" style={{ color: 'var(--forgot)' }}>
-            ⚠️ dépasse de {plan.overflowWeeks} sem.
-          </b>
+          <span className="tag bad">
+            <Icon name="alert" size={14} /> {plan.overflowWeeks} sem. de retard
+          </span>
         ) : plan.end ? (
-          <span className="small">fin prévue le {dm(plan.end)} ✓</span>
+          <span className="tag ok">
+            <Icon name="check" size={14} /> fin prévue le {dm(plan.end)}
+          </span>
         ) : null}
       </div>
       {lastDone && (
@@ -51,9 +54,9 @@ function NextSession({ group }: { group: Group }) {
         </div>
       )}
       {items.map((it) => (
-        <div key={it.unit.id} className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+        <div key={it.unit.id} className="row-calm">
           <span style={{ flex: 1 }}>
-            {it.unit.isEval && '📝 '}
+            {it.unit.isEval && <Icon name="eval" size={15} />} 
             <b>{unitLabel(it.unit)}</b> <span className="small muted">({it.seq.name})</span>
           </span>
           <DoneCell
@@ -68,7 +71,7 @@ function NextSession({ group }: { group: Group }) {
         </div>
       ))}
       {!items.length && (
-        <span className="small muted">{lp.items.length ? 'Toutes les séances sont faites 🎉' : 'Aucune séquence pour ce niveau.'}</span>
+        <span className="small muted">{lp.items.length ? 'Toutes les séances sont faites.' : 'Aucune séquence pour ce niveau.'}</span>
       )}
       <span className="small muted">Cliquez sur la date pour cocher la séance « faite » (ses flashcards sont publiées).</span>
     </div>
@@ -158,7 +161,7 @@ export function ClassOverview({ group, goTab }: { group: Group; goTab: (t: strin
             </div>
             {dropped.length > 0 && (
               <a href="#" className="small" style={{ fontWeight: 700 }} onClick={(e) => (e.preventDefault(), goTab('suivi'))}>
-                ⚠️ {dropped.length} élève(s) à relancer (aucune révision depuis 5 jours) →
+                <Icon name="alert" size={14} /> {dropped.length} élève(s) à relancer (aucune révision depuis 5 jours) →
               </a>
             )}
           </div>
@@ -173,7 +176,7 @@ export function ClassOverview({ group, goTab }: { group: Group; goTab: (t: strin
             {toCorrect.length > 0 ? (
               toCorrect.map((e) => (
                 <Link key={e.ev.id} to={`/prof/correction/${e.ev.id}?onglet=copies`} className="row" style={{ gap: 8 }}>
-                  ✏️ <b>{e.ev.name}</b>{' '}
+                  <Icon name="edit" size={15} /> <b>{e.ev.name}</b>{' '}
                   <span className="small muted">
                     {e.corrected}/{e.total} copie(s) corrigée(s)
                   </span>

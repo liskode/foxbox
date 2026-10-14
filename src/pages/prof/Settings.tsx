@@ -6,14 +6,15 @@ import { useAuth } from '../../lib/auth';
 import { db } from '../../lib/db';
 import { Groups } from './Groups';
 import { DEFAULT_ORIGINS, loadOrigins, type Origin } from '../../lib/cardCodes';
+import { Icon } from '../../components/Icon';
 
 export function Settings() {
   const { session, logout } = useAuth();
   const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
   const links = [
-    ['/prof/edt', '🗓 Emploi du temps et calendrier', 'PDF Pronote, semaines A / B, vacances, jours de présence, cours hors progression'],
-    ['/prof/competences', '🎯 Référentiel de compétences', 'APP, ANA, REA, VAL, COM et leurs sous-compétences'],
-    ['/prof/salles', '🪑 Salles', 'Disposition des places, pour les plans de classe'],
+    ['/prof/edt', 'Emploi du temps et calendrier', 'calendar', 'PDF Pronote, semaines A / B, vacances, jours de présence, cours hors progression'],
+    ['/prof/competences', 'Référentiel de compétences', 'target', 'APP, ANA, REA, VAL, COM et leurs sous-compétences'],
+    ['/prof/salles', 'Salles', 'seat', 'Disposition des places, pour les plans de classe'],
   ];
   return (
     <div className="page stack">
@@ -21,9 +22,11 @@ export function Settings() {
         Réglages
       </h1>
       <div className="grid3">
-        {links.map(([to, title, sub]) => (
-          <Link key={to} to={to} className="panel stack" style={{ gap: 4, textDecoration: 'none', color: 'inherit' }}>
-            <b>{title}</b>
+        {links.map(([to, title, icon, sub]) => (
+          <Link key={to} to={to} className="panel strong stack" style={{ gap: 4 }}>
+            <b className="row" style={{ gap: 8 }}>
+              <Icon name={icon} /> {title}
+            </b>
             <span className="small muted">{sub}</span>
           </Link>
         ))}
@@ -49,7 +52,7 @@ function OriginsPanel() {
   const save = (list: Origin[]) => db.teachers.update(session!.id, { origins: list });
   return (
     <div className="panel stack" style={{ gap: 8 }}>
-      <h3 style={{ margin: 0 }}>🏷 Origines des flashcards</h3>
+      <h3 className="panel-title"><Icon name="tag" size={16} /> Origines des flashcards</h3>
       <span className="small muted">
         Code des flashcards : niveau + thème + origine + numéro, ex. <span className="code">43MM-012</span> (4e, Énergie, origine MM, n° 12). Niveau 9 /
         thème 9 = transversal ; niveau 0 = Terminale.

@@ -20,6 +20,7 @@ import {
 } from '../../lib/timetable';
 import { WeekGrid, groupOfSlot, useGroups, useTimetable } from '../../components/TimetableView';
 import { isStaleVersionError } from '../../components/UpdateBanner';
+import { Icon } from '../../components/Icon';
 
 const WEEK_COLORS = { A: '#f2c14e', B: '#7fb8e6' };
 
@@ -247,7 +248,7 @@ function CalendarPanel({ tt, save }: { tt: TT; save: (t: TT) => Promise<void> })
                   <span>
                     {fromISO(m).getDate()}–{fromISO(addDays(m, 4)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                   </span>
-                  <b>{w ?? '🌴'}</b>
+                  <b>{w ?? <Icon name="sun" size={14} />}</b>
                 </button>
               );
             })}

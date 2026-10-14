@@ -10,6 +10,7 @@ import { Avatar } from '../../components/Avatar';
 import { removePhoto } from '../../lib/photos';
 import { NoteEditor, FlagChecks } from '../../components/StudentNote';
 import { StudentEvaluations, StudentCompetenceHisto, StudentAbsences } from '../../components/StudentEvaluations';
+import { Icon } from '../../components/Icon';
 
 export function StudentPage() {
   const { id } = useParams();
@@ -161,7 +162,7 @@ export function StudentPage() {
                   }
                 }}
               >
-                🔑 Réinitialiser le mot de passe
+                <Icon name="key" size={16} /> Réinitialiser le mot de passe
               </button>{' '}
             <FamilyChip studentId={student.id} />
             </div>
@@ -169,7 +170,7 @@ export function StudentPage() {
         </div>
       </div>
       <div className="panel stack">
-        <h3 style={{ margin: 0 }}>📝 Note</h3>
+        <h3 className="panel-title"><Icon name="edit" size={16} /> Note</h3>
         <FlagChecks studentId={student.id} />
         <NoteEditor key={student.id} studentId={student.id} />
       </div>
@@ -252,7 +253,7 @@ function FamilyChip({ studentId }: { studentId: string }) {
   const n = useLiveQuery(() => db.parentMessages.where('studentId').equals(studentId).count(), [studentId], 0);
   return (
     <Link to={`/prof/eleves/${studentId}/famille`} className="btn small" style={{ background: '#e8e1f5' }} title="Coordonnées des parents et suivi des échanges">
-      👪 Famille{n ? ` · ${n}` : ''}
+      <Icon name="family" size={16} /> Famille{n ? ` · ${n}` : ''}
     </Link>
   );
 }

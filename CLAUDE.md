@@ -5,3 +5,14 @@
 - Vocabulaire de l'interface : « flashcard » (jamais « carte »), « séquence », « séance », « Évaluations ».
 - Données privées (notes, aménagements, famille, absences, notes de classe) : tables propres au professeur, protégées par les règles d'accès du serveur ; ne jamais les rendre lisibles aux élèves ni à d'autres professeurs.
 - Vérifier chaque modification dans la démo locale avant publication ; publier par `git push` (déploiement GitHub Pages).
+
+## Charte graphique (maquette validée le 14/10/2026)
+
+- **Cadres** : le gros cadre noir + ombre (`.panel.strong`, `.btn.primary`) est réservé à ce qui s'ouvre ou s'exécute d'un clic. Les zones d'information sont calmes : `.panel` (filet clair, sans ombre), `.panel.calm`, `.panel.note` (notes privées, fond crème), `.panel.pop` (menus flottants, dialogues).
+- **Textes** : 3 niveaux seulement — titre de page (police Londrina, `h1.title`, mots courts), titre de zone (`.panel-title`, Nunito 900), texte courant. Londrina jamais pour une phrase.
+- **Couleurs, chacune un rôle** : pastels des niveaux = identité d'une classe (pastilles, bandeau de la classe) ; jaune = action principale et sélection ; vert / jaune-orangé / rouge = états, via les étiquettes `.tag.ok`, `.tag.warn`, `.tag.bad` (fond pâle, texte foncé).
+- **Boutons** : principal (`.btn.primary`, un seul par zone), secondaire (`.btn`), discret (`.btn.ghost`).
+- **Icônes** : `<Icon name="…" />` (src/components/Icon.tsx, icônes au trait) ; pas d'emoji dans l'interface.
+- **Confirmation** : après une action, message en bas de l'écran avec `toast(texte, { undo })` (src/components/Toast.tsx), avec « Annuler » quand c'est possible.
+- **Espacements** : multiples de 8 px (8, 16, 24).
+- **Téléphone d'abord pour l'espace élève** : boutons de réponse en bas (rouge à gauche, vert à droite), menu en bas de l'écran.

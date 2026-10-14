@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { db, fileBlob, type Unit } from '../lib/db';
 import { mediaUrl } from './CardFace';
+import { Icon } from './Icon';
 
 const MAX_MB = 50;
 export const sizeLabel = (n: number) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} Mo` : `${Math.max(1, Math.round(n / 1024))} ko`);
@@ -21,7 +22,7 @@ export function DocumentList({ docs }: { docs: NonNullable<Unit['documents']> })
     <div className="row" style={{ gap: 6 }}>
       {docs.map((d) => (
         <button key={d.mediaId} className="btn small" onClick={() => openDocument(d.mediaId, d.name)} title={sizeLabel(d.size)}>
-          📄 {d.name}
+          <Icon name="file" size={15} /> {d.name}
         </button>
       ))}
     </div>
@@ -80,7 +81,7 @@ export function UnitDetails({ unit }: { unit: Unit }) {
       {docs.map((d) => (
         <div key={d.mediaId} className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
           <button className="btn small ghost" onClick={() => openDocument(d.mediaId, d.name)}>
-            📄 {d.name}
+            <Icon name="file" size={15} /> {d.name}
           </button>
           <span className="small muted">{sizeLabel(d.size)}</span>
           <button className="btn small ghost" onClick={() => remove(d.mediaId, d.name)} title="Retirer">
@@ -135,7 +136,7 @@ export function DocumentsEditor({ docs, onChange, label = 'Documents' }: { docs:
       {docs.map((d) => (
         <div key={d.mediaId} className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
           <button className="btn small ghost" onClick={() => openDocument(d.mediaId, d.name)}>
-            📄 {d.name}
+            <Icon name="file" size={15} /> {d.name}
           </button>
           <span className="small muted">{sizeLabel(d.size)}</span>
           <button className="btn small ghost" onClick={() => remove(d.mediaId, d.name)} title="Retirer">

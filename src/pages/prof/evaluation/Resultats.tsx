@@ -8,6 +8,7 @@ import { frDate } from '../../../lib/dates';
 import { Avatar } from '../../../components/Avatar';
 
 import { useResults, NoteBadge, CompetenceBadges, ClassCompetences } from './shared';
+import { Icon } from '../../../components/Icon';
 
 // ---------------------------------------------------------------- Résultats
 export function ResultatsTab({ ev }: { ev: Evaluation }) {
@@ -104,7 +105,7 @@ export function ResultatsTab({ ev }: { ev: Evaluation }) {
                   );
                 }}
               >
-                📋 Copier les notes pour Pronote
+                <Icon name="clipboard" size={16} /> Copier les notes pour Pronote
               </button>
             </div>
             <div className="grid3">

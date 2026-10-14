@@ -8,6 +8,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Student } from '../lib/db';
 import { score, dateFor } from '../lib/grading';
 import { frDate } from '../lib/dates';
+import { Icon } from './Icon';
 
 export function useStudentEvals(studentId: string) {
   return useLiveQuery(async () => {
@@ -25,7 +26,7 @@ export function StudentEvaluations({ student }: { student: Student }) {
   const list = useStudentEvals(student.id);
   return (
     <div className="panel stack">
-      <h3 style={{ margin: 0 }}>📋 Évaluations</h3>
+      <h3 className="panel-title"><Icon name="eval" size={16} /> Évaluations</h3>
       {!list.length && <span className="muted small">Aucune évaluation corrigée pour l'instant.</span>}
       <table className="list">
         <tbody>
@@ -80,7 +81,7 @@ export function StudentCompetenceHisto({ student }: { student: Student }) {
   return (
     <div className="panel stack" style={{ gap: 8 }}>
       <div className="spread">
-        <h3 style={{ margin: 0 }}>🎯 Compétences</h3>
+        <h3 className="panel-title"><Icon name="target" size={16} /> Compétences</h3>
         <Link to="/prof/competences" className="small">
           détail →
         </Link>
@@ -102,7 +103,7 @@ export function StudentAbsences({ student }: { student: Student }) {
   const list = useLiveQuery(() => absencesOf(student.id), [student.id], []);
   return (
     <div className="panel stack" style={{ gap: 6 }}>
-      <h3 style={{ margin: 0 }}>🚪 Absences ({list.length})</h3>
+      <h3 className="panel-title"><Icon name="door" size={16} /> Absences ({list.length})</h3>
       {list.length ? (
         <table className="list">
           <thead>
@@ -138,7 +139,7 @@ export function StudentAbsences({ student }: { student: Student }) {
           </tbody>
         </table>
       ) : (
-        <span className="muted small">Aucune absence relevée. L'appel se fait sur le plan de classe (bouton 📋 Appel).</span>
+        <span className="muted small">Aucune absence relevée. L'appel se fait sur le plan de classe (bouton « Faire l'appel » de la classe).</span>
       )}
     </div>
   );

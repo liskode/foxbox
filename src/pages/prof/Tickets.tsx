@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
 import { Avatar } from '../../components/Avatar';
+import { Icon } from '../../components/Icon';
 
 export function Tickets() {
   const { id } = useParams();
@@ -20,7 +21,7 @@ export function Tickets() {
           ← {group?.name}
         </Link>
         <button className="btn primary" onClick={() => print()}>
-          🖨 Imprimer
+          <Icon name="print" size={16} /> Imprimer
         </button>
       </div>
       <div className="tickets">

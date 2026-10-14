@@ -7,6 +7,7 @@ import { useAuth } from '../lib/auth';
 import { unitLabel, themeLabel, levelOfName, byProgression } from '../lib/units';
 import { levelPlans, doneDate, dm } from '../lib/forecast';
 import { DoneCell } from './DoneCell';
+import { Icon } from './Icon';
 
 // Niveau déduit du nom de la classe (« 4A_2627 » → 4e)
 export const levelOf = (g: Group) => levelOfName(g.name);
@@ -83,9 +84,9 @@ export function Progression({ group }: { group: Group }) {
               {items.map((it) => (
                 <div key={it.unit.id} className="row" style={{ gap: 10, paddingLeft: 12, flexWrap: 'nowrap' }}>
                   <span style={{ flex: 1, fontWeight: doneDate(plan, it) ? 700 : 500 }} title={it.unit.description || undefined}>
-                    {it.unit.isEval && '📝 '}
+                    {it.unit.isEval && <><Icon name="eval" size={15} /> </>}
                     {it.unit.id === seq.id ? '(séquence entière)' : unitLabel(it.unit)}
-                    {it.unit.documents?.length ? <span className="small muted"> · 📄{it.unit.documents.length}</span> : null}
+                    {it.unit.documents?.length ? <span className="small muted"> · <Icon name="file" size={13} />{it.unit.documents.length}</span> : null}
                   </span>
                   <DoneCell
                     g={group}

@@ -36,9 +36,10 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'descriptif et documents PDF téléchargeables par les élèves',
       'flashcards rattachées à chaque séance',
       'case « faite » par classe à la date du cours, qui publie les flashcards',
+      'message de confirmation avec « Annuler »',
       'dates prévues calculées d’après l’emploi du temps et le calendrier',
       'fin de programme prévue ou retard en semaines',
-      'séances d’évaluation 📝',
+      'séances d’évaluation',
       'masquer ce qui est terminé',
       'réordonner (↑ ↓) avec renumérotation',
     ],
@@ -118,6 +119,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     text: 'La vue d’ensemble de chaque classe et ses outils.',
     details: [
       'accès permanent depuis le bandeau (une pastille par classe)',
+      'bandeau à la couleur du niveau avec les boutons « Faire l’appel » et « Projeter le plan »',
       'galerie des élèves (photo, prénom, photo agrandie au survol)',
       'sous-groupes (demi-groupes, îlots) avec cerclage de couleur',
       'prochain cours et séances à cocher',
@@ -168,6 +170,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     text: 'Ce que voit l’élève sur ordinateur ou téléphone.',
     details: [
       'révision quotidienne par boîtes de Leitner (7 boîtes, objectif du jour)',
+      'pensé pour le téléphone : flashcard en grand, boutons de réponse sous le pouce, menu en bas de l’écran',
       'réponses « Je ne sais pas », « Dur », « Facile »',
       'progrès : série, régularité, boîtes',
       'notes des évaluations rendues avec histogramme des compétences',
@@ -185,6 +188,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'mise à jour signalée par un bandeau',
       'réparation automatique des images',
       'pages chargées à la demande',
+      'charte graphique commune (cadres, couleurs d’état, icônes au trait)',
     ],
   },
 ];

@@ -11,19 +11,42 @@ import { TimetableWidget } from '../../components/TimetableWidget';
 import { StudentSearch } from '../../components/StudentSearch';
 import { useOverview } from './Correction';
 import { syncAllShares } from '../../lib/grading';
+import { Icon } from '../../components/Icon';
 
-function Tile({ to, title, sub, alert, children }: { to: string; title: string; sub: string; alert?: ReactNode; children?: ReactNode }) {
+// Tuile : toute la tuile s'ouvre d'un clic (gros cadre = cliquable) ; l'alerte est une étiquette de couleur
+function Tile({ to, icon, title, sub, alert, children }: { to: string; icon: string; title: string; sub: string; alert?: ReactNode; children?: ReactNode }) {
+  const head = (
+    <>
+      <span className="tile-head">
+        <Icon name={icon} size={20} />
+        {title}
+      </span>
+      <span className="small muted">{sub}</span>
+    </>
+  );
+  if (children)
+    return (
+      <div className="panel strong stack tile" style={{ gap: 8 }}>
+        <Link to={to} className="stack" style={{ gap: 2, textDecoration: 'none', color: 'inherit' }}>
+          {head}
+        </Link>
+        {children}
+      </div>
+    );
   return (
-    <div className="panel stack tile" style={{ gap: 6 }}>
-      <Link to={to} className="stack" style={{ gap: 2, textDecoration: 'none', color: 'inherit' }}>
-        <h2 style={{ margin: 0 }}>{title}</h2>
-        <span className="small muted">{sub}</span>
-      </Link>
-      {alert && <div className="small">{alert}</div>}
-      {children}
-    </div>
+    <Link to={to} className="panel strong stack tile" style={{ gap: 2 }}>
+      {head}
+      {alert && <div style={{ marginTop: 'auto', paddingTop: 10 }}>{alert}</div>}
+    </Link>
   );
 }
+
+const Alert = ({ kind, children }: { kind: 'ok' | 'warn' | 'bad'; children: ReactNode }) => (
+  <span className={'tag ' + kind}>
+    <Icon name={kind === 'ok' ? 'check' : 'alert'} size={14} />
+    {children}
+  </span>
+);
 
 function useAlerts() {
   const { session } = useAuth();
@@ -63,7 +86,7 @@ export function Dashboard() {
   }));
 
   const steps = [
-    { done: !!counts?.groups, label: 'Créer vos classes et importer les élèves (⚙️ Réglages)', to: '/prof/reglages' },
+    { done: !!counts?.groups, label: 'Créer vos classes et importer les élèves (Réglages)', to: '/prof/reglages' },
     { done: !!counts?.seqs, label: 'Préparer vos séquences et séances (Progression)', to: '/prof/progression' },
     { done: !!counts?.cards, label: 'Importer vos flashcards (Flashcards › Import)', to: '/prof/flashcards?onglet=import' },
   ];
@@ -71,7 +94,7 @@ export function Dashboard() {
   return (
     <div className="page stack" style={{ maxWidth: 1400 }}>
       {counts && steps.some((s) => !s.done) && (
-        <div className="panel stack">
+        <div className="panel note stack">
           <h3 style={{ margin: 0 }}>Pour commencer</h3>
           {steps.map((s, i) => (
             <Link key={i} to={s.to} className="row" style={{ textDecoration: 'none', gap: 10 }}>
@@ -87,23 +110,26 @@ export function Dashboard() {
       <div className="home-grid">
         <Tile
           to="/prof/progression"
+          icon="chart"
           title="Progression"
           sub="Séquences, séances"
-          alert={alerts && (alerts.late.length ? <b style={{ color: 'var(--forgot)' }}>⚠️ En retard : {alerts.late.join(', ')}</b> : <span className="muted">✓ Programme dans les temps</span>)}
+          alert={alerts && (alerts.late.length ? <Alert kind="bad">En retard : {alerts.late.join(', ')}</Alert> : <Alert kind="ok">Dans les temps</Alert>)}
         />
         <Tile
           to="/prof/correction"
+          icon="eval"
           title="Évaluations"
-          sub="Évaluations, corrections, compétences"
-          alert={evals && (toCorrect ? <b>✏️ {toCorrect} copie(s) de classe à corriger</b> : <span className="muted">✓ Rien à corriger</span>)}
+          sub="Corrections, compétences"
+          alert={evals && (toCorrect ? <Alert kind="warn">{toCorrect} classe(s) à corriger</Alert> : <Alert kind="ok">Rien à corriger</Alert>)}
         />
         <Tile
           to="/prof/flashcards"
+          icon="cards"
           title="Flashcards"
           sub="Liste, import, statistiques"
-          alert={alerts && (alerts.relancer ? <b>⚠️ {alerts.relancer} élève(s) à relancer</b> : <span className="muted">✓ Tout le monde révise</span>)}
+          alert={alerts && (alerts.relancer ? <Alert kind="warn">{alerts.relancer} élève(s) à relancer</Alert> : <Alert kind="ok">Tout le monde révise</Alert>)}
         />
-        <Tile to="/prof/eleves" title="Élève" sub="Recherche rapide, trombis">
+        <Tile to="/prof/eleves" icon="user" title="Élève" sub="Trombis, plans de classe, fiches">
           <StudentSearch max={5} />
         </Tile>
         <div className="home-edt">

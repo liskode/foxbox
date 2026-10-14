@@ -7,6 +7,7 @@ import { studentSubjects } from '../lib/leitner';
 import { Boxes, Heatmap, Pct, RateBar } from './widgets';
 import { CardFace } from './CardFace';
 import { CardDetail } from './CardDetail';
+import { Icon } from './Icon';
 
 // teacherView : présentation compacte sur une ligne (réglages, chiffres, régularité, boîtes) ; settings : réglages à y insérer
 export function StudentReport({ studentId, teacherView = false, settings }: { studentId: string; teacherView?: boolean; settings?: ReactNode }) {
@@ -63,7 +64,7 @@ export function StudentReport({ studentId, teacherView = false, settings }: { st
             }}
           >
             {[
-              ['Série', `🔥 ${streak(counts)} j`],
+              ['Série', `${streak(counts)} j`],
               ['Jours (30 j)', `${sum.activeDays} / 30`],
               ['Réussite (30 j)', sum.total ? <Pct v={sum.success} /> : '—'],
               ['Score', `${sum.score} / 100`],
@@ -93,7 +94,7 @@ export function StudentReport({ studentId, teacherView = false, settings }: { st
           <div className="grid3">
             <div className="panel">
               <div className="muted small">Série en cours</div>
-              <div style={{ fontSize: '2rem', fontWeight: 900 }}>🔥 {streak(counts)} j</div>
+              <div style={{ fontSize: '2rem', fontWeight: 900 }}><Icon name="flame" size={28} /> {streak(counts)} j</div>
             </div>
             <div className="panel">
               <div className="muted small">Jours de révision (30 j)</div>
@@ -142,7 +143,7 @@ export function StudentReport({ studentId, teacherView = false, settings }: { st
             ))}
           </div>
         ) : (
-          <span className="muted">Aucune flashcard difficile pour l'instant 👍</span>
+          <span className="muted">Aucune flashcard difficile pour l'instant.</span>
         )}
       </div>
       {open && <CardDetail cardId={open} onClose={() => setOpen(null)} />}
