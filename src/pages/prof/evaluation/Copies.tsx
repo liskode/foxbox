@@ -1,6 +1,6 @@
 // Évaluation : correction copie par copie, au clavier.
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { type Evaluation } from '../../../lib/db';
 import { LEVELS, LEVEL_KEYS, emptyResult, levelColor, saveResult, score } from '../../../lib/grading';
 import { Avatar } from '../../../components/Avatar';
@@ -104,27 +104,45 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
       </div>
 
       <div className="stack">
-        <div className="panel spread">
-          <div className="row" style={{ gap: 14 }}>
-            <Avatar student={cur.student} size={70} zoom />
-            <div>
-              <h2 style={{ margin: 0 }}>
-                {cur.student.firstName} {cur.student.lastName} <GroupChip id={cur.groupId} /> <CurFlags id={cur.student.id} />
-              </h2>
-              <div className="small muted">
-                Copie {idx + 1}/{list.length} · ← → copie précédente / suivante
+        {/* En-tête : élève, note et compétences à gauche ; appréciation générale à droite */}
+        <div className="panel" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 38%)', gap: 20, alignItems: 'stretch' }}>
+          <div className="stack" style={{ gap: 12 }}>
+            <div className="row" style={{ gap: 14, flexWrap: 'nowrap' }}>
+              <Link to={`/prof/eleves/${cur.student.id}`} title="Ouvrir la fiche de l'élève">
+                <Avatar student={cur.student} size={70} zoom />
+              </Link>
+              <div>
+                <h2 style={{ margin: 0 }}>
+                  {cur.student.firstName} {cur.student.lastName} <GroupChip id={cur.groupId} /> <CurFlags id={cur.student.id} />
+                </h2>
+                <div className="small muted">
+                  Copie {idx + 1}/{list.length} · ← → copie précédente / suivante
+                </div>
               </div>
             </div>
-          </div>
-          <div className="row">
-            <div style={{ fontSize: '1.4rem' }}>
-              <NoteBadge ev={ev} r={r} />
+            <div className="row">
+              <div style={{ fontSize: '1.4rem' }}>
+                <NoteBadge ev={ev} r={r} />
+              </div>
+              <CompetenceBadges ev={ev} r={r} />
+              <button className={'btn small' + (r.absent ? ' danger' : ' ghost')} onClick={() => saveResult(ev, { ...r, absent: !r.absent })}>
+                {r.absent ? 'Absent ✓' : 'Absent (A)'}
+              </button>
+              <NoteButton student={cur.student} />
             </div>
-            <CompetenceBadges ev={ev} r={r} />
-            <button className={'btn small' + (r.absent ? ' danger' : ' ghost')} onClick={() => saveResult(ev, { ...r, absent: !r.absent })}>
-              {r.absent ? 'Absent ✓' : 'Absent (A)'}
-            </button>
-            <NoteButton student={cur.student} />
+          </div>
+          <div className="stack" style={{ gap: 4 }}>
+            <b className="small">Appréciation générale</b>
+            <textarea
+              value={appr}
+              onChange={(e) => setAppr(e.target.value)}
+              onBlur={() => appr !== (r.appreciation ?? '') && saveResult(ev, { ...r, appreciation: appr })}
+              placeholder="Appréciation sur la copie…"
+              style={{ fontFamily: 'var(--font)', fontSize: '0.95rem', minHeight: 90, flex: 1 }}
+            />
+            <span className="small muted">
+              Enregistrée en quittant le champ. {ev.visibility.appreciation ? 'Visible par l’élève.' : 'Non visible par l’élève.'}
+            </span>
           </div>
         </div>
 
@@ -216,19 +234,6 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
           })}
         </div>
 
-        <div className="panel stack">
-          <b>Appréciation générale</b>
-          <textarea
-            value={appr}
-            onChange={(e) => setAppr(e.target.value)}
-            onBlur={() => appr !== (r.appreciation ?? '') && saveResult(ev, { ...r, appreciation: appr })}
-            placeholder="Appréciation sur la copie…"
-            style={{ fontFamily: 'var(--font)', fontSize: '0.95rem', minHeight: 80 }}
-          />
-          <span className="small muted">
-            Enregistrée en quittant le champ. {ev.visibility.appreciation ? 'Visible par l’élève.' : 'Non visible par l’élève.'}
-          </span>
-        </div>
       </div>
     </div>
   );
