@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { HashRouter, Navigate, NavLink, Route, Routes, Link } from 'react-router-dom';
+import { HashRouter, Navigate, NavLink, Route, Routes, Link, useLocation } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, shortName } from './lib/db';
 import { AuthProvider, useAuth } from './lib/auth';
 import { runOcr, subscribeOcr, type OcrState } from './lib/ocr';
 import { Login } from './pages/Login';
@@ -88,6 +90,36 @@ function Bare({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode 
   return <>{children}</>;
 }
 
+// Accès permanent aux classes depuis le bandeau (pastille entourée = classe ouverte)
+function TopClassChips() {
+  const groups = useLiveQuery(
+    async () => (await db.groups.filter((g) => !g.archived).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
+    [],
+    [],
+  );
+  const { pathname } = useLocation();
+  if (!groups.length) return null;
+  return (
+    <>
+      <span className="nav-sep" />
+      {groups.map((g) => {
+        const active = pathname.startsWith(`/prof/classes/${g.id}`);
+        return (
+          <Link
+            key={g.id}
+            to={`/prof/classes/${g.id}?onglet=apercu`}
+            className="chip cchip nav-class"
+            title={g.name}
+            style={{ background: g.color ?? 'var(--paper)', outline: active ? '3px solid var(--ink)' : undefined }}
+          >
+            {shortName(g.name)}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
+
 function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode }) {
   const { session, ready, logout } = useAuth();
   useEffect(() => {
@@ -132,6 +164,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
               </NavLink>
             ),
           )}
+          {role === 'prof' && <TopClassChips />}
         </nav>
         <OcrBadge />
         {ONLINE && <SyncBadge />}

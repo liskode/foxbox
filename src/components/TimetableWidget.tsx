@@ -1,8 +1,6 @@
 // Tableau de bord : cours du jour (ou du prochain jour de présence) et grille de la semaine A/B.
-import { shortName } from '../lib/db';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Group } from '../lib/db';
 import { addDays, today } from '../lib/dates';
 import { isPresent, dayOf, mondayOf, nextSchoolWeek, nextTeachingDay, slotsOn, weekType } from '../lib/timetable';
 import { DayList, WeekGrid, longDate, useGroups, useTimetable } from './TimetableView';
@@ -37,7 +35,6 @@ export function TimetableWidget() {
             Ajouter mon emploi du temps
           </Link>
         </div>
-        <ClassChips groups={groups} />
       </div>
     );
 
@@ -52,7 +49,6 @@ export function TimetableWidget() {
             Compléter le calendrier
           </Link>
         </div>
-        <ClassChips groups={groups} />
       </div>
     );
 
@@ -118,30 +114,6 @@ export function TimetableWidget() {
           {w ? <WeekGrid tt={tt} groups={groups} monday={monday} compact /> : <div className="notice">Pas de cours cette semaine (vacances).</div>}
         </div>
       </div>
-      <ClassChips groups={groups} />
-    </div>
-  );
-}
-
-// Accès direct aux classes (utile pendant les vacances, ou pour une classe hors emploi du temps)
-function ClassChips({ groups }: { groups: Group[] }) {
-  const sorted = [...groups].sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
-  return (
-    <div className="row" style={{ gap: 6 }}>
-      <span className="small muted">Classes :</span>
-      {sorted.map((g) => (
-        <Link
-          key={g.id}
-          to={`/prof/classes/${g.id}?onglet=apercu`}
-          className="chip cchip"
-          style={{
-            background: g.color ?? 'var(--paper)',
-            textDecoration: 'none',
-          }}
-        >
-          {shortName(g.name)}
-        </Link>
-      ))}
     </div>
   );
 }

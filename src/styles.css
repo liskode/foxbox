@@ -279,3 +279,6 @@ table.list tr.click:hover td { background: #faf7ef; }
 
 /* Pastille de classe : nom court, forme carrée */
 .chip.cchip { border-radius: 7px; min-width: 2.6em; justify-content: center; text-align: center; font-weight: 900; }
+
+/* Pastilles des classes dans le bandeau */
+.topbar .nav a.nav-class { padding: 2px 8px; font-size: 0.8rem; border: 2px solid var(--line); border-radius: 7px; align-self: center; text-decoration: none; }

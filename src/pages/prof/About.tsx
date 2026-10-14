@@ -117,6 +117,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Classes',
     text: 'La vue d’ensemble de chaque classe et ses outils.',
     details: [
+      'accès permanent depuis le bandeau (une pastille par classe)',
       'galerie des élèves (photo, prénom, photo agrandie au survol)',
       'sous-groupes (demi-groupes, îlots) avec cerclage de couleur',
       'prochain cours et séances à cocher',
