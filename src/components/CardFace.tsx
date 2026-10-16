@@ -7,23 +7,34 @@ import { fetchMedia } from '../lib/sync';
 
 const urlCache = new Map<string, string>();
 
-// Une image gardée dans le navigateur peut devenir illisible (défaut connu de Safari avec IndexedDB) :
-// on vérifie qu'elle se lit, sinon on la re-télécharge depuis le serveur.
-async function readable(blob?: Blob) {
-  if (!blob || !blob.size) return false;
+// Une image gardée dans le navigateur peut devenir illisible (défaut connu de Safari, surtout sur iPhone, avec IndexedDB).
+// On en fait donc toujours une copie en mémoire (octets relus, type d'image reconnu) avant de l'afficher ;
+// si la lecture échoue, l'image est re-téléchargée depuis le serveur.
+function sniffType(b: Uint8Array, fallback: string) {
+  if (b[0] === 0xff && b[1] === 0xd8) return 'image/jpeg';
+  if (b[0] === 0x89 && b[1] === 0x50) return 'image/png';
+  if (b[0] === 0x47 && b[1] === 0x49) return 'image/gif';
+  if (b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return 'image/webp';
+  if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return 'application/pdf';
+  if (b[0] === 0x3c) return 'image/svg+xml';
+  return fallback || 'application/octet-stream';
+}
+async function inMemory(blob?: Blob | null): Promise<Blob | null> {
+  if (!blob || !blob.size) return null;
   try {
-    await blob.slice(0, 8).arrayBuffer();
-    return true;
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    if (!bytes.length) return null;
+    return new Blob([bytes], { type: sniffType(bytes, blob.type) });
   } catch {
-    return false;
+    return null;
   }
 }
 
 export async function mediaUrl(id: string, force = false): Promise<string | null> {
   if (!force && urlCache.has(id)) return urlCache.get(id)!;
-  // force : nouvelle adresse, à partir de la copie locale si elle est lisible, sinon re-téléchargée
-  const local = (await db.media.get(id))?.blob;
-  const blob = (await readable(local)) ? local! : await fetchMedia(id);
+  // force (l'affichage a échoué) : on repart du serveur ; sinon de la copie locale, ou du serveur si elle est illisible
+  const local = force ? null : await inMemory((await db.media.get(id))?.blob);
+  const blob = local ?? (await inMemory(await fetchMedia(id).catch(() => null))) ?? (force ? await inMemory((await db.media.get(id))?.blob) : null);
   if (!blob) return null;
   // L'ancienne adresse n'est pas libérée : d'autres vignettes peuvent encore l'afficher
   const u = URL.createObjectURL(blob);
