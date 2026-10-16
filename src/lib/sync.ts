@@ -277,10 +277,16 @@ export async function fetchMedia(id: string): Promise<Blob | null> {
   if (!ONLINE) return null;
   const { data, error } = await supabase.storage.from(bucketOf(id)).download(id);
   if (error || !data) return null;
-  await db.transaction('rw', db.media, async () => {
-    (Dexie.currentTransaction as unknown as { __remote: boolean }).__remote = true;
-    await db.media.put({ id, name: id, blob: data });
-  });
+  // Copie locale pour la prochaine fois. Safari sur iPhone refuse parfois d'enregistrer une image :
+  // ce n'est pas grave, l'image téléchargée s'affiche quand même (elle sera re-téléchargée plus tard).
+  try {
+    await db.transaction('rw', db.media, async () => {
+      (Dexie.currentTransaction as unknown as { __remote: boolean }).__remote = true;
+      await db.media.put({ id, name: id, blob: data });
+    });
+  } catch (e) {
+    console.warn('Image non gardée sur cet appareil', id, e);
+  }
   return data;
 }
 

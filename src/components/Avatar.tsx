@@ -8,7 +8,12 @@ export function usePhoto(photoId?: string) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
-    if (photoId) mediaUrl(photoId).then((u) => alive && setUrl(u));
+    if (photoId)
+      mediaUrl(photoId)
+        // Pas de photo obtenue (réseau lent au démarrage…) : un nouvel essai 3 s plus tard
+        .then((u) => u ?? new Promise<string | null>((r) => setTimeout(() => r(alive ? mediaUrl(photoId, true) : null), 3000)))
+        .catch(() => null)
+        .then((u) => alive && setUrl(u));
     else setUrl(null);
     return () => {
       alive = false;

@@ -30,11 +30,20 @@ async function inMemory(blob?: Blob | null): Promise<Blob | null> {
   }
 }
 
+// Lecture de la copie locale ; une lecture refusée (Safari) compte comme « pas de copie »
+async function localBlob(id: string) {
+  try {
+    return (await db.media.get(id))?.blob;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function mediaUrl(id: string, force = false): Promise<string | null> {
   if (!force && urlCache.has(id)) return urlCache.get(id)!;
   // force (l'affichage a échoué) : on repart du serveur ; sinon de la copie locale, ou du serveur si elle est illisible
-  const local = force ? null : await inMemory((await db.media.get(id))?.blob);
-  const blob = local ?? (await inMemory(await fetchMedia(id).catch(() => null))) ?? (force ? await inMemory((await db.media.get(id))?.blob) : null);
+  const local = force ? null : await inMemory(await localBlob(id));
+  const blob = local ?? (await inMemory(await fetchMedia(id).catch(() => null))) ?? (force ? await inMemory(await localBlob(id)) : null);
   if (!blob) return null;
   // L'ancienne adresse n'est pas libérée : d'autres vignettes peuvent encore l'afficher
   const u = URL.createObjectURL(blob);
