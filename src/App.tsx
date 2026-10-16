@@ -83,7 +83,7 @@ function SyncBadge() {
     );
   return (
     <span className="tag" style={{ color: 'var(--ok)', padding: 0 }} title="Tout est enregistré en ligne">
-      <Icon name="check" size={14} stroke={2.5} /> Enregistré
+      <Icon name="check" size={14} stroke={2.5} /> <span className="sync-label">Enregistré</span>
     </span>
   );
 }
@@ -122,6 +122,70 @@ function TopClassChips() {
           </Link>
         );
       })}
+    </>
+  );
+}
+
+// Menu du professeur sur téléphone : un bouton « Menu » ouvre la liste des pages et des classes
+function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const { pathname, search } = useLocation();
+  useEffect(() => setOpen(false), [pathname, search]);
+  const groups = useLiveQuery(
+    async () => (await db.groups.filter((g) => !g.archived).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
+    [],
+    [],
+  );
+  const current =
+    links.find(([to]) => to !== '/prof' && pathname.startsWith(to))?.[1] ??
+    groups.find((g) => pathname.startsWith(`/prof/classes/${g.id}`))?.name.split('_')[0] ??
+    (pathname === '/prof' ? 'Tableau de bord' : pathname.startsWith('/prof/reglages') ? 'Réglages' : '');
+  return (
+    <>
+      <button className="menu-btn" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <Icon name={open ? 'x' : 'menu'} size={20} />
+        <span>{current || 'Menu'}</span>
+        <Icon name="chevronDown" size={16} />
+      </button>
+      {open && (
+        <>
+          <div className="menu-bg" onClick={() => setOpen(false)} />
+          <div className="menu-panel">
+            {links.map(([to, label]) => (
+              <NavLink key={to} to={to} end={to === '/prof'} className="menu-link">
+                {label}
+              </NavLink>
+            ))}
+            {groups.length > 0 && (
+              <>
+                <div className="menu-sub">Classes</div>
+                <div className="menu-classes">
+                  {groups.map((g) => (
+                    <Link
+                      key={g.id}
+                      to={`/prof/classes/${g.id}?onglet=apercu`}
+                      className={'chip cchip' + (pathname.startsWith(`/prof/classes/${g.id}`) ? ' on' : '')}
+                      style={{ background: g.color ?? 'var(--paper)' }}
+                    >
+                      {shortName(g.name)}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="menu-sub" />
+            <NavLink to="/prof/reglages" className="menu-link">
+              <Icon name="settings" /> Réglages
+            </NavLink>
+            <NavLink to="/prof/about" className="menu-link">
+              À propos
+            </NavLink>
+            <button className="menu-link" onClick={logout}>
+              <Icon name="logout" /> Déconnexion
+            </button>
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -174,14 +238,15 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           )}
           {role === 'prof' && <TopClassChips />}
         </nav>
+        {role === 'prof' && <MobileMenu links={links} logout={logout} />}
         <OcrBadge />
         {ONLINE && <SyncBadge />}
         {role === 'prof' ? (
           <>
-            <NavLink to="/prof/reglages" className="icon-btn" title="Réglages : emploi du temps, classes, couleurs, compétences">
+            <NavLink to="/prof/reglages" className="icon-btn desk" title="Réglages : emploi du temps, classes, couleurs, compétences">
               <Icon name="settings" />
             </NavLink>
-            <button className="icon-btn" onClick={logout} title="Déconnexion">
+            <button className="icon-btn desk" onClick={logout} title="Déconnexion">
               <Icon name="logout" />
             </button>
           </>

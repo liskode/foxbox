@@ -377,3 +377,38 @@ table.list tr.click:hover td { background: #faf7ef; }
   .eleve-shell.reviewing .bottom-nav { display: none; }
   .eleve-shell.reviewing .topbar { display: none; }
 }
+
+/* Bandeau professeur sur téléphone : menu déroulant à la place des liens */
+.menu-btn { display: none; }
+@media (max-width: 760px) {
+  .topbar.thin .nav, .topbar .icon-btn.desk, .topbar .sync-label { display: none; }
+  .topbar.thin { padding: 6px 12px; }
+  .menu-btn {
+    display: inline-flex; align-items: center; gap: 8px; flex: 1; min-width: 0; font: inherit; font-weight: 900; font-size: 1rem;
+    background: none; border: 1.5px solid var(--muted-line); border-radius: 12px; padding: 7px 12px; color: var(--ink); cursor: pointer;
+  }
+  .menu-btn span { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .menu-bg { position: fixed; inset: 0; z-index: 25; background: #1d1d1b33; }
+  .menu-panel {
+    position: absolute; left: 8px; right: 8px; top: calc(100% + 6px); z-index: 26; background: var(--paper);
+    border: 1.5px solid var(--muted-line); border-radius: 16px; box-shadow: 0 12px 32px #0000002e; padding: 8px;
+    display: flex; flex-direction: column; max-height: calc(100dvh - 80px); overflow-y: auto;
+  }
+  .menu-link {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; font: inherit; font-weight: 800; font-size: 1.05rem;
+    text-decoration: none; color: var(--ink); background: none; border: none; text-align: left; cursor: pointer;
+  }
+  .menu-link.active { background: var(--matiere); }
+  .menu-sub { margin: 8px 14px 4px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); border-top: 1px solid var(--soft-line); padding-top: 10px; }
+  .menu-sub:empty { padding-top: 4px; }
+  .menu-classes { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 14px 8px; }
+  .menu-classes .chip { font-size: 1rem; padding: 6px 12px; text-decoration: none; }
+  .menu-classes .chip.on { border-width: 2px; box-shadow: 2px 2px 0 var(--line); }
+}
+/* Étiquettes d'alerte : passent à la ligne plutôt que de déborder */
+.tile .tag { white-space: normal; }
+@media (max-width: 640px) {
+  .home-grid { gap: 12px; }
+  .home-grid .tile { padding: 14px; }
+  .tile-head { font-size: 1.05rem; }
+}

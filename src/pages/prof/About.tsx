@@ -187,6 +187,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'données privées (notes, aménagements, famille, absences) lisibles par le seul professeur, protégées par le serveur',
       'hébergement en France (Paris)',
       'mise à jour signalée par un bandeau',
+      'sur téléphone, menu déroulant (pages, classes, réglages) à la place du bandeau',
       'réparation automatique des images',
       'pages chargées à la demande',
       'charte graphique commune (cadres, couleurs d’état, icônes au trait)',
