@@ -2,6 +2,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { Cards } from './Cards';
 import { ImportPage } from './Import';
+import { TabBar } from '../../components/TabBar';
 
 const TABS = [
   ['cartes', 'Liste'],
@@ -19,13 +20,7 @@ export function Flashcards() {
         <h1 className="title" style={{ margin: 0 }}>
           Flashcards
         </h1>
-        <nav className="nav" style={{ flex: 'none' }}>
-          {TABS.map(([k, l]) => (
-            <a key={k} href="#" className={tab === k ? 'active' : ''} onClick={(e) => (e.preventDefault(), setParams({ onglet: k }, { replace: true }))}>
-              {l}
-            </a>
-          ))}
-        </nav>
+        <TabBar tabs={TABS} current={tab} onChange={(k) => setParams({ onglet: k }, { replace: true })} />
       </div>
       {tab === 'cartes' && <Cards embedded />}
       {tab === 'import' && <ImportPage embedded />}

@@ -139,7 +139,7 @@ export function Competences() {
           ))}
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 280px) 1fr', gap: 18, alignItems: 'start' }}>
+      <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 280px) 1fr', gap: 18, alignItems: 'start' }}>
         <Referential list={list} selected={selected} onSelect={(id) => set({ c: id })} />
         <div className="stack">
           <div className="panel" style={{ overflowX: 'auto' }}>

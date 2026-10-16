@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { type Evaluation } from '../../../lib/db';
 import { LEVELS, LEVEL_KEYS, emptyResult, levelColor, saveResult, score } from '../../../lib/grading';
 import { Avatar } from '../../../components/Avatar';
+import { Icon } from '../../../components/Icon';
 import { NoteButton } from '../../../components/StudentNote';
 
 import { pct, isTyping, parseLevel, useResults, NoteBadge, CompetenceBadges, CurFlags, GroupChip } from './shared';
@@ -71,8 +72,31 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
   if (!cur || !r) return <div className="muted">Aucun élève dans ces classes.</div>;
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 250px) 1fr', gap: 16, alignItems: 'start' }}>
-      <div className="panel stack" style={{ gap: 2, maxHeight: '75vh', overflowY: 'auto', padding: 10 }}>
+    <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 250px) 1fr', gap: 16, alignItems: 'start' }}>
+      {/* Téléphone : choix de l'élève dans un menu, avec copie précédente / suivante */}
+      <div className="show-phone row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+        <button className="btn" onClick={() => goStudent(-1)} disabled={idx === 0} aria-label="Copie précédente">
+          <Icon name="arrowLeft" />
+        </button>
+        <label className="tab-select" style={{ margin: 0, flex: 1 }}>
+          <select value={sid ?? ''} onChange={(e) => setParams({ onglet: 'copies', eleve: e.target.value }, { replace: true })}>
+            {list.map(({ student }) => {
+              const rr = results.get(student.id);
+              return (
+                <option key={student.id} value={student.id}>
+                  {student.lastName} {student.firstName}
+                  {rr?.absent ? ' · ABS' : score(ev, rr) ? ' ✓' : ''}
+                </option>
+              );
+            })}
+          </select>
+          <Icon name="chevronDown" size={18} />
+        </label>
+        <button className="btn" onClick={() => goStudent(1)} disabled={idx === list.length - 1} aria-label="Copie suivante">
+          <Icon name="arrowRight" />
+        </button>
+      </div>
+      <div className="panel stack hide-phone" style={{ gap: 2, maxHeight: '75vh', overflowY: 'auto', padding: 10 }}>
         {list.map(({ student }) => {
           const rr = results.get(student.id);
           const done = rr?.absent || score(ev, rr);
@@ -105,7 +129,7 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
 
       <div className="stack">
         {/* En-tête : élève, note et compétences à gauche ; appréciation générale à droite */}
-        <div className="panel" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 38%)', gap: 20, alignItems: 'stretch' }}>
+        <div className="panel stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 38%)', gap: 20, alignItems: 'stretch' }}>
           <div className="stack" style={{ gap: 12 }}>
             <div className="row" style={{ gap: 14, flexWrap: 'nowrap' }}>
               <Link to={`/prof/eleves/${cur.student.id}`} title="Ouvrir la fiche de l'élève">
@@ -177,7 +201,7 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
                 </span>
                 <span style={{ flex: 1, fontWeight: 600 }}>
                   {c.label || <i className="muted">(sans intitulé)</i>}
-                  {c.cardIds?.length ? <span className="small muted"> · 🃏{c.cardIds.length}</span> : null}
+                  {c.cardIds?.length ? <span className="small muted"> · <Icon name="cards" size={13} />{c.cardIds.length}</span> : null}
                 </span>
                 <span className="small muted" style={{ whiteSpace: 'nowrap' }}>
                   {c.points} pt

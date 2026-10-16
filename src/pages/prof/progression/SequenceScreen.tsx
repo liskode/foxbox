@@ -149,8 +149,8 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
 
   return (
     <div className="page">
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 300px) 1fr', gap: 20, alignItems: 'start' }}>
-        <div className="panel stack" style={{ position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
+      <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 300px) 1fr', gap: 20, alignItems: 'start' }}>
+        <div className="panel stack phone-last" style={{ position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
           <div className="spread">
             <h2 style={{ margin: 0, background: colors[lvl], borderRadius: 10, padding: '0 10px' }}>{lvl}</h2>
             <button className="btn small primary" onClick={addSequence}>

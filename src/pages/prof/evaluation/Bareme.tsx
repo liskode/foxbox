@@ -18,6 +18,7 @@ import { LEVELS as UNIT_LEVELS, levelOfName, nextSeanceCode, unitLabel, byProgre
 import { CardBrowser } from '../../../components/CardBrowser';
 import { CompetencePicker } from '../../../components/CompetencePicker';
 import { DocumentsEditor } from '../../../components/UnitDetails';
+import { Icon } from '../../../components/Icon';
 
 // ---------------------------------------------------------------- Barème
 function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => void }) {
@@ -31,7 +32,7 @@ function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => 
         title="Flashcards FoxBox liées à ce critère"
         onClick={() => (setSel(new Set(c.cardIds ?? [])), setOpen(true))}
       >
-        🃏 {n || ''}
+        <Icon name="cards" size={15} /> {n || ''}
       </button>
       {open && (
         <>

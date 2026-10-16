@@ -60,7 +60,7 @@ export function ResultatsTab({ ev }: { ev: Evaluation }) {
     <div className="stack">
       <div className="row">
         <button className="btn" onClick={exportCsv}>
-          ⬇ Exporter les notes (CSV pour Pronote / Excel)
+          <Icon name="file" /> Exporter les notes (CSV pour Pronote / Excel)
         </button>
         {linked && (
           <button
@@ -76,7 +76,7 @@ export function ResultatsTab({ ev }: { ev: Evaluation }) {
               setMsg(`${r.cards} flashcard(s) remise(s) en boîte 1 pour ${r.students} élève(s).`);
             }}
           >
-            🃏 Remettre en boîte 1 les flashcards des critères ratés
+            <Icon name="cards" /> Remettre en boîte 1 les flashcards des critères ratés
           </button>
         )}
       </div>
@@ -150,7 +150,7 @@ export function ResultatsTab({ ev }: { ev: Evaluation }) {
                       <tr key={c.id}>
                         <td style={{ width: '60%' }}>
                           {i + 1}. {c.label}
-                          {c.cardIds?.length ? <span className="small muted"> · 🃏{c.cardIds.length}</span> : null}
+                          {c.cardIds?.length ? <span className="small muted"> · <Icon name="cards" size={13} />{c.cardIds.length}</span> : null}
                         </td>
                         <td>
                           {v === null ? (

@@ -8,6 +8,7 @@ import { BaremeTab } from './evaluation/Bareme';
 import { CopiesTab } from './evaluation/Copies';
 import { GrilleTab } from './evaluation/Grille';
 import { ResultatsTab } from './evaluation/Resultats';
+import { TabBar } from '../../components/TabBar';
 
 // ---------------------------------------------------------------- Page
 export function EvaluationPage() {
@@ -50,18 +51,7 @@ export function EvaluationPage() {
             {ev.criteria.length} critère(s) · {maxPoints(ev)} point(s)
           </div>
         </div>
-        <nav className="nav" style={{ flex: 'none' }}>
-          {tabs.map(([k, l]) => (
-            <a
-              key={k}
-              href="#"
-              className={current === k ? 'active' : ''}
-              onClick={(e) => (e.preventDefault(), setParams({ onglet: k }, { replace: true }))}
-            >
-              {l}
-            </a>
-          ))}
-        </nav>
+        <TabBar tabs={tabs} current={current} onChange={(k) => setParams({ onglet: k }, { replace: true })} />
       </div>
       {current === 'bareme' && <BaremeTab ev={ev} update={update} />}
       {current === 'copies' && <CopiesTab ev={ev} />}

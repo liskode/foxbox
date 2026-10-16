@@ -12,6 +12,7 @@ import { StatsTab } from './groups/StatsTab';
 import { StudentsTab } from './groups/StudentsTab';
 import { TeachersTab } from './groups/SettingsTab';
 import { Icon } from '../../components/Icon';
+import { TabBar } from '../../components/TabBar';
 
 function schoolYear() {
   const d = new Date();
@@ -182,13 +183,7 @@ export function GroupPage() {
             )}
           </div>
         </div>
-        <nav className="tabs">
-          {tabs.map(([k, l]) => (
-            <a key={k} href="#" className={tab === k ? 'active' : ''} onClick={(e) => (e.preventDefault(), setTab(k))}>
-              {l}
-            </a>
-          ))}
-        </nav>
+        <TabBar tabs={tabs} current={tab} onChange={setTab} variant="underline" />
       </div>
       {tab === 'apercu' && <ClassOverview group={group} goTab={setTab} />}
       {tab === 'progression' && (

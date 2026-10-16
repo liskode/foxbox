@@ -412,3 +412,42 @@ table.list tr.click:hover td { background: #faf7ef; }
   .home-grid .tile { padding: 14px; }
   .tile-head { font-size: 1.05rem; }
 }
+
+/* Onglets : menu déroulant sur téléphone */
+.tab-select { display: none; }
+@media (max-width: 760px) {
+  .tabbar-desk { display: none !important; }
+  .tab-select { display: flex; align-items: center; position: relative; width: 100%; margin-top: 10px; }
+  .tab-select select {
+    width: 100%; appearance: none; -webkit-appearance: none; font: inherit; font-weight: 900; font-size: 1rem;
+    padding: 10px 40px 10px 14px; border-radius: 12px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink);
+  }
+  .tab-select .icon { position: absolute; right: 12px; pointer-events: none; }
+  .class-band .tab-select { margin: 12px 0 14px; }
+}
+
+/* Téléphone : rien ne doit dépasser de l'écran ; les grands tableaux défilent dans leur cadre */
+.grid2 { grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); }
+.grid3 { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+@media (max-width: 760px) {
+  html, body { overflow-x: hidden; }
+  .page { overflow-wrap: anywhere; }
+  .page input:not([type='checkbox']):not([type='radio']), .page select, .page textarea { max-width: 100%; }
+  .page .spread > * { min-width: 0; }
+  h1.title { font-size: 2rem; }
+  .class-band .row > div[style*='flex: 1'] { display: none; }
+  .class-band .btn { padding: 7px 12px; }
+  .stack-phone { display: flex !important; flex-direction: column !important; }
+  .stack-phone > * { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+  .hide-phone { display: none !important; }
+}
+
+.show-phone { display: none !important; }
+@media (max-width: 760px) {
+  .show-phone { display: flex !important; }
+  .stack-phone > * { position: static !important; max-height: none !important; }
+  .stack-phone > .phone-last { order: 2; }
+  .page .btn { white-space: normal; text-align: left; }
+  .page table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+}
