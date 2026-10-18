@@ -2,18 +2,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Group, type Student, shortName } from '../lib/db';
+import { db, isClass, isTutoring, type Group, type Student, shortName } from '../lib/db';
 import { StudentName } from './Avatar';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 export function useAllStudents() {
   return useLiveQuery(async () => {
-    const groups = (await db.groups.filter((g) => !g.archived).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
+    // Classes d'abord ; un élève suivi seulement en soutien est rattaché à son groupe de soutien
+    const all = (await db.groups.filter((g) => !g.archived).toArray()).sort(
+      (a, b) => Number(isTutoring(a)) - Number(isTutoring(b)) || a.name.localeCompare(b.name, 'fr', { numeric: true }),
+    );
+    const groups = all.filter(isClass);
     const ms = await db.memberships.toArray();
-    const ids = new Set(groups.map((g) => g.id));
     const byStudent = new Map<string, Group>();
-    for (const m of ms) if (ids.has(m.groupId) && !byStudent.has(m.studentId)) byStudent.set(m.studentId, groups.find((g) => g.id === m.groupId)!);
+    for (const g of all) for (const m of ms) if (m.groupId === g.id && !byStudent.has(m.studentId)) byStudent.set(m.studentId, g);
     const students = ((await db.students.bulkGet([...byStudent.keys()])).filter(Boolean) as Student[]).sort(
       (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName),
     );

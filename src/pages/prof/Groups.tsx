@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { SeatPlanTab } from '../../components/SeatPlanTab';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, SUBJECTS, CLASS_COLORS, type Group, shortName } from '../../lib/db';
+import { db, uid, isClass, SUBJECTS, CLASS_COLORS, type Group, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { ClassOverview, ClassEvaluations } from '../../components/ClassOverview';
 import { Progression } from '../../components/Progression';
@@ -23,7 +23,7 @@ function schoolYear() {
 export function Groups({ embedded = false }: { embedded?: boolean }) {
   const { session } = useAuth();
   const nav = useNavigate();
-  const groups = useLiveQuery(() => db.groups.toArray(), [], []);
+  const groups = useLiveQuery(() => db.groups.filter(isClass).toArray(), [], []);
   const counts = useLiveQuery(
     async () => {
       const ms = await db.memberships.toArray();

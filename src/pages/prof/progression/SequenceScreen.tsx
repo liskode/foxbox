@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { ask } from '../../../components/Dialog';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type Group, type Unit, shortName } from '../../../lib/db';
-import { THEMES as CARD_THEMES } from '../../../lib/themes';
+import { db, uid, SUBJECTS, type Group, type Unit, shortName } from '../../../lib/db';
+import { themesOf } from '../../../lib/themes';
 import { CardBrowser } from '../../../components/CardBrowser';
 import { CardDetail } from '../../../components/CardDetail';
 import { CardFace } from '../../../components/CardFace';
@@ -24,7 +24,8 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
   const units = useLiveQuery(() => db.units.toArray(), [], []);
   const nav = useNavigate();
   const [hideDone, setHideDone] = useHideDone();
-  const data = usePlans();
+  const subject = units.find((u) => u.id === seqId)?.subject || SUBJECTS[0];
+  const data = usePlans(subject);
   const { session } = useAuth();
   const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
   const bgOf = (u: Unit) => (u.level && colors[u.level]) || 'var(--paper)';
@@ -51,7 +52,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
   // Écran d'un niveau : seules ses séquences sont listées (on peut masquer celles terminées par toutes les classes)
   const lvl = units.find((u) => u.id === seqId)?.level ?? '';
   const lp = data?.levels.find((l) => l.level === lvl);
-  const seqs = sequencesOf(units, lvl).filter(
+  const seqs = sequencesOf(units, lvl, subject).filter(
     (q) =>
       !hideDone ||
       !lp ||
@@ -65,7 +66,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
   const openSeq = unit?.kind === 'sequence' ? unit.id : unit?.parentId;
 
   async function addSequence() {
-    const u = await createSequence(lvl, units);
+    const u = await createSequence(lvl, units, subject);
     if (u) setSel(u.id);
   }
 
@@ -113,7 +114,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
   async function newCard(u: Unit) {
     const now = Date.now();
     const id = uid();
-    const theme = u.level !== '6e' && u.theme ? CARD_THEMES[u.theme] : undefined;
+    const theme = (u.level !== '6e' || u.subject === 'Mathématiques') && u.theme ? themesOf(u.subject)[u.theme] : undefined;
     await db.cards.put({
       id,
       code: await cardCode({ level: u.level, theme, origin: defaultOrigin() }),
@@ -168,7 +169,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
             <div key={s.id} className="stack" style={{ gap: 4 }}>
               {(i === 0 || seqs[i - 1].theme !== s.theme) && (
                 <div className="small" style={{ fontWeight: 900, marginTop: i ? 8 : 0, color: 'var(--ink-soft)' }}>
-                  {themeLabel(s.theme, s.level)}
+                  {themeLabel(s.theme, s.level, s.subject)}
                 </div>
               )}
               <button
@@ -276,7 +277,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
 
               {unit.isEval && <EvalLinks unit={unit} />}
               <UnitDetails unit={unit} />
-              {data && lp && (
+              {data && lp && (lp.groups.length > 0 || subject === SUBJECTS[0]) && (
                 <ClassProgress
                   seq={unit.kind === 'sequence' ? unit : units.find((u) => u.id === unit.parentId)!}
                   lp={lp}

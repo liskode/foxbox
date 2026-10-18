@@ -31,6 +31,7 @@ export function Settings() {
           </Link>
         ))}
       </div>
+      <ModulesPanel />
       <OriginsPanel />
       <Groups embedded />
       <div className="panel spread">
@@ -88,6 +89,30 @@ function OriginsPanel() {
           + Ajouter une origine
         </button>
       </div>
+    </div>
+  );
+}
+
+// Modules facultatifs : n'apparaissent que pour les professeurs qui les activent
+function ModulesPanel() {
+  const { session } = useAuth();
+  const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
+  if (!me) return null;
+  return (
+    <div className="panel stack" style={{ gap: 8 }}>
+      <h3 className="panel-title">Modules</h3>
+      <label className="row" style={{ gap: 8, fontWeight: 700 }}>
+        <input
+          type="checkbox"
+          checked={!!me.modules?.soutien}
+          onChange={(e) => db.teachers.update(me.id, { modules: { ...(me.modules ?? {}), soutien: e.target.checked } })}
+        />
+        Soutien scolaire
+      </label>
+      <span className="small muted">
+        Élèves suivis en dehors de vos classes (un ou plusieurs, dans une ou plusieurs matières) : séances, programme, documents, flashcards et espace
+        élève. Ajoute « Soutien » au menu.
+      </span>
     </div>
   );
 }

@@ -1,7 +1,11 @@
 // Séquences et séances : codes par niveau et libellés.
-import { db, type Unit } from './db';
+import { db, SUBJECTS, type Unit } from './db';
 
 export const LEVELS = ['6e', '5e', '4e', '3e'];
+// Niveaux du lycée (soutien scolaire)
+export const LYCEE = ['2nde', '1re', 'Tle'];
+export const ALL_LEVELS = [...LEVELS, ...LYCEE];
+export const byLevel = (a: string, b: string) => ALL_LEVELS.indexOf(a) - ALL_LEVELS.indexOf(b);
 
 // Thèmes du programme de cycle 4 (5e, 4e, 3e)
 export const THEME_NAMES: Record<string, string> = {
@@ -16,16 +20,36 @@ export const THEME_NAMES_C3: Record<string, string> = {
   '2': 'Le vivant, sa diversité et les fonctions qui le caractérisent',
   '3': 'La Terre, une planète peuplée par des êtres vivants',
 };
+// Thèmes du lycée (physique-chimie, de la 2nde à la Terminale)
+export const THEME_NAMES_LYCEE: Record<string, string> = {
+  '1': 'Constitution et transformations de la matière',
+  '2': 'Mouvement et interactions',
+  '3': "L'énergie : conversions et transferts",
+  '4': 'Ondes et signaux',
+};
+// Mathématiques : mêmes grands thèmes du collège au lycée (le chiffre correspond au thème des flashcards)
+export const THEME_NAMES_MATHS: Record<string, string> = {
+  '1': 'Nombres et calculs',
+  '2': 'Fonctions',
+  '3': 'Données, statistiques et probabilités',
+  '4': 'Grandeurs, mesures et géométrie',
+  '5': 'Algorithmique et programmation',
+};
 export const HORS_THEME = 'Hors thème (présentation, révisions)';
-export const themesFor = (level?: string): Record<string, string> => ({ ...(level === '6e' ? THEME_NAMES_C3 : THEME_NAMES), '0': HORS_THEME });
-export const themeLabel = (t?: string, level?: string) => (t === '0' ? HORS_THEME : t ? `Thème ${t} – ${themesFor(level)[t] ?? ''}` : 'Sans thème');
+export const themesFor = (level?: string, subject?: string): Record<string, string> => ({
+  ...(subject === 'Mathématiques' ? THEME_NAMES_MATHS : level === '6e' ? THEME_NAMES_C3 : LYCEE.includes(level ?? '') ? THEME_NAMES_LYCEE : THEME_NAMES),
+  '0': HORS_THEME,
+});
+export const themeLabel = (t?: string, level?: string, subject?: string) =>
+  t === '0' ? HORS_THEME : t ? `Thème ${t} – ${themesFor(level, subject)[t] ?? ''}` : 'Sans thème';
 
+export const unitSubject = (u: Pick<Unit, 'subject'>) => u.subject || SUBJECTS[0];
 export const unitLabel = (u: Pick<Unit, 'code' | 'name'>) => (u.code ? `${u.code} · ${u.name}` : u.name);
 
 // Prochain code de séquence pour un niveau et un thème : 411, 412… (4e, thème 1) — 9 séquences par thème au plus
-export async function nextSequenceCode(level?: string, theme?: string) {
+export async function nextSequenceCode(level?: string, theme?: string, subject = SUBJECTS[0]) {
   if (!level || !theme) return undefined;
-  const seqs = (await db.units.toArray()).filter((u) => u.kind === 'sequence' && u.level === level && u.theme === theme);
+  const seqs = (await db.units.toArray()).filter((u) => u.kind === 'sequence' && u.level === level && u.theme === theme && u.subject === subject);
   const n = Math.max(0, ...seqs.map((u) => parseInt(u.code?.slice(2) ?? '0') || 0));
   if (n >= 9) throw new Error(`Déjà 9 séquences dans le thème ${theme} en ${level}.`);
   return `${level[0]}${theme}${n + 1}`;
@@ -62,6 +86,7 @@ export async function levelColors(teacherId: string) {
 export async function applyLevelColors(teacherId: string) {
   const map = await levelColors(teacherId);
   for (const g of await db.groups.toArray()) {
+    if (g.kind === 'soutien') continue;
     const lvl = levelOfName(g.name);
     if (lvl && map[lvl] && g.color !== map[lvl]) await db.groups.update(g.id, { color: map[lvl] });
   }

@@ -1,14 +1,14 @@
 // To-do list personnelle : tâches générales ou liées à une classe, avec échéance facultative.
 import { useState, type FormEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type Todo, shortName } from '../lib/db';
+import { db, isClass, uid, type Todo, shortName } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { addDays, frDate, today } from '../lib/dates';
 import { Icon } from './Icon';
 
 export function TodoList({ groupId }: { groupId?: string }) {
   const { session } = useAuth();
-  const groups = useLiveQuery(() => db.groups.filter((g) => !g.archived).toArray(), [], []);
+  const groups = useLiveQuery(() => db.groups.filter((g) => !g.archived && isClass(g)).toArray(), [], []);
   const todos = useLiveQuery(
     async () => (await db.todos.toArray()).filter((t) => t.teacherId === session!.id && (!groupId || t.groupId === groupId)),
     [groupId, session],

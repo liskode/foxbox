@@ -1,7 +1,7 @@
 // Affichage de l'emploi du temps : grille de la semaine et liste des cours d'une journée.
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Group } from '../lib/db';
+import { db, isClass, type Group } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { addDays, fromISO, today } from '../lib/dates';
 import { DAYS, countsForProgress, isPresent, loadTimetable, matchGroup, minutes, shortTime, slotsOn, type Slot, type Timetable, type WeekType } from '../lib/timetable';
@@ -13,7 +13,7 @@ export function useTimetable() {
 }
 
 export function useGroups() {
-  return useLiveQuery(() => db.groups.filter((g) => !g.archived).toArray(), [], [] as Group[]);
+  return useLiveQuery(() => db.groups.filter((g) => !g.archived && isClass(g)).toArray(), [], [] as Group[]);
 }
 
 export const groupOfSlot = (s: Slot, groups: Group[]) => groups.find((g) => g.id === s.groupId) ?? matchGroup(s.label, groups);

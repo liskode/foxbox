@@ -2,7 +2,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../lib/db';
+import { db, isClass } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { addDays, today } from '../../lib/dates';
 import { levelPlans } from '../../lib/forecast';
@@ -82,7 +82,7 @@ export function Dashboard() {
   const counts = useLiveQuery(async () => ({
     cards: await db.cards.filter((c) => !c.deleted).count(),
     seqs: await db.units.filter((u) => u.kind === 'sequence').count(),
-    groups: await db.groups.filter((g) => !g.archived).count(),
+    groups: await db.groups.filter((g) => !g.archived && isClass(g)).count(),
   }));
 
   const steps = [

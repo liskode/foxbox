@@ -2,7 +2,7 @@
 import { ask } from '../../components/Dialog';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Student, shortName } from '../../lib/db';
+import { db, isClass, type Student, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import {
   MASTERY,
@@ -92,7 +92,7 @@ export function Competences() {
   const list = useCompetences();
   const [params, setParams] = useSearchParams();
   const groups = useLiveQuery(
-    async () => (await db.groups.filter((g) => !g.archived).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
+    async () => (await db.groups.filter((g) => !g.archived && isClass(g)).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
     [],
     [],
   );

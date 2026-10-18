@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { LEVELS } from '../lib/units';
+import { ALL_LEVELS, LEVELS } from '../lib/units';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Card } from '../lib/db';
 import { CardFace } from './CardFace';
 import { themeClass, themeColor } from './widgets';
 import { normalize } from '../lib/students';
-import { THEMES } from '../lib/themes';
+import { ALL_THEMES } from '../lib/themes';
 
 const strip = (h: string) => h.replace(/<[^>]*>/g, ' ');
 
@@ -38,6 +38,7 @@ export function CardBrowser({
   exclude,
   onCreate,
   onExport,
+  subjects,
 }: {
   selected?: Set<string>;
   onToggle?: (id: string) => void;
@@ -46,8 +47,13 @@ export function CardBrowser({
   exclude?: Set<string>;
   onCreate?: () => void; // tuile « + » en fin de liste pour créer une flashcard
   onExport?: (cards: Card[]) => void; // export des flashcards affichées (filtres appliqués)
+  subjects?: string[]; // matières proposées (toutes par défaut)
 }) {
-  const cards = useLiveQuery(() => db.cards.filter((c) => !c.deleted).toArray(), [], []);
+  const all = useLiveQuery(() => db.cards.filter((c) => !c.deleted).toArray(), [], []);
+  // Plusieurs matières : choix de la matière (vide = toutes)
+  const inUse = useMemo(() => [...new Set(all.map((c) => c.subject))].filter((x) => !subjects || subjects.includes(x)).sort(), [all, subjects]);
+  const [subject, setSubject] = useState('');
+  const cards = useMemo(() => all.filter((c) => (subject ? c.subject === subject : !subjects || subjects.includes(c.subject))), [all, subject, subjects]);
   const linked = useLiveQuery(async () => new Set((await db.unitCards.toArray()).map((u) => u.cardId)), [], new Set<string>());
   const [q, setQ] = useState('');
   const [themes, setThemes] = useState<Set<string>>(new Set());
@@ -57,7 +63,7 @@ export function CardBrowser({
   const [orphans, setOrphans] = useState(false);
 
   const allThemes = useMemo(
-    () => Object.values(THEMES).filter((t) => cards.some((c) => c.theme === t)),
+    () => ALL_THEMES.map(([, t]) => t).filter((t) => cards.some((c) => c.theme === t)),
     [cards],
   );
   const allLevels = useMemo(() => [...new Set(cards.map((c) => c.level).filter(Boolean))].sort() as string[], [cards]);
@@ -113,6 +119,14 @@ export function CardBrowser({
           )}
         </div>
         <div className="row">
+          {inUse.length > 1 && (
+            <select value={subject} onChange={(e) => (setSubject(e.target.value), setThemes(new Set()))}>
+              <option value="">Toutes les matières</option>
+              {inUse.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          )}
           {allThemes.map((t) => (
             <button
               key={t}
@@ -123,7 +137,7 @@ export function CardBrowser({
             </button>
           ))}
           <span className="row small" style={{ gap: 10, fontWeight: 700 }}>
-            {[...LEVELS, ''].map((l) => (
+            {[...ALL_LEVELS.filter((l) => LEVELS.includes(l) || cards.some((c) => c.level === l)), ''].map((l) => (
               <label key={l || '-'} className="row" style={{ gap: 4 }}>
                 <input
                   type="checkbox"

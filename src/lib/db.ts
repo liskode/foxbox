@@ -42,6 +42,7 @@ export interface Teacher {
   timetable?: import('./timetable').Timetable; // emploi du temps et calendrier A/B
   competences?: import('./competences').Competence[]; // référentiel de compétences
   rooms?: import('./rooms').Room[]; // salles (places cochées sur un quadrillage)
+  modules?: { soutien?: boolean }; // modules activés dans les Réglages
   origins?: import('./cardCodes').Origin[]; // origines des flashcards (ER, MM…)
 }
 
@@ -55,7 +56,19 @@ export interface Group {
   color?: string; // couleur de repérage (palette CLASS_COLORS)
   seatPlans?: import('./rooms').SeatPlan[]; // plans de classe
   subgroups?: Subgroup[]; // demi-groupes, îlots… (un élève est dans un seul sous-groupe)
+  // Soutien scolaire : un « groupe de soutien » (un élève seul, ou 2-3 élèves) suivi dans une ou plusieurs matières
+  kind?: 'soutien';
+  tracks?: Track[]; // matières suivies et niveau de chacune
+  unitStatus?: Record<string, UnitStatus>; // état des points du programme fixé à la main (sinon : « vu » s'il a été travaillé)
 }
+export interface Track {
+  subject: string;
+  level: string;
+}
+export type UnitStatus = 'nonvu' | 'retravailler' | 'acquis';
+// Une classe (et non un groupe de soutien)
+export const isClass = (g?: Group | null) => !!g && g.kind !== 'soutien';
+export const isTutoring = (g?: Group | null) => !!g && g.kind === 'soutien';
 
 export interface Subgroup {
   id: string;
@@ -173,7 +186,13 @@ export interface Note {
   text: string;
   flags?: StudentFlags; // aménagements (privés, comme la note)
   family?: { contacts: FamilyContact[]; notes?: string }; // coordonnées de la famille (privées)
+  tutor?: TutorInfo; // soutien scolaire : établissement, classe, objectifs (privés)
   updatedAt: number;
+}
+export interface TutorInfo {
+  school?: string;
+  className?: string;
+  goals?: string;
 }
 export interface FamilyContact {
   id: string;
@@ -267,6 +286,59 @@ export interface ParentMessage {
   message: string;
 }
 
+// ----- Soutien scolaire -----
+// Séance de soutien : visible par le professeur et les élèves du groupe
+export interface TutoringSession {
+  id: string;
+  groupId: string;
+  date: string; // AAAA-MM-JJ
+  start?: string; // HH:MM
+  duration: number; // minutes
+  place: 'domicile' | 'en ligne';
+  studentIds: string[]; // élèves présents
+  unitIds: string[]; // points du programme travaillés (séquences ou séances de la progression, toutes matières)
+  cardIds: string[]; // flashcards ajoutées pendant la séance
+  done: string; // ce qui a été fait
+  homework: string; // travail pour la prochaine fois
+  links: { url: string; label: string }[];
+  createdAt: number;
+}
+// Notes d'une séance, une par élève et par destinataire : l'élève ne lit que la sienne (« eleve »),
+// les parents que la leur (« parents »), la note privée reste au professeur
+export type SessionNoteKind = 'eleve' | 'parents' | 'prive';
+export interface SessionNote {
+  id: string; // sessionId|studentId|kind
+  sessionId: string;
+  groupId: string;
+  teacherId: string;
+  studentId: string;
+  kind: SessionNoteKind;
+  text: string;
+  updatedAt: number;
+}
+// Document d'une séance, déposé par le professeur ou par un élève (sans séance : pour la prochaine)
+export interface TutoringFile {
+  id: string;
+  groupId: string;
+  sessionId?: string;
+  mediaId: string; // « sout/<groupe>/<id> »
+  name: string;
+  size: number;
+  type: string;
+  authorId: string;
+  byStudent: boolean;
+  createdAt: number;
+}
+// Travail à faire coché par l'élève
+export interface HomeworkCheck {
+  id: string; // sessionId|studentId
+  sessionId: string;
+  groupId: string;
+  studentId: string;
+  done: boolean;
+  at: number;
+}
+
 // To-do list personnelle du professeur
 export interface Todo {
   id: string;
@@ -335,6 +407,10 @@ class FoxBoxDB extends Dexie {
   todos!: Table<Todo, string>;
   meta!: Table<Meta, string>;
   trombi!: Table<TrombiCard, string>;
+  tutoringSessions!: Table<TutoringSession, string>;
+  sessionNotes!: Table<SessionNote, string>;
+  tutoringFiles!: Table<TutoringFile, string>;
+  homeworkChecks!: Table<HomeworkCheck, string>;
 
   constructor() {
     super(ONLINE ? 'foxbox-online' : 'foxbox-v2');
@@ -366,6 +442,12 @@ class FoxBoxDB extends Dexie {
     this.version(6).stores({ todos: 'id, groupId' });
     this.version(7).stores({ classNotes: 'id' });
     this.version(8).stores({ absences: 'id, studentId, groupId, date' });
+    this.version(9).stores({
+      tutoringSessions: 'id, groupId, date',
+      sessionNotes: 'id, sessionId, studentId',
+      tutoringFiles: 'id, groupId, sessionId',
+      homeworkChecks: 'id, sessionId, studentId',
+    });
   }
 }
 

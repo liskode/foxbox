@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { ask } from './Dialog';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, fileBlob, type Card } from '../lib/db';
+import { db, uid, fileBlob, SUBJECTS, type Card } from '../lib/db';
 import { cardCode, codePrefix, loadOrigins, rememberOrigin, DEFAULT_ORIGINS } from '../lib/cardCodes';
 import { useAuth } from '../lib/auth';
-import { THEMES } from '../lib/themes';
+import { themesOf } from '../lib/themes';
+import { ALL_LEVELS } from '../lib/units';
 import { cardByGroup } from '../lib/stats';
 import { CardFace } from './CardFace';
 import { unitLabel } from '../lib/units';
 import { RateBar, ThemeChip } from './widgets';
 import { Icon } from './Icon';
 
-const THEME_LIST = Object.values(THEMES);
 
 // Image déjà présente dans FoxBox (même nom et même taille) : on la réutilise au lieu d'en créer un doublon
 async function storeImage(name: string, blob: Blob) {
@@ -190,6 +190,8 @@ export function CardDetail({
   const { session } = useAuth();
   const origins = useLiveQuery(() => (session ? loadOrigins(session.id) : DEFAULT_ORIGINS), [session?.id], DEFAULT_ORIGINS);
   const stats = useLiveQuery(() => cardByGroup(cardId), [cardId]);
+  // Matière modifiable dès qu'une autre matière que la physique-chimie est utilisée (soutien en maths…)
+  const subjectsInUse = useLiveQuery(async () => new Set((await db.groups.toArray()).flatMap((g) => [g.subject, ...(g.tracks ?? []).map((t) => t.subject)])).size, [], 1);
   const units = useLiveQuery(async () => {
     const links = await db.unitCards.where('cardId').equals(cardId).toArray();
     const us = await db.units.bulkGet(links.map((l) => l.unitId));
@@ -403,7 +405,7 @@ export function CardDetail({
                   Niveau
                   <select value={edit.level ?? ''} onChange={(e) => setEdit({ ...edit, level: e.target.value || undefined })}>
                     <option value="">—</option>
-                    {['6e', '5e', '4e', '3e'].map((l) => (
+                    {ALL_LEVELS.map((l) => (
                       <option key={l}>{l}</option>
                     ))}
                   </select>
@@ -412,11 +414,21 @@ export function CardDetail({
                   Thème
                   <select value={edit.theme ?? ''} onChange={(e) => setEdit({ ...edit, theme: e.target.value || undefined })}>
                     <option value="">—</option>
-                    {THEME_LIST.map((t) => (
+                    {Object.values(themesOf(edit.subject)).map((t) => (
                       <option key={t}>{t}</option>
                     ))}
                   </select>
                 </label>
+                {(edit.subject !== SUBJECTS[0] || subjectsInUse > 1) && (
+                  <label className="field">
+                    Matière
+                    <select value={edit.subject} onChange={(e) => setEdit({ ...edit, subject: e.target.value, theme: undefined })}>
+                      {SUBJECTS.map((x) => (
+                        <option key={x}>{x}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label className="field">
                   Origine
                   <select value={edit.origin ?? 'ER'} onChange={(e) => setEdit({ ...edit, origin: e.target.value })}>

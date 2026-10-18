@@ -110,3 +110,28 @@ export function CardFace({ html, full = false }: { html: string; full?: boolean 
   }, [out]);
   return <div ref={ref} className={'cardface' + (full ? ' full' : '')} dangerouslySetInnerHTML={{ __html: out }} />;
 }
+
+// Texte libre (séances de soutien…) : retours à la ligne, **gras**, formules $…$ ; le HTML tapé n'est pas interprété
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export function RichText({ text }: { text: string }) {
+  const [out, setOut] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let alive = true;
+    resolve(escapeHtml(text)).then((h) => alive && setOut(h));
+    return () => {
+      alive = false;
+    };
+  }, [text]);
+  useEffect(() => {
+    if (ref.current && /\$/.test(out))
+      renderMathInElement(ref.current, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+        ],
+        throwOnError: false,
+      });
+  }, [out]);
+  return <div ref={ref} className="richtext" dangerouslySetInnerHTML={{ __html: out }} />;
+}

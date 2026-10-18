@@ -38,15 +38,53 @@ export function HideDoneToggle({ value, onChange }: { value: boolean; onChange: 
   );
 }
 
-export function usePlans() {
+export function usePlans(subject = SUBJECTS[0]) {
   const { session } = useAuth();
-  return useLiveQuery(() => levelPlans(session!.id), [session?.id]);
+  return useLiveQuery(() => levelPlans(session!.id, subject), [session?.id, subject]);
 }
 
-export async function createSequence(level: string, units: Unit[]) {
-  const names = themesFor(level);
+// Matière affichée dans la Progression (gardée dans le navigateur) et matières utilisées (classes, soutien, séquences)
+export function useSubject(): [string, (s: string) => void] {
+  const [v, setV] = useState(() => {
+    try {
+      return localStorage.getItem('foxbox-subject') || SUBJECTS[0];
+    } catch {
+      return SUBJECTS[0];
+    }
+  });
+  return [
+    v,
+    (x: string) => {
+      setV(x);
+      try {
+        localStorage.setItem('foxbox-subject', x);
+      } catch {
+        /* navigation privée */
+      }
+    },
+  ];
+}
+export function useSubjectsInUse() {
+  return useLiveQuery(
+    async () => {
+      const set = new Set([SUBJECTS[0]]);
+      (await db.groups.toArray()).forEach((g) => {
+        if (g.archived) return;
+        set.add(g.subject);
+        g.tracks?.forEach((t) => set.add(t.subject));
+      });
+      (await db.units.toArray()).forEach((u) => u.subject && set.add(u.subject));
+      return SUBJECTS.filter((s) => set.has(s));
+    },
+    [],
+    [SUBJECTS[0]],
+  );
+}
+
+export async function createSequence(level: string, units: Unit[], subject = SUBJECTS[0]) {
+  const names = themesFor(level, subject);
   const r = await askForm(
-    `Nouvelle séquence de ${level}`,
+    `Nouvelle séquence de ${level}${subject !== SUBJECTS[0] ? ` (${subject})` : ''}`,
     [
       {
         key: 'theme',
@@ -62,13 +100,13 @@ export async function createSequence(level: string, units: Unit[]) {
   const { theme, name } = r;
   let code;
   try {
-    code = await nextSequenceCode(level, theme);
+    code = await nextSequenceCode(level, theme, subject);
   } catch (e) {
     alert((e as Error).message);
     return;
   }
-  const order = Math.max(0, ...units.filter((x) => x.kind === 'sequence' && x.level === level).map((x) => x.order)) + 1;
-  const u: Unit = { id: uid(), kind: 'sequence', subject: SUBJECTS[0], level, theme, name, order, code };
+  const order = Math.max(0, ...units.filter((x) => x.kind === 'sequence' && x.level === level && (x.subject || SUBJECTS[0]) === subject).map((x) => x.order)) + 1;
+  const u: Unit = { id: uid(), kind: 'sequence', subject, level, theme, name, order, code };
   await db.units.put(u);
   return u;
 }

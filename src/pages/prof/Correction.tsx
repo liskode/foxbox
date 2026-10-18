@@ -1,7 +1,7 @@
 // Évaluations : une colonne par niveau, état de chaque classe (à venir / à corriger / corrigée), modèles.
 import { useNavigate, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, SUBJECTS, type Evaluation, type Group } from '../../lib/db';
+import { db, isClass, SUBJECTS, type Evaluation, type Group } from '../../lib/db';
 import { newEvaluation, duplicate, score, stats, levelOfEval } from '../../lib/grading';
 import { today } from '../../lib/dates';
 import { useAuth } from '../../lib/auth';
@@ -10,7 +10,7 @@ import { LEVELS, levelColors, levelOfName } from '../../lib/units';
 import { Icon } from '../../components/Icon';
 
 function useGroups() {
-  return useLiveQuery(() => db.groups.toArray(), [], []);
+  return useLiveQuery(() => db.groups.filter(isClass).toArray(), [], []);
 }
 
 interface Pill {
@@ -26,7 +26,7 @@ export function useOverview() {
   return useLiveQuery(async () => {
     const [evs, groups, results, ms, plans] = await Promise.all([
       db.evaluations.toArray(),
-      db.groups.toArray(),
+      db.groups.filter(isClass).toArray(),
       db.results.toArray(),
       db.memberships.toArray(),
       levelPlans(session!.id),

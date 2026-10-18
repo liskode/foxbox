@@ -1,5 +1,6 @@
 // Moteur de révision : boîte de Leitner à 7 boîtes.
-import { db, uid, type Rating, type Rule, type StudentCard, type Review } from './db';
+import { db, uid, isTutoring, type Card, type Group, type Rating, type Rule, type StudentCard, type Review } from './db';
+import { unitSubject } from './units';
 import { addDays, today } from './dates';
 
 // Intervalle (en jours) avant la prochaine révision, selon la boîte atteinte.
@@ -65,25 +66,37 @@ export function buildQueue(
   return [...due.map((d) => d.cardId), ...news.map((n) => n.cardId)].slice(0, remaining);
 }
 
-// Cartes publiées (à la date `day`) dans les classes de l'élève pour une matière.
+// Cartes publiées (à la date `day`) dans les classes de l'élève pour une matière, et cartes de ses séances
+// de soutien (celles des points du programme travaillés et celles ajoutées pendant la séance).
 export async function availableCards(studentId: string, subject: string, day = today()): Promise<Available[]> {
   const ms = await db.memberships.where('studentId').equals(studentId).toArray();
   const groups = (await db.groups.bulkGet(ms.map((m) => m.groupId))).filter(
-    (g) => g && g.subject === subject && !g.archived,
-  );
+    (g) => g && !g.archived && (isTutoring(g) ? g.tracks?.some((t) => t.subject === subject) : g.subject === subject),
+  ) as Group[];
   const result = new Map<string, Available>();
+  const offer = (c: Card | undefined, date: string) => {
+    if (!c || c.deleted) return;
+    const prev = result.get(c.id);
+    const order = parseInt(c.code.slice(1)) || 0;
+    if (!prev || date < prev.pubDate) result.set(c.id, { cardId: c.id, pubDate: date, order });
+  };
   for (const g of groups) {
-    const pubs = (await db.publications.where('groupId').equals(g!.id).toArray()).filter((p) => p.date <= day);
+    const tutoring = isTutoring(g);
+    const pubs = (await db.publications.where('groupId').equals(g.id).toArray()).filter((p) => p.date <= day);
     for (const p of pubs) {
-      const unitIds = [p.unitId, ...(await db.units.where('parentId').equals(p.unitId).primaryKeys())];
-      const links = await db.unitCards.where('unitId').anyOf(unitIds).toArray();
-      const cards = await db.cards.bulkGet(links.map((l) => l.cardId));
-      for (const c of cards) {
-        if (!c || c.deleted) continue;
-        const prev = result.get(c.id);
-        const order = parseInt(c.code.slice(1)) || 0;
-        if (!prev || p.date < prev.pubDate) result.set(c.id, { cardId: c.id, pubDate: p.date, order });
-      }
+      let units = [p.unitId, ...(await db.units.where('parentId').equals(p.unitId).primaryKeys())];
+      // Soutien : une séance peut mêler plusieurs matières, on ne garde que les points de cette matière
+      if (tutoring) units = (await db.units.bulkGet(units)).filter((u) => u && unitSubject(u) === subject).map((u) => u!.id);
+      const links = await db.unitCards.where('unitId').anyOf(units).toArray();
+      for (const c of await db.cards.bulkGet(links.map((l) => l.cardId))) offer(c, p.date);
+    }
+    if (!tutoring) continue;
+    // Flashcards ajoutées pendant une séance : rangées dans leur matière (ou la première matière suivie)
+    const main = g.tracks?.[0]?.subject;
+    const own = (c: Card) => (g.tracks?.some((t) => t.subject === c.subject) ? c.subject : main) === subject;
+    for (const ss of await db.tutoringSessions.where('groupId').equals(g.id).toArray()) {
+      if (ss.date > day || !ss.studentIds.includes(studentId)) continue;
+      for (const c of await db.cards.bulkGet(ss.cardIds)) if (c && own(c)) offer(c, ss.date);
     }
   }
   return [...result.values()];
@@ -92,7 +105,7 @@ export async function availableCards(studentId: string, subject: string, day = t
 export async function studentSubjects(studentId: string): Promise<string[]> {
   const ms = await db.memberships.where('studentId').equals(studentId).toArray();
   const groups = await db.groups.bulkGet(ms.map((m) => m.groupId));
-  return [...new Set(groups.filter((g) => g && !g.archived).map((g) => g!.subject))];
+  return [...new Set(groups.filter((g) => g && !g.archived).flatMap((g) => (isTutoring(g) ? (g!.tracks ?? []).map((t) => t.subject) : [g!.subject])))];
 }
 
 export async function doneToday(studentId: string, subject: string, day = today()): Promise<number> {

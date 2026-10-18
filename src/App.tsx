@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { HashRouter, Navigate, NavLink, Route, Routes, Link, useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, shortName } from './lib/db';
+import { db, isClass, isTutoring, shortName } from './lib/db';
 import { AuthProvider, useAuth } from './lib/auth';
 import { runOcr, subscribeOcr, type OcrState } from './lib/ocr';
 import { Login } from './pages/Login';
@@ -36,6 +36,10 @@ const StudentHome = lazy(() => import('./pages/eleve/Home').then((m) => ({ defau
 const ReviewSession = lazy(() => import('./pages/eleve/Review').then((m) => ({ default: m.ReviewSession })));
 const MyStats = lazy(() => import('./pages/eleve/MyStats').then((m) => ({ default: m.MyStats })));
 const StudentDocuments = lazy(() => import('./pages/eleve/Documents').then((m) => ({ default: m.StudentDocuments })));
+const StudentSoutien = lazy(() => import('./pages/eleve/Soutien').then((m) => ({ default: m.StudentSoutien })));
+const Soutien = lazy(() => import('./pages/prof/Soutien').then((m) => ({ default: m.Soutien })));
+const SoutienGroup = lazy(() => import('./pages/prof/SoutienGroup').then((m) => ({ default: m.SoutienGroup })));
+const SoutienSession = lazy(() => import('./pages/prof/SoutienSession').then((m) => ({ default: m.SoutienSession })));
 
 function OcrBadge() {
   const [s, setS] = useState<OcrState | null>(null);
@@ -99,7 +103,7 @@ function Bare({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode 
 // Accès permanent aux classes depuis le bandeau (pastille entourée = classe ouverte)
 function TopClassChips() {
   const groups = useLiveQuery(
-    async () => (await db.groups.filter((g) => !g.archived).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
+    async () => (await db.groups.filter((g) => !g.archived && isClass(g)).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
     [],
     [],
   );
@@ -132,7 +136,7 @@ function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }
   const { pathname, search } = useLocation();
   useEffect(() => setOpen(false), [pathname, search]);
   const groups = useLiveQuery(
-    async () => (await db.groups.filter((g) => !g.archived).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
+    async () => (await db.groups.filter((g) => !g.archived && isClass(g)).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
     [],
     [],
   );
@@ -193,6 +197,17 @@ function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }
 function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode }) {
   const { session, ready, logout } = useAuth();
   const { pathname } = useLocation();
+  // Module Soutien : activé dans les Réglages (professeur) ; onglet affiché à l'élève suivi en soutien
+  const soutien = useLiveQuery(
+    async () => {
+      if (!session) return false;
+      if (session.role === 'prof') return !!(await db.teachers.get(session.id))?.modules?.soutien;
+      const ms = await db.memberships.where('studentId').equals(session.id).toArray();
+      return (await db.groups.bulkGet(ms.map((m) => m.groupId))).some((g) => isTutoring(g) && !g!.archived);
+    },
+    [session?.id, session?.role],
+    false,
+  );
   useEffect(() => {
     // Reprend la lecture des images interrompue (fermeture de l'onglet…)
     if (session?.role === 'prof') runOcr();
@@ -208,13 +223,15 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           ['/prof/correction', 'Évaluations'],
           ['/prof/flashcards', 'Flashcards'],
           ['/prof/eleves', 'Élèves'],
+          ...(soutien ? [['/prof/soutien', 'Soutien']] : []),
         ]
       : [
           ['/eleve', 'Flashcards'],
+          ...(soutien ? [['/eleve/soutien', 'Soutien']] : []),
           ['/eleve/notes', 'Notes'],
           ['/eleve/documents', 'Documents de cours'],
         ];
-  const icons: Record<string, string> = { '/eleve': 'cards', '/eleve/notes': 'bars', '/eleve/documents': 'file' };
+  const icons: Record<string, string> = { '/eleve': 'cards', '/eleve/soutien': 'clipboard', '/eleve/notes': 'bars', '/eleve/documents': 'file' };
   return (
     <div className={role === 'eleve' ? 'eleve-shell' + (pathname.startsWith('/eleve/revision') ? ' reviewing' : '') : undefined}>
       <header className={'topbar noprint' + (role === 'prof' ? ' thin' : '')}>
@@ -309,11 +326,15 @@ export function App() {
           <Route path="/prof/salles" element={<Shell role="prof"><Rooms /></Shell>} />
           <Route path="/prof/edt" element={<Shell role="prof"><Timetable /></Shell>} />
           <Route path="/prof/import" element={<Navigate to="/prof/flashcards?onglet=import" replace />} />
+          <Route path="/prof/soutien" element={<Shell role="prof"><Soutien /></Shell>} />
+          <Route path="/prof/soutien/:id" element={<Shell role="prof"><SoutienGroup /></Shell>} />
+          <Route path="/prof/soutien/:id/seance/:sid" element={<Shell role="prof"><SoutienSession /></Shell>} />
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />
           <Route path="/eleve/revision/:subject" element={<Shell role="eleve"><ReviewSession /></Shell>} />
           <Route path="/eleve/notes" element={<Shell role="eleve"><MyStats /></Shell>} />
           <Route path="/eleve/stats" element={<Navigate to="/eleve" replace />} />
           <Route path="/eleve/documents" element={<Shell role="eleve"><StudentDocuments /></Shell>} />
+          <Route path="/eleve/soutien" element={<Shell role="eleve"><StudentSoutien /></Shell>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>

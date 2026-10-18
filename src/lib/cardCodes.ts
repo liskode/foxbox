@@ -1,10 +1,13 @@
 // Codification des flashcards : niveau d'introduction + thème + origine + numéro, ex. 43MM-012
 //  - niveau : 6, 5, 4, 3 (collège), 2, 1, 0 (Seconde, Première, Terminale), 9 = transversal / sans niveau
-//  - thème : 1 Matière, 2 Mouvement, 3 Énergie, 4 Signaux (en 6e, thème 1 du cycle 3), 9 = transversal
+//  - thème : 1 Matière, 2 Mouvement, 3 Énergie, 4 Signaux (en 6e, thème 1 du cycle 3), 9 = transversal ;
+//    en maths : 1 Nombres, 2 Fonctions, 3 Statistiques, 4 Géométrie, 5 Algorithmique
 //  - origine : 2 lettres (ER, MM…), voir Réglages
 //  - numéro : 3 chiffres, compté pour chaque combinaison niveau + thème + origine
 import { db, type Card } from './db';
-import { THEMES } from './themes';
+import { ALL_THEMES, THEMES } from './themes';
+
+const THEMES_PC = Object.values(THEMES);
 
 export const LEVEL_DIGIT: Record<string, string> = { '6e': '6', '5e': '5', '4e': '4', '3e': '3', '2nde': '2', '1re': '1', Tle: '0' };
 
@@ -15,9 +18,9 @@ export interface Origin {
 export const DEFAULT_ORIGINS: Origin[] = [{ code: 'ER', name: 'Etienne Renard' }];
 
 export function themeDigit(level?: string, theme?: string) {
-  const t = Object.entries(THEMES).find(([, v]) => v === theme)?.[0];
+  const t = ALL_THEMES.find(([, v]) => v === theme)?.[0];
   if (!t || t === '9') return '9';
-  return level === '6e' ? '1' : t; // en 6e, matière, mouvement, énergie et signaux forment le thème 1 du cycle 3
+  return level === '6e' && THEMES_PC.includes(theme!) ? '1' : t; // en 6e, matière, mouvement, énergie et signaux forment le thème 1 du cycle 3
 }
 
 export const codePrefix = (c: Pick<Card, 'level' | 'theme' | 'origin'>) =>

@@ -130,7 +130,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px #f2be4e66; }
 input[type='checkbox'], input[type='radio'] { accent-color: var(--ink); }
 textarea { width: 100%; min-height: 110px; font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; }
-label.field { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 0.9rem; }
+label.field, div.field { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 0.9rem; }
 
 /* Pastilles de thème */
 .chip {
@@ -151,6 +151,11 @@ button.chip { cursor: pointer; font-family: inherit; color: var(--ink); }
 .t-Énergie { background: var(--energie); }
 .t-Signaux { background: var(--signaux); }
 .t-Outils { background: var(--outils); }
+.t-Nombres { background: #f2be4e; }
+.t-Fonctions { background: #e98a7a; }
+.t-Statistiques { background: #b9a6e0; }
+.t-Géométrie { background: #8fd0a8; }
+.t-Algorithmique { background: #8dc9e3; }
 .code { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 0.85rem; }
 
 /* Grille de cartes */
@@ -368,7 +373,7 @@ table.list tr.click:hover td { background: #faf7ef; }
   .eleve-shell .topbar .nav, .eleve-shell .topbar .btn { display: none; }
   .eleve-shell .page { padding-bottom: 90px; }
   .bottom-nav {
-    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
     background: var(--paper); border-top: 1.5px solid var(--soft-line); padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
   }
   .bottom-nav a, .bottom-nav button { display: flex; flex-direction: column; align-items: center; gap: 2px; font: inherit; font-size: 0.7rem; font-weight: 800;
@@ -451,3 +456,17 @@ table.list tr.click:hover td { background: #faf7ef; }
   .page .btn { white-space: normal; text-align: left; }
   .page table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
 }
+
+/* Soutien scolaire */
+.richtext { font-size: 0.95rem; line-height: 1.45; overflow-wrap: anywhere; }
+.richtext .katex-display { margin: 8px 0; overflow-x: auto; }
+.seg { display: inline-flex; border: 1.5px solid var(--muted-line); border-radius: 10px; overflow: hidden; }
+.seg button { font: inherit; font-weight: 700; font-size: 0.85rem; border: none; background: var(--paper); padding: 6px 12px; cursor: pointer; color: var(--ink-soft); }
+.seg button + button { border-left: 1.5px solid var(--muted-line); }
+.seg button.on { background: var(--matiere); color: var(--ink); }
+.session-line { display: flex; gap: 16px; align-items: flex-start; text-decoration: none; color: inherit; }
+.session-date { flex: none; width: 64px; text-align: center; border-radius: 10px; background: var(--calm); padding: 6px 0; font-weight: 900; line-height: 1.1; }
+.session-date small { display: block; font-weight: 700; font-size: 0.75rem; color: var(--ink-soft); }
+.prog-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; }
+.prog-item:hover { background: var(--calm); }
+.prog-item .name { flex: 1; min-width: 0; }

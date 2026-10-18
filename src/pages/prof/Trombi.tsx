@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, type Rating, type Student, type TrombiCard, shortName } from '../../lib/db';
+import { db, isClass, type Rating, type Student, type TrombiCard, shortName } from '../../lib/db';
 import { INTERVALS, nextBox } from '../../lib/leitner';
 import { addDays, frDate, today } from '../../lib/dates';
 import { useFixedPhoto } from '../../components/Avatar';
@@ -169,7 +169,7 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
   const teacherId = session!.id;
   const groups = useLiveQuery(
     async () =>
-      (await db.groups.filter((g) => !g.archived && g.teacherIds.includes(teacherId)).toArray()).sort((a, b) =>
+      (await db.groups.filter((g) => !g.archived && isClass(g) && g.teacherIds.includes(teacherId)).toArray()).sort((a, b) =>
         a.name.localeCompare(b.name),
       ),
     [teacherId],

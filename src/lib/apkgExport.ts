@@ -5,7 +5,7 @@
 // Les identifiants (notes, paquets, modèle) sont stables : réimporter met à jour au lieu de dupliquer.
 import { db, type Card, type Unit } from './db';
 import { fetchMedia } from './sync';
-import { THEMES } from './themes';
+import { ALL_THEMES } from './themes';
 import { byProgression } from './units';
 import type { Origin } from './cardCodes';
 
@@ -43,7 +43,7 @@ const levelRank = (l: string) => {
   return i < 0 ? 9 : i;
 };
 function themeName(c: Card) {
-  const digit = Object.entries(THEMES).find(([, v]) => v === c.theme)?.[0];
+  const digit = ALL_THEMES.find(([, v]) => v === c.theme)?.[0];
   return digit ? `${digit} ${c.theme}` : 'Sans thème';
 }
 

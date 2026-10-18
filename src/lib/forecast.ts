@@ -1,9 +1,10 @@
 // Progression d'un niveau : séances faites (publiées) par classe, dates prévisionnelles calculées
 // à partir de l'emploi du temps et du calendrier (vacances, jours fériés), fin de programme prévue.
-import { db, uid, type Group, type Publication, type Unit } from './db';
+import { db, uid, isClass, SUBJECTS, type Group, type Publication, type Unit } from './db';
 import { addDays, today } from './dates';
 import { countsForProgress, loadTimetable, matchGroup, minutes, slotsOn, type Timetable } from './timetable';
-import { LEVELS, levelOfName, byProgression } from './units';
+import { LEVELS, ALL_LEVELS, levelOfName, byProgression, unitSubject } from './units';
+export { unitSubject };
 
 export const durationOf = (u: Unit) => u.duration ?? 1;
 export const classCode = (g: Group) => g.name.toUpperCase().match(/^\s*(\d[A-Z])/)?.[1];
@@ -11,9 +12,9 @@ export const groupsOfLevel = (groups: Group[], level: string) =>
   groups.filter((g) => !g.archived && levelOfName(g.name) === level).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
 
 // Séquences d'un niveau dans l'ordre de la progression
-export const sequencesOf = (units: Unit[], level: string) =>
+export const sequencesOf = (units: Unit[], level: string, subject?: string) =>
   units
-    .filter((u) => u.kind === 'sequence' && u.level === level)
+    .filter((u) => u.kind === 'sequence' && u.level === level && (!subject || unitSubject(u) === subject))
     .sort(byProgression);
 export const seancesOf = (units: Unit[], seq: Unit) => units.filter((u) => u.parentId === seq.id).sort((a, b) => a.order - b.order);
 
@@ -130,7 +131,7 @@ export interface LevelPlan {
 // et refait seulement quand une séquence, une publication, une classe ou l'emploi du temps change (ou le jour).
 let version = 0;
 let hooked = false;
-let cache: { key: string; value: { tt: Timetable; units: Unit[]; levels: LevelPlan[] } } | null = null;
+const cache = new Map<string, { key: string; value: { tt: Timetable; units: Unit[]; levels: LevelPlan[] } }>();
 function watchChanges() {
   if (hooked) return;
   hooked = true;
@@ -144,20 +145,28 @@ function watchChanges() {
   }
 }
 
-export async function levelPlans(teacherId: string): Promise<{ tt: Timetable; units: Unit[]; levels: LevelPlan[] }> {
+// Progression d'une matière (physique-chimie par défaut : celle des classes). Les niveaux affichés : ceux du collège
+// s'il y a des classes de cette matière, plus ceux qui ont déjà des séquences ou un élève suivi en soutien.
+export async function levelPlans(teacherId: string, subject = SUBJECTS[0]): Promise<{ tt: Timetable; units: Unit[]; levels: LevelPlan[] }> {
   watchChanges();
   // Les lectures sont faites à chaque fois : elles abonnent l'affichage aux changements (useLiveQuery)
-  const [tt, units, allGroups, pubs] = await Promise.all([loadTimetable(teacherId), db.units.toArray(), db.groups.toArray(), db.publications.toArray()]);
-  const key = `${teacherId}|${version}|${today()}`;
-  if (cache?.key === key) return cache.value;
-  const active = allGroups.filter((g) => !g.archived);
-  const levels = LEVELS.map((level) => {
+  const [tt, allUnits, allGroups, pubs] = await Promise.all([loadTimetable(teacherId), db.units.toArray(), db.groups.toArray(), db.publications.toArray()]);
+  const key = `${teacherId}|${subject}|${version}|${today()}`;
+  if (cache.get(subject)?.key === key) return cache.get(subject)!.value;
+  const units = allUnits.filter((u) => unitSubject(u) === subject);
+  const active = allGroups.filter((g) => !g.archived && isClass(g) && g.subject === subject);
+  const shown = new Set([
+    ...(subject === SUBJECTS[0] || active.length ? LEVELS : []),
+    ...units.map((u) => u.level ?? ''),
+    ...allGroups.filter((g) => !g.archived && !isClass(g)).flatMap((g) => (g.tracks ?? []).filter((t) => t.subject === subject).map((t) => t.level)),
+  ]);
+  const levels = ALL_LEVELS.filter((l) => shown.has(l)).map((level) => {
     const groups = groupsOfLevel(active, level);
     const items = itemsOf(units, level);
     return { level, groups, items, plans: new Map(groups.map((g) => [g.id, planClass(tt, g, active, items, pubs)])) };
   });
   const value = { tt, units, levels };
-  cache = { key, value };
+  cache.set(subject, { key, value });
   return value;
 }
 

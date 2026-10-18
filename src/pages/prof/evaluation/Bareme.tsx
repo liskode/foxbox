@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, SUBJECTS, type Criterion, type Evaluation, shortName } from '../../../lib/db';
+import { db, isClass, uid, SUBJECTS, type Criterion, type Evaluation, shortName } from '../../../lib/db';
 import {
   duplicate,
   maxPoints,
@@ -75,7 +75,7 @@ function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => 
 
 export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<Evaluation>) => Promise<void> }) {
   const nav = useNavigate();
-  const allGroups = useLiveQuery(() => db.groups.filter((g) => !g.archived).toArray(), [], []);
+  const allGroups = useLiveQuery(() => db.groups.filter((g) => !g.archived && isClass(g)).toArray(), [], []);
   const level = levelOfEval(ev, allGroups);
   // Seules les classes du niveau de l'évaluation sont proposées
   const groups = allGroups.filter((g) => !level || levelOfName(g.name) === level);

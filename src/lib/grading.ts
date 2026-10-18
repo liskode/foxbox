@@ -1,5 +1,5 @@
 // Calculs de l'onglet Correction : notes, statistiques, partage avec l'élève, lien avec les cartes.
-import { db, uid, SUBJECTS, type Evaluation, type Group, type Result, type ResultShare, type Student, type Unit } from './db';
+import { db, isClass, uid, SUBJECTS, type Evaluation, type Group, type Result, type ResultShare, type Student, type Unit } from './db';
 import { levelOfName, nextSeanceCode } from './units';
 import { competenceScores, loadCompetences, type Competence } from './competences';
 import { today } from './dates';
@@ -213,7 +213,7 @@ export async function createEvalSeance(seq: Unit, existing?: Evaluation): Promis
   if (ev) {
     ev = { ...ev, unitId: unit.id, level: seq.level };
   } else {
-    const groups = (await db.groups.toArray()).filter((g) => !g.archived && levelOfName(g.name) === seq.level);
+    const groups = (await db.groups.toArray()).filter((g) => !g.archived && isClass(g) && levelOfName(g.name) === seq.level);
     ev = { ...newEvaluation(SUBJECTS[0], groups.map((g) => g.id)), name: unit.name, level: seq.level, unitId: unit.id };
   }
   await db.evaluations.put(ev);

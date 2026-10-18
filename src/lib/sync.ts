@@ -38,6 +38,10 @@ const SPECS: Record<string, TableSpec> = {
   todos: { remote: 'todos', cols: (t) => ({ teacher_id: t.teacherId }) },
   classNotes: { remote: 'class_notes', cols: (n) => ({ teacher_id: n.teacherId }) },
   absences: { remote: 'absences', cols: (a) => ({ teacher_id: a.teacherId, student_id: a.studentId }) },
+  tutoringSessions: { remote: 'tutoring_sessions', cols: (t) => ({ group_id: t.groupId }) },
+  sessionNotes: { remote: 'session_notes', cols: (n) => ({ teacher_id: n.teacherId, student_id: n.studentId, kind: n.kind }) },
+  tutoringFiles: { remote: 'tutoring_files', cols: (f) => ({ group_id: f.groupId, author_id: f.authorId }) },
+  homeworkChecks: { remote: 'homework_checks', cols: (h) => ({ group_id: h.groupId, student_id: h.studentId }) },
 };
 
 // ---------- Envoi ----------
@@ -93,8 +97,9 @@ function installHooks() {
   [...Object.keys(SPECS), 'media'].forEach(watch);
 }
 
-// photos d'élèves : « élève/fichier » ; documents de séance : « doc-… » ; le reste : images des cartes
-const bucketOf = (mediaId: string) => (mediaId.includes('/') ? 'photos' : mediaId.startsWith('doc-') ? 'docs' : 'cards');
+// soutien : « sout/groupe/fichier » ; photos d'élèves : « élève/fichier » ; documents de séance : « doc-… » ; le reste : images des cartes
+const bucketOf = (mediaId: string) =>
+  mediaId.startsWith('sout/') ? 'soutien' : mediaId.includes('/') ? 'photos' : mediaId.startsWith('doc-') ? 'docs' : 'cards';
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 function schedulePush() {

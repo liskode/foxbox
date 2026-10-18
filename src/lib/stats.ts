@@ -1,4 +1,4 @@
-import { db, type Review, type StudentCard, type Student } from './db';
+import { db, isClass, type Review, type StudentCard, type Student } from './db';
 import { addDays, diffDays, today } from './dates';
 import { availableCards } from './leitner';
 
@@ -115,7 +115,7 @@ export async function groupOverview(groupId: string) {
 export async function cardByGroup(cardId: string) {
   const card = await db.cards.get(cardId);
   if (!card) return [];
-  const groups = (await db.groups.toArray()).filter((g) => g.subject === card.subject && !g.archived);
+  const groups = (await db.groups.toArray()).filter((g) => isClass(g) && g.subject === card.subject && !g.archived);
   const reviews = await db.reviews.where('cardId').equals(cardId).toArray();
   const out = [];
   for (const g of groups) {

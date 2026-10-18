@@ -4,12 +4,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { unitLabel, themeLabel, levelColors } from '../../../lib/units';
 import { sequencesOf, finishedByAll, doneDate, dm } from '../../../lib/forecast';
 import { useAuth } from '../../../lib/auth';
-import { useHideDone, HideDoneToggle, usePlans, createSequence } from './shared';
+import { useHideDone, HideDoneToggle, usePlans, createSequence, useSubject, useSubjectsInUse } from './shared';
 import { ClassBilan } from './SequenceScreen';
 
 // Vue d'ensemble : une colonne par niveau
 export function LevelsOverview() {
-  const data = usePlans();
+  const [subject, setSubject] = useSubject();
+  const subjects = useSubjectsInUse();
+  const current = subjects.includes(subject) ? subject : subjects[0];
+  const data = usePlans(current);
   const { session } = useAuth();
   const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
   const [hideDone, setHideDone] = useHideDone();
@@ -23,11 +26,20 @@ export function LevelsOverview() {
         <h1 className="title" style={{ margin: 0 }}>
           Progression
         </h1>
+        {subjects.length > 1 && (
+          <nav className="nav" style={{ flex: 'none' }}>
+            {subjects.map((s) => (
+              <a key={s} href="#" className={s === current ? 'active' : ''} onClick={(e) => (e.preventDefault(), setSubject(s))}>
+                {s}
+              </a>
+            ))}
+          </nav>
+        )}
         <HideDoneToggle value={hideDone} onChange={setHideDone} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, alignItems: 'start' }}>
         {data.levels.map((lp) => {
-          const seqs = sequencesOf(units, lp.level);
+          const seqs = sequencesOf(units, lp.level, current);
           return (
             <div key={lp.level} className="panel stack" style={{ gap: 8, background: colors[lp.level] }}>
               <div className="spread">
@@ -35,7 +47,7 @@ export function LevelsOverview() {
                 <button
                   className="btn small"
                   onClick={async () => {
-                    const u = await createSequence(lp.level, units);
+                    const u = await createSequence(lp.level, units, current);
                     if (u) nav(`/prof/progression/${u.id}`);
                   }}
                 >
@@ -52,7 +64,7 @@ export function LevelsOverview() {
                   <div key={q.id} className="stack" style={{ gap: 4 }}>
                     {(i === 0 || seqs[i - 1].theme !== q.theme) && (
                       <div className="small" style={{ fontWeight: 900, marginTop: 6, color: 'var(--ink-soft)' }}>
-                        {themeLabel(q.theme, q.level)}
+                        {themeLabel(q.theme, q.level, current)}
                       </div>
                     )}
                     <Link

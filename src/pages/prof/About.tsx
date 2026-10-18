@@ -31,6 +31,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     text: 'Les séquences et séances de chaque niveau, dans l’ordre réel de la progression, avec l’avancement de chaque classe et les dates prévues.',
     details: [
       'une colonne par niveau, thèmes du programme et « hors thème »',
+      'plusieurs matières (physique-chimie, mathématiques…) avec leurs thèmes, et niveaux du lycée pour le soutien',
       'codes de séquence et de séance (431, 4311…)',
       'durée de chaque séance',
       'descriptif et documents PDF téléchargeables par les élèves',
@@ -78,6 +79,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     text: 'Les flashcards de révision : création, recherche, import, export et codification.',
     details: [
       'code niveau + thème + origine + numéro (ex. 43MM-012)',
+      'matière de chaque flashcard, avec les thèmes propres aux mathématiques (nombres, fonctions, statistiques, géométrie, algorithmique)',
       'recherche par mot, code ou joker (43MM*, ??ER*)',
       'filtres par niveau, thème, tag et séquence',
       'éditeur avec le code à gauche et le rendu à droite',
@@ -145,6 +147,24 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     ],
   },
   {
+    title: 'Soutien scolaire',
+    text: 'Suivre des élèves en dehors de ses classes (cours particuliers), avec les mêmes outils : progression, flashcards, espace élève. Module à activer dans les Réglages.',
+    details: [
+      'un suivi par élève, ou pour 2-3 élèves ensemble (binôme, frères et sœurs)',
+      'une ou plusieurs matières, chacune avec son niveau (du collège à la Terminale)',
+      'un élève déjà dans une classe garde le même compte',
+      'séances : date, heure, durée, à domicile ou en ligne',
+      'programme : la Progression du niveau, sans ordre imposé, avec l’état de chaque point (pas vu, vu, à retravailler, acquis)',
+      'une séance peut mêler plusieurs matières',
+      'ce qui a été fait et travail pour la prochaine fois, formules mathématiques comprises',
+      'trois notes par séance : pour l’élève (pas pour les parents), pour les parents (pas pour l’élève), privée',
+      'documents (déposés par vous ou par l’élève), liens avec description',
+      'flashcards ajoutées pendant la séance, et celles des points travaillés, dans les révisions de l’élève',
+      'travail coché « fait » par l’élève',
+      'fiche : établissement, classe, objectifs, famille',
+    ],
+  },
+  {
     title: 'Trombi',
     text: 'Apprendre les prénoms de ses élèves et imprimer le trombinoscope.',
     details: [
@@ -161,6 +181,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'emploi du temps et calendrier',
       'salles',
       'référentiel de compétences',
+      'modules à activer (soutien scolaire)',
       'origines des flashcards (ER, MM…)',
       'classes : création, couleurs des niveaux, archivage',
       'compte',
@@ -176,6 +197,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'progrès : série, régularité, boîtes',
       'notes des évaluations rendues avec histogramme des compétences',
       'documents de cours des séances faites',
+      'soutien : travail pour la prochaine fois à cocher, dépôt de documents ou de photos, historique des séances avec documents, liens et note personnelle',
     ],
   },
   {
@@ -184,7 +206,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     details: [
       'copie locale et synchronisation automatique',
       'envois refusés mis de côté sans bloquer les autres',
-      'données privées (notes, aménagements, famille, absences) lisibles par le seul professeur, protégées par le serveur',
+      'données privées (notes, aménagements, famille, absences, notes de séance de soutien) lisibles par le seul professeur, protégées par le serveur',
       'hébergement en France (Paris)',
       'mise à jour signalée par un bandeau',
       'sur téléphone : menu déroulant (pages, classes, réglages) à la place du bandeau, onglets en menu déroulant, pages sur une colonne, grands tableaux qui défilent dans leur cadre',

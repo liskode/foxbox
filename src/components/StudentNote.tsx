@@ -1,7 +1,7 @@
 // Note privée du professeur sur un élève (appréciations, points de vigilance…).
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type FamilyContact, type Student, type StudentFlags } from '../lib/db';
+import { db, type FamilyContact, type Student, type StudentFlags, type TutorInfo } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { Icon } from './Icon';
 
@@ -9,17 +9,34 @@ export function useNote(studentId: string) {
   const { session } = useAuth();
   const id = `${session!.id}|${studentId}`;
   const note = useLiveQuery(() => db.notes.get(id), [id]);
-  const write = async (patch: { text?: string; flags?: StudentFlags; family?: { contacts: FamilyContact[]; notes?: string } }) => {
+  const write = async (patch: { text?: string; flags?: StudentFlags; family?: { contacts: FamilyContact[]; notes?: string }; tutor?: TutorInfo }) => {
     const cur = (await db.notes.get(id)) ?? { id, teacherId: session!.id, studentId, text: '', updatedAt: 0 };
     const next = { ...cur, ...patch, updatedAt: Date.now() };
-    const empty = !next.text.trim() && !Object.values(next.flags ?? {}).some(Boolean) && !next.family?.contacts.length && !next.family?.notes?.trim();
+    const empty =
+      !next.text.trim() &&
+      !Object.values(next.flags ?? {}).some(Boolean) &&
+      !next.family?.contacts.length &&
+      !next.family?.notes?.trim() &&
+      !Object.values(next.tutor ?? {}).some((v) => v?.trim());
     if (empty) await db.notes.delete(id);
     else await db.notes.put(next);
   };
   const save = (text: string) => write({ text });
   const setFlag = (k: keyof StudentFlags, v: boolean) => write({ flags: { ...(note?.flags ?? {}), [k]: v } });
   const setFamily = (family: { contacts: FamilyContact[]; notes?: string }) => write({ family });
-  return { text: note?.text ?? '', flags: note?.flags ?? {}, family: note?.family, loaded: note !== undefined, updatedAt: note?.updatedAt, save, setFlag, setFamily };
+  const setTutor = (tutor: TutorInfo) => write({ tutor });
+  return {
+    text: note?.text ?? '',
+    flags: note?.flags ?? {},
+    family: note?.family,
+    tutor: note?.tutor,
+    loaded: note !== undefined,
+    updatedAt: note?.updatedAt,
+    save,
+    setFlag,
+    setFamily,
+    setTutor,
+  };
 }
 
 export function NoteEditor({ studentId, onDone, autoFocus = false }: { studentId: string; onDone?: () => void; autoFocus?: boolean }) {
