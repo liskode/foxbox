@@ -159,7 +159,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'ce qui a été fait et travail pour la prochaine fois, formules mathématiques comprises',
       'trois notes par séance : pour l’élève (pas pour les parents), pour les parents (pas pour l’élève), privée',
       'documents (déposés par vous ou par l’élève), liens avec description',
-      'flashcards ajoutées pendant la séance, et celles des points travaillés, dans les révisions de l’élève',
+      'flashcards ajoutées pendant la séance (choix en plein écran, les plus récentes en haut, celles choisies grisées), et celles des points travaillés, dans les révisions de l’élève',
       'travail coché « fait » par l’élève',
       'fiche : établissement, classe, objectifs, famille',
     ],

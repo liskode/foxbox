@@ -39,6 +39,7 @@ export function CardBrowser({
   onCreate,
   onExport,
   subjects,
+  picker = false,
 }: {
   selected?: Set<string>;
   onToggle?: (id: string) => void;
@@ -48,6 +49,7 @@ export function CardBrowser({
   onCreate?: () => void; // tuile « + » en fin de liste pour créer une flashcard
   onExport?: (cards: Card[]) => void; // export des flashcards affichées (filtres appliqués)
   subjects?: string[]; // matières proposées (toutes par défaut)
+  picker?: boolean; // choix de flashcards : les plus récentes d'abord, celles déjà choisies grisées
 }) {
   const all = useLiveQuery(() => db.cards.filter((c) => !c.deleted).toArray(), [], []);
   // Plusieurs matières : choix de la matière (vide = toutes)
@@ -89,7 +91,7 @@ export function CardBrowser({
       const targets = wildcardTargets(c);
       return patterns.every((re) => targets.some((x) => re.test(x)));
     })
-    .sort((a, b) => a.code.localeCompare(b.code));
+    .sort((a, b) => (picker ? b.createdAt - a.createdAt || a.code.localeCompare(b.code) : a.code.localeCompare(b.code)));
 
   const toggleTheme = (t: string) => {
     const n = new Set(themes);
@@ -174,7 +176,7 @@ export function CardBrowser({
         </div>
       </div>
 
-      <div className="cardgrid">
+      <div className={'cardgrid' + (picker ? ' pick' : '')}>
         {list.map((c) => (
           <button
             key={c.id}

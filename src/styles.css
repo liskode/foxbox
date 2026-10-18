@@ -177,6 +177,9 @@ button.chip { cursor: pointer; font-family: inherit; color: var(--ink); }
   background: var(--paper); display: flex; align-items: center; justify-content: center; font-weight: 900;
 }
 .thumb.selected .check { background: var(--turquoise); }
+/* Choix de flashcards : celles déjà choisies se grisent */
+.cardgrid.pick .thumb.selected { outline: none; opacity: 0.35; filter: grayscale(1); }
+.drawer.full { width: 100%; border-left: none; }
 
 /* Rendu d'une face */
 .cardface { font-size: 1.15rem; text-align: center; }

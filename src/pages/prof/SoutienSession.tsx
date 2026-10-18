@@ -451,8 +451,9 @@ function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
       {picking && (
         <>
           <div className="drawer-bg" onClick={() => setPicking(false)} />
-          <div className="drawer stack">
-            <div className="spread">
+          <div className="drawer full stack">
+            {/* Boutons toujours visibles pendant le défilement */}
+            <div className="spread" style={{ position: 'sticky', top: -20, zIndex: 2, background: 'var(--bg)', padding: '12px 0', margin: '-12px 0 0' }}>
               <h2 style={{ margin: 0 }}>Choisir des flashcards</h2>
               <div className="row" style={{ gap: 6 }}>
                 <button
@@ -472,20 +473,24 @@ function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
               </div>
             </div>
             <CardBrowser
-              subjects={(group.tracks ?? []).map((t) => t.subject)}
+              picker
               selected={picked}
               exclude={new Set(s.cardIds)}
-              onToggle={(cid) => {
-                const n = new Set(picked);
-                if (n.has(cid)) n.delete(cid);
-                else n.add(cid);
-                setPicked(n);
-              }}
-              onToggleMany={(ids, on) => {
-                const n = new Set(picked);
-                ids.forEach((i) => (on ? n.add(i) : n.delete(i)));
-                setPicked(n);
-              }}
+              onToggle={(cid) =>
+                setPicked((prev) => {
+                  const n = new Set(prev);
+                  if (n.has(cid)) n.delete(cid);
+                  else n.add(cid);
+                  return n;
+                })
+              }
+              onToggleMany={(ids, on) =>
+                setPicked((prev) => {
+                  const n = new Set(prev);
+                  ids.forEach((i) => (on ? n.add(i) : n.delete(i)));
+                  return n;
+                })
+              }
               onOpen={(c) => setOpen({ id: c.id, edit: false })}
             />
           </div>
