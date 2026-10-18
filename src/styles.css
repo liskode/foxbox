@@ -156,6 +156,9 @@ button.chip { cursor: pointer; font-family: inherit; color: var(--ink); }
 .t-Statistiques { background: #b9a6e0; }
 .t-Géométrie { background: #8fd0a8; }
 .t-Algorithmique { background: #8dc9e3; }
+.t-Mathématiques { background: #f2be4e; }
+.t-Mécanique { background: #b9b06c; }
+.t-Physique-chimie { background: #ec8e83; }
 .code { font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 0.85rem; }
 
 /* Grille de cartes */

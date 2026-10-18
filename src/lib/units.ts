@@ -4,7 +4,9 @@ import { db, SUBJECTS, type Unit } from './db';
 export const LEVELS = ['6e', '5e', '4e', '3e'];
 // Niveaux du lycée (soutien scolaire)
 export const LYCEE = ['2nde', '1re', 'Tle'];
-export const ALL_LEVELS = [...LEVELS, ...LYCEE];
+// Après le bac (BTS…)
+export const POSTBAC = ['1re année', '2e année'];
+export const ALL_LEVELS = [...LEVELS, ...LYCEE, ...POSTBAC];
 export const byLevel = (a: string, b: string) => ALL_LEVELS.indexOf(a) - ALL_LEVELS.indexOf(b);
 
 // Thèmes du programme de cycle 4 (5e, 4e, 3e)
@@ -35,9 +37,15 @@ export const THEME_NAMES_MATHS: Record<string, string> = {
   '4': 'Grandeurs, mesures et géométrie',
   '5': 'Algorithmique et programmation',
 };
+// BTS CPI (conception des produits industriels) : maths, génie mécanique et physique-chimie dans une même progression
+export const THEME_NAMES_BTS_CPI: Record<string, string> = {
+  '1': 'Mathématiques',
+  '2': 'Génie mécanique',
+  '3': 'Physique-chimie',
+};
 export const HORS_THEME = 'Hors thème (présentation, révisions)';
 export const themesFor = (level?: string, subject?: string): Record<string, string> => ({
-  ...(subject === 'Mathématiques' ? THEME_NAMES_MATHS : level === '6e' ? THEME_NAMES_C3 : LYCEE.includes(level ?? '') ? THEME_NAMES_LYCEE : THEME_NAMES),
+  ...(subject === 'BTS CPI' ? THEME_NAMES_BTS_CPI : subject === 'Mathématiques' ? THEME_NAMES_MATHS : level === '6e' ? THEME_NAMES_C3 : LYCEE.includes(level ?? '') ? THEME_NAMES_LYCEE : THEME_NAMES),
   '0': HORS_THEME,
 });
 export const themeLabel = (t?: string, level?: string, subject?: string) =>

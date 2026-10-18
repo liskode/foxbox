@@ -21,6 +21,9 @@ export const themeColor = (t?: string) =>
     Statistiques: '#b9a6e0',
     Géométrie: '#8fd0a8',
     Algorithmique: '#8dc9e3',
+    Mathématiques: '#f2be4e',
+    Mécanique: '#b9b06c',
+    'Physique-chimie': '#ec8e83',
   })[t ?? ''] ?? 'var(--divers)';
 
 const SHADES = ['#e9e5dc', '#c8eadf', '#95d6c3', '#5fbfa4', '#2f8f75'];

@@ -9,7 +9,7 @@ import { ALL_THEMES, THEMES } from './themes';
 
 const THEMES_PC = Object.values(THEMES);
 
-export const LEVEL_DIGIT: Record<string, string> = { '6e': '6', '5e': '5', '4e': '4', '3e': '3', '2nde': '2', '1re': '1', Tle: '0' };
+export const LEVEL_DIGIT: Record<string, string> = { '6e': '6', '5e': '5', '4e': '4', '3e': '3', '2nde': '2', '1re': '1', Tle: '0', '1re année': '7', '2e année': '8' };
 
 export interface Origin {
   code: string; // 2 lettres

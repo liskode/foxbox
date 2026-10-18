@@ -455,7 +455,7 @@ export const db = new FoxBoxDB();
 
 export const uid = () => crypto.randomUUID();
 
-export const SUBJECTS = ['Physique-Chimie', 'SVT', 'Technologie', 'Mathématiques'];
+export const SUBJECTS = ['Physique-Chimie', 'SVT', 'Technologie', 'Mathématiques', 'BTS CPI'];
 
 // Compte professeur de démonstration (à remplacer par Supabase Auth en production)
 export const DEMO_TEACHER = { id: 'prof-demo', name: 'E. Renard', login: 'prof', password: 'foxbox' };

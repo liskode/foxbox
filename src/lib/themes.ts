@@ -16,6 +16,11 @@ export const THEMES_BY_SUBJECT: Record<string, Record<string, string>> = {
     '4': 'Géométrie',
     '5': 'Algorithmique',
   },
+  'BTS CPI': {
+    '1': 'Mathématiques',
+    '2': 'Mécanique',
+    '3': 'Physique-chimie',
+  },
 };
 export const themesOf = (subject?: string) => THEMES_BY_SUBJECT[subject ?? ''] ?? THEMES;
 // Tous les thèmes, toutes matières confondues : nom → chiffre
