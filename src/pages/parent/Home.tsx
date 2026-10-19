@@ -52,9 +52,15 @@ export function ParentHome() {
   const cur = fam.children.find((c) => c.child.id === sel) ?? fam.children[0];
   return (
     <div className="page narrow stack">
-      <h1 className="title" style={{ margin: 0 }}>
-        Bonjour
-      </h1>
+      <div>
+        <h1 className="title" style={{ margin: 0 }}>
+          Espace parents
+        </h1>
+        <span className="small muted">
+          {fam.parent.name}
+          {fam.children.length ? ` · parent de ${fam.children.map((c) => c.child.firstName).join(', ')}` : ''}
+        </span>
+      </div>
       <ChildPicker names={fam.children.map((c) => ({ id: c.child.id, name: c.child.firstName }))} current={cur?.child.id ?? ''} onChange={setSel} />
       {!cur && <div className="notice">Aucun enfant rattaché à ce compte.</div>}
       {cur && !cur.groups.length && <div className="notice">Pas encore de suivi à afficher pour {cur.child.firstName}.</div>}
