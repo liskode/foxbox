@@ -98,6 +98,7 @@ function ChildTutoring({ child, group, showName }: { child: Student; group: Grou
         </div>
       )}
 
+      {!data.ledger.free && (
       <div className="panel stack" style={{ gap: 8 }}>
         <div className="spread">
           <h3 className="panel-title">
@@ -125,6 +126,7 @@ function ChildTutoring({ child, group, showName }: { child: Student; group: Grou
           </Link>
         </div>
       </div>
+      )}
 
       <h2 style={{ margin: '8px 0 0' }}>Séances de {child.firstName}</h2>
       {!sorted.length && <div className="notice">Aucune séance pour l'instant.</div>}

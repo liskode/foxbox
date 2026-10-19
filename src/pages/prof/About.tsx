@@ -165,6 +165,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'fiche : établissement, classe, objectifs, famille',
       'tarif horaire propre à chaque élève, avec date d’effet et devise (euro, franc suisse, livre, dollar…) ; montant de chaque séance calculé au tarif en vigueur à sa date',
       'règlements : à la séance, forfait payé d’avance (avance restante en heures) ou en fin de mois ; séances réglées, en partie ou à régler',
+      'tarif à 0 (soutien gratuit) : aucun règlement ni montant affiché, ni pour vous ni pour les parents',
       'relevé mensuel et attestation annuelle (séances à domicile) à imprimer, avec vos coordonnées et votre SIRET',
       'récapitulatif global par mois et par élève (heures, montants, reçu, domicile / en ligne)',
       'messages : un fil avec l’élève et un fil avec les parents, séparés ; photo, document ou mémo vocal ; pastille des messages non lus',

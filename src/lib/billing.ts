@@ -3,6 +3,7 @@
 // atteint le total dû jusqu'à elle. Cela marche pour les trois façons de payer : à la séance, forfait payé
 // d'avance (le reste du forfait apparaît comme une avance), en fin de mois (un règlement pour le mois).
 import { isUpcoming } from './tutoring';
+import { today } from './dates';
 import { db, type Billing, type Group, type PayMode, type Payment, type TutoringSession } from './db';
 
 export const PAY_MODES: { key: PayMode; label: string; hint: string }[] = [
@@ -51,6 +52,7 @@ export interface Ledger {
   missingRate: boolean;
   hours: number;
   currency: string;
+  free: boolean; // tarif à 0 : soutien gratuit, rien à régler
 }
 
 export function buildLedger(studentId: string, sessions: TutoringSession[], billing: Billing | undefined, payments: Payment[], groups: Group[] = []): Ledger {
@@ -79,6 +81,7 @@ export function buildLedger(studentId: string, sessions: TutoringSession[], bill
     missingRate,
     hours: lines.reduce((a, l) => a + l.hours, 0),
     currency: billing?.currency || 'EUR',
+    free: rateAt(billing, today()) === 0,
   };
 }
 

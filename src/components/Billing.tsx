@@ -11,12 +11,14 @@ import { toast } from './Toast';
 import { Icon } from './Icon';
 
 export function LineTag({ l }: { l: Line }) {
+  if (l.rate === 0) return null; // soutien gratuit
   if (!l.amount) return <span className="tag plain">tarif à saisir</span>;
   return l.paid ? <span className="tag ok">réglée</span> : l.partly ? <span className="tag warn">en partie</span> : <span className="tag warn">à régler</span>;
 }
 
 export function BalanceTag({ ledger, billing }: { ledger: Ledger; billing?: Billing }) {
   const rate = rateAt(billing, today());
+  if (ledger.free) return null;
   if (ledger.missingRate && !ledger.due && !ledger.paid) return <span className="tag plain">Tarif à saisir</span>;
   if (ledger.balance < 0) return <span className="tag warn">Reste à payer : {money(-ledger.balance, ledger.currency)}</span>;
   if (ledger.balance > 0)
@@ -67,6 +69,8 @@ export function BillingPanel({ teacherId, student, showName }: { teacherId: stri
       <div className="grid2" style={{ alignItems: 'start' }}>
         <div className="panel stack" style={{ gap: 10 }}>
           <h3 className="panel-title">Tarif et façon de payer</h3>
+          {!ledger.free && (
+          <>
           <div className="seg" style={{ flexWrap: 'wrap' }}>
             {PAY_MODES.map((m) => (
               <button key={m.key} className={(billing?.mode ?? 'seance') === m.key ? 'on' : ''} title={m.hint} onClick={() => save({ mode: m.key as PayMode })}>
@@ -85,6 +89,8 @@ export function BillingPanel({ teacherId, student, showName }: { teacherId: stri
               ))}
             </select>
           </label>
+          </>
+          )}
           {(billing?.rates ?? [])
             .slice()
             .sort((a, b) => b.from.localeCompare(a.from))
@@ -111,7 +117,7 @@ export function BillingPanel({ teacherId, student, showName }: { teacherId: stri
               onSubmit={(e) => {
                 e.preventDefault();
                 const hourly = Number(rateDraft.hourly.replace(',', '.'));
-                if (!(hourly > 0)) return;
+                if (!rateDraft.hourly.trim() || !(hourly >= 0)) return; // 0 : soutien gratuit
                 save({ rates: [...(billing?.rates ?? []).filter((x) => x.from !== rateDraft.from), { from: rateDraft.from, hourly }] });
                 setRateDraft(null);
               }}
@@ -136,6 +142,9 @@ export function BillingPanel({ teacherId, student, showName }: { teacherId: stri
           {ledger.missingRate && <span className="small" style={{ color: 'var(--bad)' }}>Certaines séances n'ont pas de tarif à leur date.</span>}
         </div>
 
+        {ledger.free ? (
+          <div className="panel calm small muted">Tarif à 0 : soutien gratuit, pas de règlement à suivre (rien n'apparaît non plus pour les parents).</div>
+        ) : (
         <div className="panel stack" style={{ gap: 10 }}>
           <div className="spread">
             <h3 className="panel-title">Règlements</h3>
@@ -216,11 +225,13 @@ export function BillingPanel({ teacherId, student, showName }: { teacherId: stri
               </div>
             ))}
         </div>
+        )}
       </div>
 
       <div className="panel stack" style={{ gap: 8 }}>
         <div className="spread">
           <h3 className="panel-title">Séances</h3>
+          {!ledger.free && (
           <div className="row" style={{ gap: 6 }}>
             <select value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Mois du relevé">
               {months.map((m) => (
@@ -247,14 +258,15 @@ export function BillingPanel({ teacherId, student, showName }: { teacherId: stri
               <Icon name="file" size={15} /> Attestation annuelle
             </button>
           </div>
+          )}
         </div>
-        <LinesTable lines={ledger.lines.slice().reverse()} currency={cur} />
+        <LinesTable lines={ledger.lines.slice().reverse()} currency={cur} tags={!ledger.free} money={!ledger.free} />
       </div>
     </div>
   );
 }
 
-export function LinesTable({ lines, tags = true, currency = 'EUR' }: { lines: Line[]; tags?: boolean; currency?: string }) {
+export function LinesTable({ lines, tags = true, currency = 'EUR', money: showMoney = true }: { lines: Line[]; tags?: boolean; currency?: string; money?: boolean }) {
   if (!lines.length) return <span className="small muted">Aucune séance.</span>;
   return (
     <div className="scroll-x">
@@ -264,8 +276,8 @@ export function LinesTable({ lines, tags = true, currency = 'EUR' }: { lines: Li
             <th style={{ padding: '4px 8px' }}>Date</th>
             <th style={{ padding: '4px 8px' }}>Durée</th>
             <th style={{ padding: '4px 8px' }}>Lieu</th>
-            <th style={{ padding: '4px 8px', textAlign: 'right' }}>Tarif</th>
-            <th style={{ padding: '4px 8px', textAlign: 'right' }}>Montant</th>
+            {showMoney && <th style={{ padding: '4px 8px', textAlign: 'right' }}>Tarif</th>}
+            {showMoney && <th style={{ padding: '4px 8px', textAlign: 'right' }}>Montant</th>}
             {tags && <th />}
           </tr>
         </thead>
@@ -275,8 +287,8 @@ export function LinesTable({ lines, tags = true, currency = 'EUR' }: { lines: Li
               <td style={{ padding: '4px 8px', whiteSpace: 'nowrap' }}>{frDate(l.session.date)}</td>
               <td style={{ padding: '4px 8px' }}>{durationLabel(l.session.duration)}</td>
               <td style={{ padding: '4px 8px' }}>{placeLabel(l.session)}</td>
-              <td style={{ padding: '4px 8px', textAlign: 'right' }}>{l.rate ? `${money(l.rate, currency)}/h` : '—'}</td>
-              <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 800 }}>{money(l.amount, currency)}</td>
+              {showMoney && <td style={{ padding: '4px 8px', textAlign: 'right' }}>{l.rate ? `${money(l.rate, currency)}/h` : '—'}</td>}
+              {showMoney && <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 800 }}>{money(l.amount, currency)}</td>}
               {tags && (
                 <td style={{ padding: '4px 8px' }}>
                   <LineTag l={l} />

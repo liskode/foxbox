@@ -166,7 +166,8 @@ function SessionAmounts({ s, students, groupId }: { s: TutoringSession; students
     [students, s.id, s.date, s.duration, session?.id],
     [],
   );
-  if (!rows.length) return null;
+  // Soutien gratuit (tarif à 0) ou séance à venir : rien à afficher
+  if (!rows.length || rows.every((r) => !r.line || r.line.rate === 0)) return null;
   return (
     <div className="row small" style={{ gap: 12 }}>
       {rows.map(({ st, line, currency }) => (
