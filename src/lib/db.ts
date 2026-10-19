@@ -45,6 +45,8 @@ export interface Teacher {
   modules?: { soutien?: boolean }; // modules activés dans les Réglages
   notifyEmail?: boolean; // e-mail à chaque nouveau message (adresse de connexion)
   tutorProfile?: TutorProfile; // soutien : coordonnées imprimées sur les relevés et attestations
+  photoId?: string; // photo ou logo, à côté de ses messages
+  relations?: import('./relations').Relation[]; // interlocuteurs de la famille (Mère M, Père P…)
   origins?: import('./cardCodes').Origin[]; // origines des flashcards (ER, MM…)
 }
 
@@ -62,6 +64,8 @@ export interface Group {
   kind?: 'soutien';
   tracks?: Track[]; // matières suivies et niveau de chacune
   unitStatus?: Record<string, UnitStatus>; // état des points du programme fixé à la main (sinon : « vu » s'il a été travaillé)
+  teacherPhotoId?: string; // photo du professeur, recopiée pour l'élève et les parents (messages)
+  relations?: import('./relations').Relation[]; // interlocuteurs et leurs codes, recopiés depuis les Réglages
 }
 export interface Track {
   subject: string;

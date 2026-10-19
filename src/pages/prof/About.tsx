@@ -170,7 +170,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'tarif à 0 (soutien gratuit) : aucun règlement ni montant affiché, ni pour vous ni pour les parents',
       'relevé mensuel et attestation annuelle (séances à domicile) à imprimer, avec vos coordonnées et votre SIRET',
       'récapitulatif global par mois et par élève (heures, montants, reçu, domicile / en ligne)',
-      'messages : une conversation par élève, destinataires cochés à chaque message (l’élève, un ou plusieurs parents) ; chacun ne lit que ce qui lui est adressé ; photo, document ou mémo vocal ; message corrigeable après envoi ; pastille des messages non lus',
+      'messages : une conversation par élève, avec un petit rond à côté de chaque message (photo de l’élève, code du parent, votre photo ou logo), destinataires cochés à chaque message (l’élève, un ou plusieurs parents) ; chacun ne lit que ce qui lui est adressé ; photo, document ou mémo vocal ; message corrigeable après envoi ; pastille des messages non lus',
     ],
   },
   {
@@ -203,6 +203,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'salles',
       'référentiel de compétences',
       'modules à activer (soutien scolaire), coordonnées des relevés et attestations',
+      'messages : votre photo ou logo, interlocuteurs de la famille et leur code (Mère M, Père P, Grand-mère GM…)',
       'notification par e-mail des nouveaux messages (professeur, élève, parents : chacun choisit)',
       'origines des flashcards (ER, MM…)',
       'classes : création, couleurs des niveaux, archivage',

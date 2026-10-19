@@ -3,7 +3,10 @@ import { askForm } from '../../components/Dialog';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db } from '../../lib/db';
+import { db, uid, fileBlob, type Teacher } from '../../lib/db';
+import { DEFAULT_RELATIONS, shareTeacherProfile } from '../../lib/relations';
+import { resizeImage } from '../../lib/photos';
+import { usePhoto } from '../../components/Avatar';
 import { Groups } from './Groups';
 import { DEFAULT_ORIGINS, loadOrigins, type Origin } from '../../lib/cardCodes';
 import { Icon } from '../../components/Icon';
@@ -136,10 +139,82 @@ function ModulesPanel() {
           />
         </div>
       )}
+      {me.modules?.soutien && <MessagesProfile />}
       <label className="row" style={{ gap: 8, fontWeight: 700, marginTop: 8 }}>
         <input type="checkbox" checked={me.notifyEmail !== false} onChange={(e) => db.teachers.update(me.id, { notifyEmail: e.target.checked })} />
         M'avertir par e-mail des nouveaux messages des élèves et des parents
       </label>
+    </div>
+  );
+}
+
+// Messages du soutien : photo ou logo du professeur, interlocuteurs de la famille et leur code (rond à côté des messages)
+function MessagesProfile() {
+  const { session } = useAuth();
+  const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
+  const url = usePhoto(me?.photoId);
+  if (!me) return null;
+  const relations = me.relations ?? DEFAULT_RELATIONS;
+  const save = async (patch: Partial<Teacher>) => {
+    await db.teachers.update(me.id, patch);
+    await shareTeacherProfile(me.id);
+  };
+  return (
+    <div className="stack" style={{ gap: 8, marginTop: 8 }}>
+      <b className="small">Dans les messages</b>
+      <div className="row" style={{ gap: 10 }}>
+        <span className="msg-badge" style={{ width: 40, height: 40 }}>
+          {url ? <img src={url} alt="" /> : (me.name || '?').slice(0, 2).toUpperCase()}
+        </span>
+        <label className="btn small">
+          <Icon name="camera" size={15} /> {me.photoId ? 'Changer ma photo ou mon logo' : 'Ajouter ma photo ou mon logo'}
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const id = uid();
+              await db.media.put({ id, name: f.name || 'photo.jpg', blob: await resizeImage(await fileBlob(f), 200) });
+              await save({ photoId: id });
+              e.target.value = '';
+            }}
+          />
+        </label>
+        {me.photoId && (
+          <button className="btn small ghost" onClick={() => save({ photoId: undefined })}>
+            Retirer
+          </button>
+        )}
+        <span className="small muted">Vue par l'élève et les parents à côté de vos messages.</span>
+      </div>
+      <span className="small muted">Interlocuteurs de la famille : le code apparaît dans un rond à côté de leurs messages.</span>
+      <div className="row" style={{ gap: 8 }}>
+        {relations.map((r, i) => (
+          <span key={i} className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
+            <input
+              defaultValue={r.label}
+              aria-label="Interlocuteur"
+              style={{ width: 110 }}
+              onBlur={(e) => e.target.value.trim() && e.target.value !== r.label && save({ relations: relations.map((x, j) => (j === i ? { ...x, label: e.target.value.trim() } : x)) })}
+            />
+            <input
+              defaultValue={r.code}
+              aria-label="Code"
+              maxLength={3}
+              style={{ width: 48, textAlign: 'center', fontWeight: 800 }}
+              onBlur={(e) => e.target.value.trim() && e.target.value !== r.code && save({ relations: relations.map((x, j) => (j === i ? { ...x, code: e.target.value.trim() } : x)) })}
+            />
+            <button className="btn small ghost" title="Retirer" onClick={() => save({ relations: relations.filter((_, j) => j !== i) })}>
+              <Icon name="x" size={13} />
+            </button>
+          </span>
+        ))}
+        <button className="btn small" onClick={() => save({ relations: [...relations, { label: 'Autre', code: 'A' }] })}>
+          <Icon name="plus" size={15} /> Ajouter
+        </button>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, isTutoring, type FamilyContact, type Parent, type ParentMessage, shortName } from '../../lib/db';
 import { createParentAccess } from '../../lib/parents';
+import { DEFAULT_RELATIONS } from '../../lib/relations';
 import { showInfo } from '../../components/Dialog';
 import { useAuth } from '../../lib/auth';
 import { score } from '../../lib/grading';
@@ -32,6 +33,7 @@ export function Family() {
   const evals = useStudentEvals(id!);
   // Accès parents : proposés pour les élèves suivis en soutien (l'espace parents ne montre encore que le soutien)
   const tutoring = groups.find((g) => isTutoring(g));
+  const relations = useLiveQuery(async () => (await db.teachers.get(session!.id))?.relations ?? DEFAULT_RELATIONS, [session?.id], DEFAULT_RELATIONS);
   const tutored = !!tutoring;
   const parents = useLiveQuery(() => db.parents.where('studentIds').equals(id!).toArray(), [id], []);
   const log = useLiveQuery(
@@ -129,7 +131,7 @@ export function Family() {
         </div>
         {contacts.map((c) => (
           <div key={c.id} className="row" style={{ gap: 8 }}>
-            <input value={c.name} aria-label="Lien avec l'élève" placeholder="Mère, Père…" onChange={(e) => setContact(c.id, { name: e.target.value })} onBlur={() => persist()} style={{ width: 130 }} />
+            <input value={c.name} list="family-relations" aria-label="Lien avec l'élève" placeholder="Mère, Père…" onChange={(e) => setContact(c.id, { name: e.target.value })} onBlur={() => persist()} style={{ width: 130 }} />
             <input value={c.person ?? ''} aria-label="Prénom et nom" placeholder="Prénom et nom" onChange={(e) => setContact(c.id, { person: e.target.value })} onBlur={() => persist()} style={{ width: 200 }} />
             <input type="email" value={c.email ?? ''} placeholder="e-mail" onChange={(e) => setContact(c.id, { email: e.target.value })} onBlur={() => persist()} style={{ flex: 1, minWidth: 200 }} />
             <input type="tel" value={c.phone ?? ''} placeholder="téléphone" onChange={(e) => setContact(c.id, { phone: e.target.value })} onBlur={() => persist()} style={{ width: 150 }} />
@@ -153,6 +155,11 @@ export function Family() {
             </button>
           </div>
         ))}
+        <datalist id="family-relations">
+          {relations.map((r) => (
+            <option key={r.label} value={r.label} />
+          ))}
+        </datalist>
         {!contacts.length && <span className="muted small">Aucun contact. Ajoutez les parents (e-mail et téléphone).</span>}
         <label className="field">
           Notes sur la famille

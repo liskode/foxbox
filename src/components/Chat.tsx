@@ -1,7 +1,9 @@
 // Fil de discussion (professeur, élève ou parents) : messages, photos, documents, mémos vocaux.
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Message } from '../lib/db';
+import { db, type Message, type Student } from '../lib/db';
+import { codeFor, type Relation } from '../lib/relations';
+import { usePhoto } from './Avatar';
 import { conversation, markRead, sendMessage } from '../lib/messages';
 import { frDate } from '../lib/dates';
 import { mediaUrl, RichText } from './CardFace';
@@ -42,6 +44,35 @@ const time = (ts: number) => {
   return `${frDate(d.toISOString().slice(0, 10))} ${String(d.getHours()).padStart(2, '0')} h ${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+// Petit rond en haut à gauche d'un message : photo de l'élève, photo ou logo du professeur, code d'un parent (P, M…)
+function Face({
+  m,
+  studentId,
+  teacherId,
+  faces,
+}: {
+  m: Message;
+  studentId: string;
+  teacherId: string;
+  faces?: { student?: Student; teacherPhotoId?: string; relations?: Relation[] };
+}) {
+  const isStudent = m.authorId === studentId;
+  const isTeacher = m.authorId === teacherId;
+  const url = usePhoto(isStudent ? faces?.student?.photoId : isTeacher ? faces?.teacherPhotoId : undefined);
+  const initials = m.authorName
+    .split(/[\s.–-]+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <span className="msg-badge" title={m.authorName}>
+      {url ? <img src={url} alt="" /> : isStudent || isTeacher ? initials : codeFor(m.authorName, faces?.relations)}
+    </span>
+  );
+}
+
 export interface Person {
   id: string;
   name: string;
@@ -76,6 +107,17 @@ export function Chat({
     },
     [role, studentId],
     [] as Person[],
+  );
+  // Photo de l'élève, photo du professeur et codes des interlocuteurs (recopiés dans le groupe de soutien)
+  const faces = useLiveQuery(
+    async () => {
+      const st = await db.students.get(studentId);
+      const ms = await db.memberships.where('studentId').equals(studentId).toArray();
+      const g = (await db.groups.bulkGet(ms.map((m) => m.groupId))).find((x) => x?.kind === 'soutien' && x.teacherIds.includes(teacherId));
+      const t = role === 'prof' ? await db.teachers.get(teacherId) : undefined;
+      return { student: st, teacherPhotoId: t?.photoId ?? g?.teacherPhotoId, relations: t?.relations ?? g?.relations };
+    },
+    [studentId, teacherId, role],
   );
   const last = msgs[msgs.length - 1];
   const lastIn = [...msgs].reverse().find((m) => m.authorId !== me.id) ?? last;
@@ -181,9 +223,12 @@ export function Chat({
           const mine = m.authorId === me.id;
           return (
             <div key={m.id} className={'bubble' + (mine ? ' mine' : '')}>
-              <div className="small muted">
-                {mine ? 'Moi' : m.authorName} {toLabel(m)} · {time(m.createdAt)}
-                {m.editedAt ? ' · modifié' : ''}
+              <div className="bubble-head">
+                <Face m={m} studentId={studentId} teacherId={teacherId} faces={faces} />
+                <span className="small muted">
+                  {mine ? 'Moi' : m.authorName} {toLabel(m)} · {time(m.createdAt)}
+                  {m.editedAt ? ' · modifié' : ''}
+                </span>
               </div>
               {editing?.id === m.id ? (
                 <div className="stack" style={{ gap: 6 }}>

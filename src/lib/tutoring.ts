@@ -4,6 +4,7 @@
 // (table `publications`, à la date de la séance) : l'élève reçoit leurs flashcards et leurs documents.
 import { db, uid, fileBlob, isTutoring, type Group, type Track, type TutoringSession, type Unit, type UnitStatus } from './db';
 import { importStudents } from './students';
+import { shareTeacherProfile } from './relations';
 import { ONLINE } from './supabase';
 import { push } from './sync';
 import { today } from './dates';
@@ -29,6 +30,7 @@ export async function createTutoring(teacherId: string, students: { firstName: s
   const name = students.map((s) => `${s.firstName} ${s.lastName.slice(0, 1)}.`.trim()).join(' & ');
   const g: Group = { id: uid(), kind: 'soutien', name, schoolYear: schoolYear(), subject: tracks[0].subject, tracks, teacherIds: [teacherId] };
   await db.groups.put(g);
+  await shareTeacherProfile(teacherId);
   await waitPushed(`groups|${g.id}`);
   await importStudents(students, g.id, g.subject);
   return g;
