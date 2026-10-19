@@ -13,9 +13,17 @@ export function Login() {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const sample = useLiveQuery(() => (ONLINE ? undefined : db.students.limit(1).first()));
+  // Page d'arrivée : un élève suivi en soutien arrive sur sa page Soutien (bouton flashcards, prochaine séance, consignes)
+  const home = useLiveQuery(async () => {
+    if (!session) return null;
+    if (session.role !== 'eleve') return homeOf(session.role);
+    const ms = await db.memberships.where('studentId').equals(session.id).toArray();
+    const tutored = (await db.groups.bulkGet(ms.map((m) => m.groupId))).some((g) => g?.kind === 'soutien' && !g.archived);
+    return tutored ? '/eleve/soutien' : '/eleve';
+  }, [session?.id, session?.role]);
 
   if (!ready) return null;
-  if (session) return <Navigate to={homeOf(session.role)} replace />;
+  if (session) return home ? <Navigate to={home} replace /> : null;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -23,8 +31,7 @@ export function Login() {
     setErr('');
     const s = await login(l, p);
     setBusy(false);
-    if ('error' in s) setErr(s.error);
-    else nav(homeOf(s.role));
+    if ('error' in s) setErr(s.error); // sinon : redirection vers la page d'arrivée ci-dessus
   }
 
   return (

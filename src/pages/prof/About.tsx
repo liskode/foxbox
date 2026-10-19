@@ -216,7 +216,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'progrès : série, régularité, boîtes',
       'notes des évaluations rendues avec histogramme des compétences',
       'documents de cours des séances faites',
-      'soutien : bouton « Je révise mes flashcards CHAQUE JOUR » avec le nombre à revoir, prochaine séance en tête (date, heure, contenu prévu, documents), consignes de la dernière séance et travail à cocher, dépôt de documents ou de photos, historique des séances avec documents, liens et note personnelle',
+      'soutien : page d’arrivée des élèves suivis, avec le bouton « Je révise mes flashcards CHAQUE JOUR » avec le nombre à revoir, prochaine séance en tête (date, heure, contenu prévu, documents), consignes de la dernière séance et travail à cocher, dépôt de documents ou de photos, historique des séances avec documents, liens et note personnelle',
       'messages au professeur de soutien (photo, mémo vocal), que les parents ne lisent pas',
     ],
   },
