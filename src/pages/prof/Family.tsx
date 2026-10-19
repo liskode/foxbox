@@ -44,7 +44,7 @@ export function Family() {
     } else if (student?.parentEmails?.length) setContacts(student.parentEmails.map((email, i) => ({ id: uid(), name: `Parent ${i + 1}`, email })));
   }, [family, student?.parentEmails]);
   const persist = async (cs = contacts, n = notes) => {
-    await setFamily({ contacts: cs.filter((c) => c.name.trim() || c.email?.trim() || c.phone?.trim()), notes: n });
+    await setFamily({ contacts: cs.filter((c) => c.name.trim() || c.person?.trim() || c.email?.trim() || c.phone?.trim()), notes: n });
     // Les adresses ne restent plus dans le compte de l'élève (lisible par lui)
     if (student?.parentEmails?.length) await db.students.update(student.id, { parentEmails: [] });
   };
@@ -117,13 +117,14 @@ export function Family() {
       <div className="panel stack">
         <div className="spread">
           <h2 style={{ margin: 0 }}>Coordonnées</h2>
-          <button className="btn small" onClick={() => setContacts([...contacts, { id: uid(), name: '', email: '', phone: '' }])}>
+          <button className="btn small" onClick={() => setContacts([...contacts, { id: uid(), name: '', person: '', email: '', phone: '' }])}>
             + Ajouter un contact
           </button>
         </div>
         {contacts.map((c) => (
           <div key={c.id} className="row" style={{ gap: 8 }}>
-            <input value={c.name} placeholder="Mère, Père, tuteur…" onChange={(e) => setContact(c.id, { name: e.target.value })} onBlur={() => persist()} style={{ width: 170 }} />
+            <input value={c.name} aria-label="Lien avec l'élève" placeholder="Mère, Père…" onChange={(e) => setContact(c.id, { name: e.target.value })} onBlur={() => persist()} style={{ width: 130 }} />
+            <input value={c.person ?? ''} aria-label="Prénom et nom" placeholder="Prénom et nom" onChange={(e) => setContact(c.id, { person: e.target.value })} onBlur={() => persist()} style={{ width: 200 }} />
             <input type="email" value={c.email ?? ''} placeholder="e-mail" onChange={(e) => setContact(c.id, { email: e.target.value })} onBlur={() => persist()} style={{ flex: 1, minWidth: 200 }} />
             <input type="tel" value={c.phone ?? ''} placeholder="téléphone" onChange={(e) => setContact(c.id, { phone: e.target.value })} onBlur={() => persist()} style={{ width: 150 }} />
             {c.phone && (
@@ -135,7 +136,7 @@ export function Family() {
               className="btn small ghost"
               title="Retirer ce contact"
               onClick={() => {
-                if (!confirm(`Retirer le contact « ${c.name || c.email || c.phone} » ?`)) return;
+                if (!confirm(`Retirer le contact « ${c.person || c.name || c.email || c.phone} » ?`)) return;
                 const cs = contacts.filter((x) => x.id !== c.id);
                 setContacts(cs);
                 persist(cs);
@@ -193,7 +194,7 @@ export function Family() {
                 <input value={entry.to} list="family-contacts" onChange={(e) => setEntry({ ...entry, to: e.target.value })} placeholder="Mère, Père…" />
                 <datalist id="family-contacts">
                   {contacts.map((c) => (
-                    <option key={c.id} value={entry.kind === 'mail' ? c.email ?? '' : c.name} />
+                    <option key={c.id} value={entry.kind === 'mail' ? c.email ?? '' : [c.name, c.person].filter(Boolean).join(' – ')} />
                   ))}
                 </datalist>
               </label>

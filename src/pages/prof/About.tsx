@@ -111,7 +111,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Famille',
     text: "Les coordonnées de la famille et le suivi de tous les échanges, au même endroit (privé).",
     details: [
-      'contacts (e-mail, téléphone)',
+      'contacts : lien avec l’élève, prénom et nom, e-mail, téléphone',
       'notes sur la famille',
       'journal daté des échanges : téléphone, mail, entretien',
       'mail prérempli au sujet d’une évaluation, ouvert dans votre messagerie',

@@ -196,7 +196,8 @@ export interface TutorInfo {
 }
 export interface FamilyContact {
   id: string;
-  name: string; // Mère, Père, Mme Dupont…
+  name: string; // lien avec l'élève : Mère, Père, tuteur…
+  person?: string; // prénom et nom du parent
   email?: string;
   phone?: string;
 }
