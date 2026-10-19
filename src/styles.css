@@ -517,3 +517,8 @@ table.list tr.click:hover td { background: #faf7ef; }
 
 /* Travail à faire : réponses de l'élève */
 .hw-choice { border: none; cursor: pointer; font: inherit; font-weight: 800; font-size: 0.95rem; padding: 8px 14px; border-radius: 999px; white-space: normal; }
+
+/* Progrès de l'élève : chiffres sur une ligne */
+.stat-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.stat-row .panel { padding: 8px 12px; }
+.stat-n { font-size: 1.3rem; font-weight: 900; white-space: nowrap; }

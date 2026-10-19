@@ -91,23 +91,26 @@ export function StudentReport({ studentId, teacherView = false, settings }: { st
         </div>
       ) : (
         <>
-          <div className="grid3">
+          {/* Les trois chiffres sur une ligne, en petit */}
+          <div className="stat-row">
             <div className="panel">
               <div className="muted small">Série en cours</div>
-              <div style={{ fontSize: '2rem', fontWeight: 900 }}><Icon name="flame" size={28} /> {streak(counts)} j</div>
+              <div className="stat-n">
+                <Icon name="flame" size={18} /> {streak(counts)} j
+              </div>
             </div>
             <div className="panel">
-              <div className="muted small">Jours de révision (30 j)</div>
-              <div style={{ fontSize: '2rem', fontWeight: 900 }}>{sum.activeDays} / 30</div>
+              <div className="muted small">Jours (30 j)</div>
+              <div className="stat-n">{sum.activeDays} / 30</div>
             </div>
             <div className="panel">
               <div className="muted small">Réussite (30 j)</div>
-              <div style={{ fontSize: '2rem', fontWeight: 900 }}>{sum.total ? <Pct v={sum.success} /> : '—'}</div>
+              <div className="stat-n">{sum.total ? <Pct v={sum.success} /> : '—'}</div>
             </div>
             {teacherView && (
               <div className="panel">
                 <div className="muted small">Score (classement)</div>
-                <div style={{ fontSize: '2rem', fontWeight: 900 }}>{sum.score} / 100</div>
+                <div className="stat-n">{sum.score} / 100</div>
               </div>
             )}
           </div>
@@ -117,9 +120,9 @@ export function StudentReport({ studentId, teacherView = false, settings }: { st
           </div>
           <div className="panel stack">
             <div className="spread">
-              <h3 style={{ margin: 0 }}>{teacherView ? 'Boîtes' : 'Mes boîtes'}</h3>
+              <h3 style={{ margin: 0 }}>{teacherView ? 'Boîtes' : 'Avancement'}</h3>
               <span className="muted small">
-                {total} flashcard(s) · {mastered} bien installée(s) (boîtes 5 à 7)
+                {total} flashcard(s){teacherView ? ` · ${mastered} bien installée(s) (boîtes 5 à 7)` : ''}
               </span>
             </div>
             <Boxes dist={data.dist} />
