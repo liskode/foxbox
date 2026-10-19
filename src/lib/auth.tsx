@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { db } from './db';
 import { ONLINE, supabase, loginToEmail, normalizeLogin } from './supabase';
 import { startSync, stopSync } from './sync';
+import { stopVisits } from './visits';
 
 export interface Session {
   role: 'prof' | 'eleve' | 'parent';
@@ -107,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    stopVisits();
     if (ONLINE) {
       await stopSync();
       await supabase.auth.signOut();

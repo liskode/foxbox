@@ -103,6 +103,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'aménagements (tiers temps, ULIS, ordinateur)',
       'évaluations et histogramme des compétences',
       'absences avec date, séance et motif',
+      'connexions de l’élève et de ses parents : date, heure, durée',
       'flashcards : objectif, règle d’erreur, régularité, boîtes, flashcards difficiles',
       'fiches identifiants à imprimer',
     ],

@@ -11,6 +11,7 @@ import { removePhoto } from '../../lib/photos';
 import { NoteEditor, FlagChecks } from '../../components/StudentNote';
 import { StudentEvaluations, StudentCompetenceHisto, StudentAbsences } from '../../components/StudentEvaluations';
 import { Icon } from '../../components/Icon';
+import { StudentVisits } from '../../components/Visits';
 
 export function StudentPage() {
   const { id } = useParams();
@@ -179,6 +180,7 @@ export function StudentPage() {
         <StudentCompetenceHisto student={student} />
       </div>
       <StudentAbsences student={student} />
+      <StudentVisits student={student} />
       <section className="stack" style={{ gap: 12, borderTop: '3px solid var(--line)', paddingTop: 12 }}>
         <h2 className="row" style={{ margin: 0, gap: 8 }}><Icon name="cards" size={20} /> Flashcards</h2>
         <StudentReport

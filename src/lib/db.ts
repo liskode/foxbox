@@ -400,6 +400,17 @@ export interface MessageRead {
   at: number; // date du dernier message lu
 }
 
+// Connexion d'un élève ou d'un parent (lue par les professeurs de l'élève)
+export interface Visit {
+  id: string;
+  userId: string;
+  role: 'eleve' | 'parent';
+  name: string; // prénom de l'élève, ou « Mère – Claire … »
+  studentIds: string[];
+  start: number;
+  last: number; // dernière activité : la durée est last − start
+}
+
 // To-do list personnelle du professeur
 export interface Todo {
   id: string;
@@ -477,6 +488,7 @@ class FoxBoxDB extends Dexie {
   payments!: Table<Payment, string>;
   messages!: Table<Message, string>;
   messageReads!: Table<MessageRead, string>;
+  visits!: Table<Visit, string>;
 
   constructor() {
     super(ONLINE ? 'foxbox-online' : 'foxbox-v2');
@@ -521,6 +533,7 @@ class FoxBoxDB extends Dexie {
       messages: 'id, studentId, [studentId+thread]',
       messageReads: 'id',
     });
+    this.version(11).stores({ visits: 'id, userId, *studentIds' });
   }
 }
 

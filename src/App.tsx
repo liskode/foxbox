@@ -9,6 +9,7 @@ import { Signup } from './pages/Signup';
 import { subscribeSync, retryFailed, type SyncState } from './lib/sync';
 import { ONLINE } from './lib/supabase';
 import { unreadTotal } from './lib/messages';
+import { trackVisits } from './lib/visits';
 import { UpdateBanner } from './components/UpdateBanner';
 import { DialogHost } from './components/Dialog';
 import { ToastHost } from './components/Toast';
@@ -217,6 +218,10 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
   // Messages non lus : pastille sur « Soutien » (professeur, élève) ou « Messages » (parents)
   const unread = useLiveQuery(async () => (session ? unreadTotal(session.id, session.role) : 0), [session?.id, session?.role], 0);
   const badgeOn = role === 'parent' ? '/parent/messages' : role === 'prof' ? '/prof/soutien' : '/eleve/soutien';
+  // Journal des connexions (élèves et parents)
+  useEffect(() => {
+    if (session && session.role !== 'prof') trackVisits(session);
+  }, [session]);
   useEffect(() => {
     // Reprend la lecture des images interrompue (fermeture de l'onglet…)
     if (session?.role === 'prof') runOcr();
