@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useAuth } from '../lib/auth';
+import { useAuth, homeOf } from '../lib/auth';
 import { db, DEMO_TEACHER } from '../lib/db';
 import { ONLINE } from '../lib/supabase';
 
@@ -15,7 +15,7 @@ export function Login() {
   const sample = useLiveQuery(() => (ONLINE ? undefined : db.students.limit(1).first()));
 
   if (!ready) return null;
-  if (session) return <Navigate to={session.role === 'prof' ? '/prof' : '/eleve'} replace />;
+  if (session) return <Navigate to={homeOf(session.role)} replace />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -24,7 +24,7 @@ export function Login() {
     const s = await login(l, p);
     setBusy(false);
     if ('error' in s) setErr(s.error);
-    else nav(s.role === 'prof' ? '/prof' : '/eleve');
+    else nav(homeOf(s.role));
   }
 
   return (

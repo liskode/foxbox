@@ -110,9 +110,36 @@ function ModulesPanel() {
         Soutien scolaire
       </label>
       <span className="small muted">
-        Élèves suivis en dehors de vos classes (un ou plusieurs, dans une ou plusieurs matières) : séances, programme, documents, flashcards et espace
-        élève. Ajoute « Soutien » au menu.
+        Élèves suivis en dehors de vos classes (un ou plusieurs, dans une ou plusieurs matières) : séances, programme, documents, flashcards, règlements,
+        espaces élève et parents, messages. Ajoute « Soutien » au menu.
       </span>
+      {me.modules?.soutien && (
+        <div className="stack" style={{ gap: 8, marginTop: 8 }}>
+          <b className="small">Coordonnées imprimées sur les relevés et attestations</b>
+          <div className="row" style={{ gap: 8, alignItems: 'flex-start' }}>
+            <input
+              placeholder={`Nom (${me.name})`}
+              defaultValue={me.tutorProfile?.name ?? ''}
+              onBlur={(e) => db.teachers.update(me.id, { tutorProfile: { ...(me.tutorProfile ?? {}), name: e.target.value.trim() || undefined } })}
+            />
+            <input
+              placeholder="SIRET / n° de déclaration"
+              defaultValue={me.tutorProfile?.siret ?? ''}
+              onBlur={(e) => db.teachers.update(me.id, { tutorProfile: { ...(me.tutorProfile ?? {}), siret: e.target.value.trim() || undefined } })}
+            />
+          </div>
+          <textarea
+            placeholder="Adresse"
+            defaultValue={me.tutorProfile?.address ?? ''}
+            onBlur={(e) => db.teachers.update(me.id, { tutorProfile: { ...(me.tutorProfile ?? {}), address: e.target.value.trim() || undefined } })}
+            style={{ fontFamily: 'var(--font)', minHeight: 60, maxWidth: 480 }}
+          />
+        </div>
+      )}
+      <label className="row" style={{ gap: 8, fontWeight: 700, marginTop: 8 }}>
+        <input type="checkbox" checked={me.notifyEmail !== false} onChange={(e) => db.teachers.update(me.id, { notifyEmail: e.target.checked })} />
+        M'avertir par e-mail des nouveaux messages des élèves et des parents
+      </label>
     </div>
   );
 }

@@ -43,6 +43,8 @@ export interface Teacher {
   competences?: import('./competences').Competence[]; // référentiel de compétences
   rooms?: import('./rooms').Room[]; // salles (places cochées sur un quadrillage)
   modules?: { soutien?: boolean }; // modules activés dans les Réglages
+  notifyEmail?: boolean; // e-mail à chaque nouveau message (adresse de connexion)
+  tutorProfile?: TutorProfile; // soutien : coordonnées imprimées sur les relevés et attestations
   origins?: import('./cardCodes').Origin[]; // origines des flashcards (ER, MM…)
 }
 
@@ -104,6 +106,23 @@ export interface Student {
   goals: Record<string, number>; // objectif quotidien par matière
   photoId?: string; // media
   parentEmails?: string[];
+  notifyEmail?: string; // adresse où l'élève veut être prévenu des nouveaux messages (facultatif)
+}
+
+// Compte parent (créé par le professeur depuis la fiche Famille), rattaché à un ou plusieurs enfants
+export interface Parent {
+  id: string;
+  name: string; // Mère, Père… et prénom nom
+  login: string; // adresse e-mail, ou identifiant parent.prenom.nom
+  password: string;
+  studentIds: string[];
+  contactIds?: string[]; // contacts de la fiche Famille correspondants
+  notifyEmail?: boolean; // e-mail à chaque nouveau message
+}
+export interface TutorProfile {
+  name?: string; // nom affiché (sinon celui du compte)
+  address?: string;
+  siret?: string; // SIRET / n° de déclaration services à la personne
 }
 
 // Espace Trombi : progression du professeur dans la mémorisation des élèves
@@ -340,6 +359,46 @@ export interface HomeworkCheck {
   at: number;
 }
 
+// Tarifs et mode de règlement d'un élève suivi en soutien (lus aussi par ses parents)
+export type PayMode = 'seance' | 'forfait' | 'mois';
+export interface Billing {
+  id: string; // teacherId|studentId
+  teacherId: string;
+  studentId: string;
+  rates: { from: string; hourly: number }[]; // tarif horaire et date d'effet
+  mode: PayMode;
+  issuer?: TutorProfile; // nom et coordonnées du professeur, pour le relevé vu par les parents
+}
+// Règlement reçu (lu aussi par les parents)
+export interface Payment {
+  id: string;
+  teacherId: string;
+  studentId: string;
+  date: string;
+  amount: number;
+  method: string; // virement, chèque, espèces, CESU…
+  label?: string; // ex. « Forfait 10 h »
+  createdAt: number;
+}
+// Message d'un fil de discussion (fil « eleve » : élève ↔ professeur ; fil « parents » : parents ↔ professeur)
+export type Thread = 'eleve' | 'parents';
+export interface Message {
+  id: string;
+  teacherId: string;
+  studentId: string;
+  thread: Thread;
+  authorId: string;
+  authorName: string;
+  text: string;
+  attachments: { mediaId: string; name: string; size: number; type: string }[];
+  createdAt: number;
+}
+export interface MessageRead {
+  id: string; // userId|teacherId|studentId|thread
+  userId: string;
+  at: number; // date du dernier message lu
+}
+
 // To-do list personnelle du professeur
 export interface Todo {
   id: string;
@@ -412,6 +471,11 @@ class FoxBoxDB extends Dexie {
   sessionNotes!: Table<SessionNote, string>;
   tutoringFiles!: Table<TutoringFile, string>;
   homeworkChecks!: Table<HomeworkCheck, string>;
+  parents!: Table<Parent, string>;
+  billing!: Table<Billing, string>;
+  payments!: Table<Payment, string>;
+  messages!: Table<Message, string>;
+  messageReads!: Table<MessageRead, string>;
 
   constructor() {
     super(ONLINE ? 'foxbox-online' : 'foxbox-v2');
@@ -448,6 +512,13 @@ class FoxBoxDB extends Dexie {
       sessionNotes: 'id, sessionId, studentId',
       tutoringFiles: 'id, groupId, sessionId',
       homeworkChecks: 'id, sessionId, studentId',
+    });
+    this.version(10).stores({
+      parents: 'id, &login, *studentIds',
+      billing: 'id, studentId',
+      payments: 'id, studentId',
+      messages: 'id, studentId, [studentId+thread]',
+      messageReads: 'id',
     });
   }
 }

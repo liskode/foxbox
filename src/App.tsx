@@ -2,12 +2,13 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { HashRouter, Navigate, NavLink, Route, Routes, Link, useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isClass, isTutoring, shortName } from './lib/db';
-import { AuthProvider, useAuth } from './lib/auth';
+import { AuthProvider, useAuth, homeOf } from './lib/auth';
 import { runOcr, subscribeOcr, type OcrState } from './lib/ocr';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { subscribeSync, retryFailed, type SyncState } from './lib/sync';
 import { ONLINE } from './lib/supabase';
+import { unreadTotal } from './lib/messages';
 import { UpdateBanner } from './components/UpdateBanner';
 import { DialogHost } from './components/Dialog';
 import { ToastHost } from './components/Toast';
@@ -36,6 +37,11 @@ const StudentHome = lazy(() => import('./pages/eleve/Home').then((m) => ({ defau
 const ReviewSession = lazy(() => import('./pages/eleve/Review').then((m) => ({ default: m.ReviewSession })));
 const MyStats = lazy(() => import('./pages/eleve/MyStats').then((m) => ({ default: m.MyStats })));
 const StudentDocuments = lazy(() => import('./pages/eleve/Documents').then((m) => ({ default: m.StudentDocuments })));
+const StudentMessages = lazy(() => import('./pages/eleve/Messages').then((m) => ({ default: m.StudentMessages })));
+const ParentHome = lazy(() => import('./pages/parent/Home').then((m) => ({ default: m.ParentHome })));
+const ParentMessages = lazy(() => import('./pages/parent/Home').then((m) => ({ default: m.ParentMessages })));
+const RelevePage = lazy(() => import('./pages/prof/SoutienPrint').then((m) => ({ default: m.RelevePage })));
+const AttestationPage = lazy(() => import('./pages/prof/SoutienPrint').then((m) => ({ default: m.AttestationPage })));
 const StudentSoutien = lazy(() => import('./pages/eleve/Soutien').then((m) => ({ default: m.StudentSoutien })));
 const Soutien = lazy(() => import('./pages/prof/Soutien').then((m) => ({ default: m.Soutien })));
 const SoutienGroup = lazy(() => import('./pages/prof/SoutienGroup').then((m) => ({ default: m.SoutienGroup })));
@@ -194,7 +200,7 @@ function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }
   );
 }
 
-function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode }) {
+function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children: ReactNode }) {
   const { session, ready, logout } = useAuth();
   const { pathname } = useLocation();
   // Module Soutien : activé dans les Réglages (professeur) ; onglet affiché à l'élève suivi en soutien
@@ -208,13 +214,16 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
     [session?.id, session?.role],
     false,
   );
+  // Messages non lus : pastille sur « Soutien » (professeur, élève) ou « Messages » (parents)
+  const unread = useLiveQuery(async () => (session ? unreadTotal(session.id, session.role) : 0), [session?.id, session?.role], 0);
+  const badgeOn = role === 'parent' ? '/parent/messages' : role === 'prof' ? '/prof/soutien' : '/eleve/soutien';
   useEffect(() => {
     // Reprend la lecture des images interrompue (fermeture de l'onglet…)
     if (session?.role === 'prof') runOcr();
   }, [session]);
   if (!ready) return null;
   if (!session) return <Navigate to="/" replace />;
-  if (session.role !== role) return <Navigate to={session.role === 'prof' ? '/prof' : '/eleve'} replace />;
+  if (session.role !== role) return <Navigate to={homeOf(session.role)} replace />;
   const links =
     role === 'prof'
       ? [
@@ -225,19 +234,33 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
           ['/prof/eleves', 'Élèves'],
           ...(soutien ? [['/prof/soutien', 'Soutien']] : []),
         ]
-      : [
-          ['/eleve', 'Flashcards'],
-          ...(soutien ? [['/eleve/soutien', 'Soutien']] : []),
-          ['/eleve/notes', 'Notes'],
-          ['/eleve/documents', 'Documents de cours'],
-        ];
-  const icons: Record<string, string> = { '/eleve': 'cards', '/eleve/soutien': 'clipboard', '/eleve/notes': 'bars', '/eleve/documents': 'file' };
+      : role === 'parent'
+        ? [
+            ['/parent', 'Suivi'],
+            ['/parent/messages', 'Messages'],
+          ]
+        : [
+            ['/eleve', 'Flashcards'],
+            ...(soutien ? [['/eleve/soutien', 'Soutien']] : []),
+            ['/eleve/notes', 'Notes'],
+            ['/eleve/documents', 'Documents de cours'],
+          ];
+  const icons: Record<string, string> = {
+    '/eleve': 'cards',
+    '/eleve/soutien': 'clipboard',
+    '/eleve/notes': 'bars',
+    '/eleve/documents': 'file',
+    '/parent': 'clipboard',
+    '/parent/messages': 'message',
+  };
+  const home = role === 'parent' ? '/parent' : '/eleve';
+  const badge = (to: string) => (to === badgeOn && unread > 0 ? <span className="badge">{unread}</span> : null);
   return (
-    <div className={role === 'eleve' ? 'eleve-shell' + (pathname.startsWith('/eleve/revision') ? ' reviewing' : '') : undefined}>
+    <div className={role !== 'prof' ? 'eleve-shell' + (pathname.startsWith('/eleve/revision') ? ' reviewing' : '') : undefined}>
       <header className={'topbar noprint' + (role === 'prof' ? ' thin' : '')}>
-        <Link to={role === 'prof' ? '/prof/about' : '/eleve'} className="brand" title={role === 'prof' ? 'À propos de FoxBox' : 'Accueil'}>
+        <Link to={role === 'prof' ? '/prof/about' : home} className="brand" title={role === 'prof' ? 'À propos de FoxBox' : 'Accueil'}>
           <img src="./logo.png" alt="FoxBox" />
-          {role === 'eleve' && <span>FoxBox</span>}
+          {role !== 'prof' && <span>FoxBox</span>}
         </Link>
         <nav className="nav">
           {links.map(([to, label], i) =>
@@ -248,8 +271,8 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
                 {label}
               </span>
             ) : (
-              <NavLink key={to} to={to} end={to === '/prof' || to === '/eleve'}>
-                {label}
+              <NavLink key={to} to={to} end={to === '/prof' || to === '/eleve' || to === '/parent'}>
+                {label} {badge(to)}
               </NavLink>
             ),
           )}
@@ -274,11 +297,14 @@ function Shell({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode
         )}
       </header>
       {children}
-      {role === 'eleve' && (
+      {role !== 'prof' && (
         <nav className="bottom-nav noprint">
           {links.map(([to, label]) => (
-            <NavLink key={to} to={to} end={to === '/eleve'}>
-              <Icon name={icons[to]} size={22} />
+            <NavLink key={to} to={to} end={to === home}>
+              <span style={{ position: 'relative' }}>
+                <Icon name={icons[to]} size={22} />
+                {to === badgeOn && unread > 0 && <span className="badge" style={{ position: 'absolute', top: -6, right: -12 }}>{unread}</span>}
+              </span>
               {label.replace(' de cours', '')}
             </NavLink>
           ))}
@@ -327,6 +353,8 @@ export function App() {
           <Route path="/prof/edt" element={<Shell role="prof"><Timetable /></Shell>} />
           <Route path="/prof/import" element={<Navigate to="/prof/flashcards?onglet=import" replace />} />
           <Route path="/prof/soutien" element={<Shell role="prof"><Soutien /></Shell>} />
+          <Route path="/prof/soutien/releve/:studentId" element={<Shell role="prof"><RelevePage /></Shell>} />
+          <Route path="/prof/soutien/attestation/:studentId" element={<Shell role="prof"><AttestationPage /></Shell>} />
           <Route path="/prof/soutien/:id" element={<Shell role="prof"><SoutienGroup /></Shell>} />
           <Route path="/prof/soutien/:id/seance/:sid" element={<Shell role="prof"><SoutienSession /></Shell>} />
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />
@@ -335,6 +363,10 @@ export function App() {
           <Route path="/eleve/stats" element={<Navigate to="/eleve" replace />} />
           <Route path="/eleve/documents" element={<Shell role="eleve"><StudentDocuments /></Shell>} />
           <Route path="/eleve/soutien" element={<Shell role="eleve"><StudentSoutien /></Shell>} />
+          <Route path="/eleve/messages" element={<Shell role="eleve"><StudentMessages /></Shell>} />
+          <Route path="/parent" element={<Shell role="parent"><ParentHome /></Shell>} />
+          <Route path="/parent/messages" element={<Shell role="parent"><ParentMessages /></Shell>} />
+          <Route path="/parent/releve/:studentId" element={<Shell role="parent"><RelevePage /></Shell>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>

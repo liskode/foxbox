@@ -2,7 +2,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type FamilyContact, type ParentMessage, shortName } from '../../lib/db';
+import { db, uid, isTutoring, type FamilyContact, type Parent, type ParentMessage, shortName } from '../../lib/db';
+import { createParentAccess } from '../../lib/parents';
+import { showInfo } from '../../components/Dialog';
 import { useAuth } from '../../lib/auth';
 import { score } from '../../lib/grading';
 import { frDate, today } from '../../lib/dates';
@@ -28,6 +30,9 @@ export function Family() {
   }, [id], []);
   const { family, flags, setFamily } = useNote(id!);
   const evals = useStudentEvals(id!);
+  // Accès parents : proposés pour les élèves suivis en soutien (l'espace parents ne montre encore que le soutien)
+  const tutored = groups.some((g) => isTutoring(g));
+  const parents = useLiveQuery(() => db.parents.where('studentIds').equals(id!).toArray(), [id], []);
   const log = useLiveQuery(
     async () => (await db.parentMessages.where('studentId').equals(id!).toArray()).sort((a, b) => b.date.localeCompare(a.date)),
     [id],
@@ -127,6 +132,7 @@ export function Family() {
             <input value={c.person ?? ''} aria-label="Prénom et nom" placeholder="Prénom et nom" onChange={(e) => setContact(c.id, { person: e.target.value })} onBlur={() => persist()} style={{ width: 200 }} />
             <input type="email" value={c.email ?? ''} placeholder="e-mail" onChange={(e) => setContact(c.id, { email: e.target.value })} onBlur={() => persist()} style={{ flex: 1, minWidth: 200 }} />
             <input type="tel" value={c.phone ?? ''} placeholder="téléphone" onChange={(e) => setContact(c.id, { phone: e.target.value })} onBlur={() => persist()} style={{ width: 150 }} />
+            {tutored && <ParentAccessButton studentId={id!} contact={c} parents={parents} onBeforeCreate={() => persist()} />}
             {c.phone && (
               <a className="btn small ghost" href={`tel:${c.phone.replace(/\s/g, '')}`} title="Appeler">
                 <Icon name="phone" size={16} />
@@ -261,5 +267,39 @@ export function Family() {
         {!log.length && !entry && <span className="muted small">Aucun échange noté pour l'instant.</span>}
       </div>
     </div>
+  );
+}
+
+// Accès parent d'un contact : création (identifiant = son e-mail s'il est saisi), ou rappel de l'identifiant
+function ParentAccessButton({ studentId, contact, parents, onBeforeCreate }: { studentId: string; contact: FamilyContact; parents: Parent[]; onBeforeCreate: () => Promise<void> }) {
+  const p = parents.find((x) => x.contactIds?.includes(contact.id) || (contact.email && x.login === contact.email.trim().toLowerCase()));
+  if (p)
+    return (
+      <button className="btn small ghost" title="Accès parent créé" onClick={() => showInfo('Accès parent', `${p.name}\nIdentifiant : ${p.login}\nMot de passe : ${p.password}`)}>
+        <Icon name="key" size={15} /> Accès
+      </button>
+    );
+  return (
+    <button
+      className="btn small"
+      title="Créer un compte pour ce parent : il suit les séances, les règlements et peut vous écrire"
+      onClick={async () => {
+        if (!contact.name.trim() && !contact.person?.trim()) return alert('Indiquez d’abord le lien (Mère, Père…) ou le nom du parent.');
+        await onBeforeCreate();
+        try {
+          const r = await createParentAccess(studentId, contact);
+          await showInfo(
+            'Accès parent créé',
+            r.reused
+              ? `Ce parent avait déjà un accès (${r.login}) : il voit maintenant aussi cet enfant.`
+              : `Identifiant : ${r.login}\nMot de passe : ${r.password}\n\nÀ transmettre au parent. Connexion sur foxbox.physifox.fr.`,
+          );
+        } catch (e) {
+          alert('Erreur : ' + (e as Error).message);
+        }
+      }}
+    >
+      <Icon name="plus" size={15} /> Créer l'accès
+    </button>
   );
 }

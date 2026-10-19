@@ -1,6 +1,8 @@
 // Soutien scolaire : liste des élèves suivis (groupes de soutien) et création d'un nouveau suivi.
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { TabBar } from '../../components/TabBar';
+import { GlobalSummary } from '../../components/Billing';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isTutoring, SUBJECTS, type Track } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
@@ -23,6 +25,9 @@ export function Soutien() {
     );
   });
   const [creating, setCreating] = useState(false);
+  const { session } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('onglet') === 'recap' ? 'recap' : 'suivis';
   if (!list) return null;
   const active = list.filter((x) => !x.g.archived);
   const archived = list.filter((x) => x.g.archived);
@@ -33,12 +38,23 @@ export function Soutien() {
         <h1 className="title" style={{ margin: 0 }}>
           Soutien
         </h1>
-        {!creating && (
+        <TabBar
+          tabs={[
+            ['suivis', 'Suivis'],
+            ['recap', 'Récapitulatif'],
+          ]}
+          current={tab}
+          onChange={(t) => setParams({ onglet: t }, { replace: true })}
+        />
+        {!creating && tab === 'suivis' && (
           <button className="btn primary" onClick={() => setCreating(true)}>
             <Icon name="plus" /> Nouveau suivi
           </button>
         )}
       </div>
+      {tab === 'recap' && <GlobalSummary teacherId={session!.id} />}
+      {tab === 'suivis' && (
+        <>
       {creating && <NewTutoring onDone={(id) => (setCreating(false), id && nav(`/prof/soutien/${id}`))} />}
       {!active.length && !creating && (
         <div className="notice">
@@ -80,6 +96,8 @@ export function Soutien() {
             ))}
           </ul>
         </details>
+      )}
+        </>
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import { ONLINE, supabase, loginToEmail, normalizeLogin } from './supabase';
 import { startSync, stopSync } from './sync';
 
 export interface Session {
-  role: 'prof' | 'eleve';
+  role: 'prof' | 'eleve' | 'parent';
   id: string;
 }
 
@@ -40,6 +40,8 @@ async function roleOf(uid: string): Promise<Session | null> {
   if (t.data) return { role: 'prof', id: uid };
   const s = await supabase.from('students').select('id').eq('id', uid).maybeSingle();
   if (s.data) return { role: 'eleve', id: uid };
+  const p = await supabase.from('parents').select('id').eq('id', uid).maybeSingle();
+  if (p.data) return { role: 'parent', id: uid };
   return null;
 }
 
@@ -93,6 +95,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else {
       const st = await db.students.where('login').equals(l).first();
       if (st && st.password === password.trim()) s = { role: 'eleve', id: st.id };
+      else {
+        const pa = await db.parents.where('login').equals(l).first();
+        if (pa && pa.password === password.trim()) s = { role: 'parent', id: pa.id };
+      }
     }
     if (!s) return { error: 'Identifiant ou mot de passe incorrect.' };
     setSession(s);
@@ -113,3 +119,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export const useAuth = () => useContext(Ctx);
+
+// Page d'accueil de chaque rôle
+export const homeOf = (role: Session['role']) => (role === 'prof' ? '/prof' : role === 'parent' ? '/parent' : '/eleve');

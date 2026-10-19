@@ -476,3 +476,10 @@ table.list tr.click:hover td { background: #faf7ef; }
 .prog-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; }
 .prog-item:hover { background: var(--calm); }
 .prog-item .name { flex: 1; min-width: 0; }
+
+/* Fils de discussion */
+.chat-list { max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+.bubble { align-self: flex-start; max-width: min(560px, 90%); background: var(--calm); border-radius: 12px 12px 12px 4px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+.bubble.mine { align-self: flex-end; background: #fdf0c4; border-radius: 12px 12px 4px 12px; }
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 0.7rem; font-weight: 900; }
+@media print { .statement { border: none; padding: 0; } }

@@ -16,6 +16,8 @@ import { CardFace, RichText } from '../../components/CardFace';
 import { themeColor } from '../../components/widgets';
 import { frDate } from '../../lib/dates';
 import { toast } from '../../components/Toast';
+import { LineTag } from '../../components/Billing';
+import { euros, loadLedger } from '../../lib/billing';
 import { Icon } from '../../components/Icon';
 
 const DURATIONS = [30, 45, 60, 75, 90, 105, 120, 150, 180];
@@ -87,6 +89,7 @@ export function SoutienSession() {
             </div>
           </div>
         </div>
+        <SessionAmounts s={s} students={present} groupId={group.id} />
         {students.length > 1 && (
           <div className="row" style={{ gap: 12 }}>
             <b className="small">Présents :</b>
@@ -139,6 +142,31 @@ export function SoutienSession() {
           <Icon name="trash" size={15} /> Supprimer la séance
         </button>
       </div>
+    </div>
+  );
+}
+
+// Montant de la séance pour chaque élève présent (tarif en vigueur à la date) et état du règlement
+function SessionAmounts({ s, students, groupId }: { s: TutoringSession; students: Student[]; groupId: string }) {
+  const { session } = useAuth();
+  const rows = useLiveQuery(
+    () => Promise.all(students.map(async (st) => ({ st, line: (await loadLedger(session!.id, st.id)).ledger.lines.find((l) => l.session.id === s.id) }))),
+    [students, s.id, s.date, s.duration, session?.id],
+    [],
+  );
+  if (!rows.length) return null;
+  return (
+    <div className="row small" style={{ gap: 12 }}>
+      {rows.map(({ st, line }) => (
+        <span key={st.id} className="row" style={{ gap: 6 }}>
+          {students.length > 1 && <b>{st.firstName} :</b>}
+          {line?.amount ? <b>{euros(line.amount)}</b> : null}
+          {line && <LineTag l={line} />}
+        </span>
+      ))}
+      <Link to={`/prof/soutien/${groupId}?onglet=reglements`} className="small muted">
+        Règlements
+      </Link>
     </div>
   );
 }

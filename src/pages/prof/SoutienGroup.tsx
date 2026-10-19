@@ -18,6 +18,10 @@ import { showInfo } from '../../components/Dialog';
 import { toast } from '../../components/Toast';
 import { Icon } from '../../components/Icon';
 import { TracksEditor } from './Soutien';
+import { BillingPanel } from '../../components/Billing';
+import { Chat } from '../../components/Chat';
+import { unreadIn } from '../../lib/messages';
+import { resetParentPassword, removeParentAccess } from '../../lib/parents';
 
 export function SoutienGroup() {
   const { id } = useParams();
@@ -32,7 +36,17 @@ export function SoutienGroup() {
     [],
   );
   const [params, setParams] = useSearchParams();
-  type Tab = 'seances' | 'programme' | 'flashcards' | 'eleves' | 'reglages';
+  type Tab = 'seances' | 'programme' | 'flashcards' | 'reglements' | 'messages' | 'eleves' | 'reglages';
+  const { session } = useAuth();
+  const unread = useLiveQuery(
+    async () => {
+      let n = 0;
+      for (const s of students) for (const t of ['eleve', 'parents'] as const) n += await unreadIn(session!.id, session!.id, s.id, t);
+      return n;
+    },
+    [students, session?.id],
+    0,
+  );
   const tab = (params.get('onglet') as Tab) || 'seances';
   if (group === undefined) return null;
   if (!group || !isTutoring(group)) return <div className="page muted">Suivi introuvable.</div>;
@@ -40,6 +54,8 @@ export function SoutienGroup() {
     ['seances', 'Séances'],
     ['programme', 'Programme'],
     ['flashcards', 'Flashcards'],
+    ['reglements', 'Règlements'],
+    ['messages', unread ? `Messages (${unread})` : 'Messages'],
     ['eleves', students.length > 1 ? 'Élèves' : 'Élève'],
     ['reglages', 'Réglages'],
   ] as const;
@@ -78,6 +94,14 @@ export function SoutienGroup() {
           ))}
         </div>
       )}
+      {tab === 'reglements' && (
+        <div className="stack">
+          {students.map((s) => (
+            <BillingPanel key={s.id} teacherId={session!.id} student={s} showName={students.length > 1} />
+          ))}
+        </div>
+      )}
+      {tab === 'messages' && <MessagesTab students={students} />}
       {tab === 'eleves' && <StudentsTab group={group} students={students} />}
       {tab === 'reglages' && <SettingsTab group={group} />}
     </div>
@@ -343,6 +367,71 @@ function StudentCardPanel({ student, group }: { student: Student; group: Group }
       <span className="small muted">
         <Icon name="lock" size={13} /> Visible par vous seul · enregistré en quittant un champ
       </span>
+      <ParentAccesses student={student} />
+    </div>
+  );
+}
+
+// Comptes parents de l'élève (créés depuis la fiche Famille)
+export function ParentAccesses({ student }: { student: Student }) {
+  const parents = useLiveQuery(() => db.parents.where('studentIds').equals(student.id).toArray(), [student.id], []);
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <b className="small">Accès parents</b>
+      {parents.map((p) => (
+        <div key={p.id} className="row small" style={{ gap: 8 }}>
+          <span style={{ minWidth: 140 }}>{p.name}</span>
+          <span>
+            Identifiant : <span className="code">{p.login}</span> · mot de passe : <span className="code">{p.password}</span>
+          </span>
+          <button
+            className="btn small ghost"
+            onClick={async () => {
+              if (!confirm(`Donner un nouveau mot de passe à ${p.name} ?`)) return;
+              await resetParentPassword(p.id);
+              const n = await db.parents.get(p.id);
+              await showInfo('Nouveau mot de passe', `${p.name} se connecte avec ${n?.login} / ${n?.password}`);
+            }}
+          >
+            <Icon name="key" size={14} /> Nouveau mot de passe
+          </button>
+          <button
+            className="btn small ghost"
+            onClick={async () => {
+              if (!confirm(`Retirer l'accès de ${p.name} au suivi de ${student.firstName} ?`)) return;
+              await removeParentAccess(p.id, student.id);
+              toast('Accès retiré');
+            }}
+          >
+            <Icon name="x" size={14} /> Retirer l'accès
+          </button>
+        </div>
+      ))}
+      <span className="small muted">
+        {parents.length ? '' : 'Aucun accès parent. '}
+        Les accès se créent depuis la fiche{' '}
+        <Link to={`/prof/eleves/${student.id}/famille`}>Famille</Link>, contact par contact.
+      </span>
+    </div>
+  );
+}
+
+// Messages : pour chaque élève, le fil avec l'élève et le fil avec ses parents (séparés)
+function MessagesTab({ students }: { students: Student[] }) {
+  const { session } = useAuth();
+  const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
+  if (!me) return null;
+  return (
+    <div className="stack">
+      {students.map((s) => (
+        <div key={s.id} className="stack" style={{ gap: 8 }}>
+          {students.length > 1 && <h2 style={{ margin: 0 }}>{s.firstName}</h2>}
+          <div className="grid2" style={{ alignItems: 'start' }}>
+            <Chat teacherId={me.id} studentId={s.id} thread="eleve" me={{ id: me.id, name: me.name }} title={`Avec ${s.firstName}`} hint="Lu par l'élève, pas par ses parents" />
+            <Chat teacherId={me.id} studentId={s.id} thread="parents" me={{ id: me.id, name: me.name }} title="Avec les parents" hint="Lu par les parents, pas par l'élève" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

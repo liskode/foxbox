@@ -162,6 +162,81 @@ Deno.serve(async (req) => {
       return json({ password: pw });
     }
 
+    // ---------- Comptes parents ----------
+    // Identifiant : l'adresse e-mail du parent (il peut alors réinitialiser son mot de passe), sinon parent.prenom.nom
+    const isMine = async (studentId: string) => {
+      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      return (mine as string[] | null)?.includes(studentId) ?? false;
+    };
+
+    if (body.action === 'createParent') {
+      const { studentId, contactId, name, email } = body as { studentId: string; contactId: string; name: string; email?: string };
+      if (!(await isMine(studentId))) return json({ error: 'Élève introuvable' }, 403);
+      const mail = email?.trim().toLowerCase();
+      if (mail) {
+        // Même adresse qu'un parent existant (frères et sœurs) : on lui rattache cet enfant
+        const { data: same } = await admin.from('parents').select('id, student_ids, data').eq('data->>login', mail).eq('deleted', false).maybeSingle();
+        if (same) {
+          const ids = [...new Set([...same.student_ids, studentId])];
+          const data = { ...same.data, studentIds: ids, contactIds: [...new Set([...(same.data.contactIds ?? []), contactId])] };
+          await admin.from('parents').update({ student_ids: ids, data }).eq('id', same.id);
+          return json({ login: mail, reused: true });
+        }
+      }
+      let login = mail;
+      if (!login) {
+        const { data: st } = await admin.from('students').select('data').eq('id', studentId).single();
+        const base = ['parent', normalize(st!.data.firstName ?? ''), normalize(st!.data.lastName ?? '')].filter(Boolean).join('.');
+        const { data: others } = await admin.from('parents').select('data').like('data->>login', `${base}%`);
+        const taken = new Set((others ?? []).map((o) => o.data.login as string));
+        login = base;
+        for (let n = 2; taken.has(login); n++) login = base + n;
+      }
+      const pw = password();
+      const { data: u, error } = await admin.auth.admin.createUser({
+        email: login.includes('@') ? login : `${login}@${STUDENT_DOMAIN}`,
+        password: pw,
+        email_confirm: true,
+        user_metadata: { role: 'parent' },
+      });
+      if (error) return json({ error: /already/i.test(error.message) ? 'Cette adresse e-mail a déjà un compte FoxBox.' : error.message }, 400);
+      const data = { id: u.user.id, name, login, password: pw, studentIds: [studentId], contactIds: [contactId], notifyEmail: !!mail };
+      const { error: e2 } = await admin.from('parents').insert({ id: u.user.id, student_ids: [studentId], data });
+      if (e2) throw e2;
+      return json({ login, password: pw, reused: false });
+    }
+
+    const parentOfMine = async (parentId: string) => {
+      const { data: p } = await admin.from('parents').select('student_ids, data').eq('id', parentId).maybeSingle();
+      if (!p) return null;
+      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      return (p.student_ids as string[]).some((x) => (mine as string[] | null)?.includes(x)) ? p : null;
+    };
+
+    if (body.action === 'resetParent') {
+      const { parentId } = body as { parentId: string };
+      const p = await parentOfMine(parentId);
+      if (!p) return json({ error: 'Compte introuvable' }, 403);
+      const pw = password();
+      const { error } = await admin.auth.admin.updateUserById(parentId, { password: pw });
+      if (error) throw error;
+      await admin.from('parents').update({ data: { ...p.data, password: pw } }).eq('id', parentId);
+      return json({ password: pw });
+    }
+
+    if (body.action === 'removeParent') {
+      const { parentId, studentId } = body as { parentId: string; studentId: string };
+      const p = await parentOfMine(parentId);
+      if (!p || !(await isMine(studentId))) return json({ error: 'Compte introuvable' }, 403);
+      const ids = (p.student_ids as string[]).filter((x) => x !== studentId);
+      if (ids.length) await admin.from('parents').update({ student_ids: ids, data: { ...p.data, studentIds: ids } }).eq('id', parentId);
+      else {
+        const { error } = await admin.auth.admin.deleteUser(parentId); // efface aussi la ligne parents
+        if (error) throw error;
+      }
+      return json({ removed: true });
+    }
+
     return json({ error: 'Action inconnue' }, 400);
   } catch (e) {
     return json({ error: (e as Error).message }, 500);

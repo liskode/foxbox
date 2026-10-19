@@ -7,16 +7,26 @@ import { frDate } from '../../lib/dates';
 import { FileList, SessionSummary, UploadButton, placeLabel, whenLabel, dayName } from '../../components/Soutien';
 import { RichText } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
+import { Link } from 'react-router-dom';
+import { unreadTotal } from '../../lib/messages';
 
 export function StudentSoutien() {
   const { session } = useAuth();
   const groups = useLiveQuery(() => tutoringsOf(session!.id), [session]);
+  const unread = useLiveQuery(() => unreadTotal(session!.id, 'eleve'), [session], 0);
   if (!groups) return null;
   return (
     <div className="page narrow stack">
-      <h1 className="title" style={{ margin: 0 }}>
-        Soutien
-      </h1>
+      <div className="spread">
+        <h1 className="title" style={{ margin: 0 }}>
+          Soutien
+        </h1>
+        {groups.length > 0 && (
+          <Link className="btn" to="/eleve/messages">
+            <Icon name="message" /> Poser une question {unread > 0 && <span className="badge">{unread}</span>}
+          </Link>
+        )}
+      </div>
       {!groups.length && <div className="notice">Pas de soutien pour l'instant.</div>}
       {groups.map((g) => (
         <GroupBlock key={g.id} group={g} studentId={session!.id} showName={groups.length > 1} />
