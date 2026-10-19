@@ -263,7 +263,7 @@ export function Chat({
       )}
       <textarea
         aria-label="Message"
-        placeholder="Écrire un message… (formules entre $ … $)"
+        placeholder="Écrire un message…"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && send()}
