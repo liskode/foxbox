@@ -1,10 +1,11 @@
+import { useState } from 'react';
 // Espace élève : soutien scolaire (travail pour la prochaine fois, dépôt de documents, historique des séances).
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, type Group } from '../../lib/db';
+import { db, type Group, type HomeworkStatus } from '../../lib/db';
 import { tutoringsOf } from '../../lib/tutoring';
 import { frDate, today as todayISO } from '../../lib/dates';
-import { FileList, SessionSummary, UploadButton, hLabel, isUpcoming, localWhen, placeLabel, whenLabel, dayName } from '../../components/Soutien';
+import { FileList, HOMEWORK, SessionSummary, UploadButton, hLabel, homeworkOf, isUpcoming, localWhen, placeLabel, whenLabel, dayName } from '../../components/Soutien';
 import { durationLabel } from '../../lib/tutoring';
 import { RichText } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
@@ -113,11 +114,13 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
   const last = past[0];
   const note = useLiveQuery(async () => (last ? db.sessionNotes.get(`${last.id}|${studentId}|eleve`) : undefined), [last?.id, studentId]);
   const check = useLiveQuery(async () => (last ? db.homeworkChecks.get(`${last.id}|${studentId}`) : undefined), [last?.id, studentId]);
+  const [asking, setAsking] = useState(false);
   if (!sessions) return null;
 
-  async function toggle() {
+  async function answer(status: HomeworkStatus) {
     if (!last) return;
-    await db.homeworkChecks.put({ id: `${last.id}|${studentId}`, sessionId: last.id, groupId: group.id, studentId, done: !check?.done, at: Date.now() });
+    await db.homeworkChecks.put({ id: `${last.id}|${studentId}`, sessionId: last.id, groupId: group.id, studentId, status, done: status === 'fait' || status === 'partiel', at: Date.now() });
+    setAsking(false);
   }
 
   return (
@@ -161,9 +164,31 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
             <>
               <b className="small">Travail à faire</b>
               <RichText text={last.homework} />
-              <button className={'btn big' + (check?.done ? '' : ' primary')} onClick={toggle}>
-                <Icon name="check" /> {check?.done ? 'Travail fait (appuie pour annuler)' : "J'ai fait mon travail"}
-              </button>
+              {asking || !homeworkOf(check) ? (
+                <div className="stack" style={{ gap: 8 }}>
+                  {!asking ? (
+                    <button className="daily-go" style={{ alignSelf: 'flex-start', border: 'none', cursor: 'pointer', font: 'inherit', fontWeight: 800 }} onClick={() => setAsking(true)}>
+                      Travail fait ?
+                      <Icon name="arrowRight" size={20} stroke={2.5} />
+                    </button>
+                  ) : (
+                    <div className="row" style={{ gap: 8 }}>
+                      {HOMEWORK.map((h) => (
+                        <button key={h.key} className={'tag ' + h.cls + ' hw-choice'} onClick={() => answer(h.key)}>
+                          {h.mine}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="row" style={{ gap: 8 }}>
+                  <span className={'tag ' + homeworkOf(check)!.cls + ' hw-choice'}>{homeworkOf(check)!.mine}</span>
+                  <button className="btn small ghost" onClick={() => setAsking(true)}>
+                    Changer
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

@@ -9,7 +9,7 @@ import { deleteSession, durationLabel, syncPublications, trackLabel } from '../.
 import { byProgression, unitLabel, unitSubject } from '../../lib/units';
 import { themesOf } from '../../lib/themes';
 import { cardCode, defaultOrigin } from '../../lib/cardCodes';
-import { FileList, UploadButton, dayName, whenLabel } from '../../components/Soutien';
+import { FileList, HomeworkTag, UploadButton, dayName, whenLabel } from '../../components/Soutien';
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
 import { CardFace, RichText } from '../../components/CardFace';
@@ -220,13 +220,8 @@ function HomeworkStatus({ s, students }: { s: TutoringSession; students: Student
   return (
     <div className="row" style={{ gap: 8 }}>
       {students.map((x) => {
-        const c = checks.find((k) => k.studentId === x.id && k.done);
-        return (
-          <span key={x.id} className={'tag ' + (c ? 'ok' : 'plain')}>
-            {students.length > 1 ? `${x.firstName} : ` : ''}
-            {c ? `fait (coché le ${frDate(new Date(c.at).toISOString().slice(0, 10))})` : "pas encore coché par l'élève"}
-          </span>
-        );
+        const c = checks.find((k) => k.studentId === x.id);
+        return <HomeworkTag key={x.id} check={c} who={students.length > 1 ? x.firstName : `Réponse de ${x.firstName}`} />;
       })}
     </div>
   );

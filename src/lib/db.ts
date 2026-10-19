@@ -361,9 +361,11 @@ export interface HomeworkCheck {
   sessionId: string;
   groupId: string;
   studentId: string;
-  done: boolean;
+  done: boolean; // fait ou en grande partie
+  status?: HomeworkStatus; // réponse de l'élève (sans : « fait » si done)
   at: number;
 }
+export type HomeworkStatus = 'fait' | 'partiel' | 'dur' | 'temps';
 
 // Tarifs et mode de règlement d'un élève suivi en soutien (lus aussi par ses parents)
 export type PayMode = 'seance' | 'forfait' | 'mois';

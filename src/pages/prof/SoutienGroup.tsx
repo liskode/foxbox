@@ -13,7 +13,7 @@ import { RichText } from '../../components/CardFace';
 import { Avatar } from '../../components/Avatar';
 import { StudentReport } from '../../components/StudentReport';
 import { useNote } from '../../components/StudentNote';
-import { FileList, UploadButton, isUpcoming, placeLabel, whenLabel } from '../../components/Soutien';
+import { FileList, UploadButton, homeworkOf, isUpcoming, placeLabel, whenLabel } from '../../components/Soutien';
 import { showInfo } from '../../components/Dialog';
 import { toast } from '../../components/Toast';
 import { Icon } from '../../components/Icon';
@@ -148,7 +148,7 @@ function SessionsTab({ group }: { group: Group }) {
       {!sessions.length && <div className="notice">Aucune séance. « Nouvelle séance » ouvre la fiche à remplir pendant ou après le cours.</div>}
       {sessions.map((s) => {
         const points = s.unitIds.map((u) => units.find((x) => x.id === u)).filter(Boolean);
-        const doneBy = checks.filter((c) => c.sessionId === s.id && c.done).length;
+        const answer = homeworkOf(checks.find((c) => c.sessionId === s.id));
         return (
           <Link key={s.id} to={`/prof/soutien/${group.id}/seance/${s.id}`} className="panel strong session-line">
             <div className="session-date">
@@ -162,7 +162,7 @@ function SessionsTab({ group }: { group: Group }) {
                 <span className="tag plain">
                   <Icon name={s.place === 'en ligne' ? 'laptop' : 'home'} size={13} /> {placeLabel(s)}
                 </span>
-                {s.homework.trim() && <span className={'tag ' + (doneBy ? 'ok' : 'plain')}>{doneBy ? 'Travail fait' : 'Travail donné'}</span>}
+                {s.homework.trim() && <span className={'tag ' + (answer?.cls ?? 'plain')}>{answer ? `Travail : ${answer.label}` : 'Travail donné'}</span>}
               </div>
               {points.length > 0 && <span className="small">{points.map((u) => unitLabel(u!)).join(' · ')}</span>}
               {s.done.trim() && (

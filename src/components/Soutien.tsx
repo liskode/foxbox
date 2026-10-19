@@ -1,7 +1,7 @@
 // Soutien scolaire : éléments communs à l'espace professeur et à l'espace élève (documents, liens, résumé d'une séance).
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type TutoringFile, type TutoringSession, type Unit } from '../lib/db';
+import { db, type HomeworkCheck, type HomeworkStatus, type TutoringFile, type TutoringSession, type Unit } from '../lib/db';
 import { addFiles, durationLabel } from '../lib/tutoring';
 import { frDate } from '../lib/dates';
 import { browserZone, DEFAULT_ZONE, inZone, zonedToUtc, zoneLabel } from '../lib/time';
@@ -95,6 +95,24 @@ export function LinkList({ links }: { links: TutoringSession['links'] }) {
 }
 
 export { isUpcoming, sessionEnd } from '../lib/tutoring';
+
+// Travail à faire : réponse de l'élève (son libellé à lui, et celui vu par le professeur et les parents)
+export const HOMEWORK: { key: HomeworkStatus; mine: string; label: string; cls: string }[] = [
+  { key: 'fait', mine: 'Fait !', label: 'fait', cls: 'ok' },
+  { key: 'partiel', mine: 'En grande partie', label: 'en grande partie', cls: 'ok' },
+  { key: 'dur', mine: "J'ai essayé mais c'était dur", label: 'essayé, mais difficile', cls: 'warn' },
+  { key: 'temps', mine: 'Pas eu le temps', label: 'pas eu le temps', cls: 'bad' },
+];
+export const homeworkOf = (c?: HomeworkCheck) => HOMEWORK.find((h) => h.key === (c?.status ?? (c?.done ? 'fait' : undefined)));
+export function HomeworkTag({ check, who }: { check?: HomeworkCheck; who?: string }) {
+  const h = homeworkOf(check);
+  return (
+    <span className={'tag ' + (h?.cls ?? 'plain')}>
+      {who ? `${who} : ` : ''}
+      {h ? h.label : 'pas encore répondu'}
+    </span>
+  );
+}
 
 export const placeLabel = (s: TutoringSession) => (s.place === 'en ligne' ? 'En ligne' : 'À domicile');
 // Date et heure d'une séance dans un fuseau (par défaut celui de l'appareil) ; sans heure, la date ne change pas

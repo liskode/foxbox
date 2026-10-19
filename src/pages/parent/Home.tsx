@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, isTutoring, type Group, type Student, type TutoringSession, type Unit } from '../../lib/db';
+import { db, isTutoring, type Group, type HomeworkCheck, type Student, type TutoringSession, type Unit } from '../../lib/db';
 import { buildLedger, money, monthLabel, monthOf, billingId } from '../../lib/billing';
 import { frDate, today } from '../../lib/dates';
 import { unitLabel } from '../../lib/units';
 import { BalanceTag, LineTag } from '../../components/Billing';
-import { FileList, LinkList, placeLabel, whenLabel, dayName } from '../../components/Soutien';
+import { FileList, HomeworkTag, LinkList, placeLabel, whenLabel, dayName } from '../../components/Soutien';
 import { RichText } from '../../components/CardFace';
 import { Chat } from '../../components/Chat';
 import { AssessmentsPanel } from '../../components/Assessments';
@@ -86,7 +86,7 @@ function ChildTutoring({ child, group, showName }: { child: Student; group: Grou
   if (!data) return null;
   const sorted = data.sessions.slice().sort((a, b) => b.date.localeCompare(a.date) || (b.start ?? '').localeCompare(a.start ?? ''));
   const last = sorted.find((s) => s.homework.trim());
-  const lastDone = last && data.checks.some((c) => c.sessionId === last.id && c.done);
+  const lastCheck = last && data.checks.find((c) => c.sessionId === last.id);
   const month = monthOf(today());
   return (
     <>
@@ -97,7 +97,7 @@ function ChildTutoring({ child, group, showName }: { child: Student; group: Grou
             <h3 className="panel-title">
               <Icon name="clipboard" size={16} /> Travail à faire par {child.firstName}
             </h3>
-            <span className={'tag ' + (lastDone ? 'ok' : 'plain')}>{lastDone ? 'fait' : 'pas encore coché'}</span>
+            <HomeworkTag check={lastCheck} />
           </div>
           <RichText text={last.homework} />
           <span className="small muted">
@@ -148,7 +148,7 @@ function ChildTutoring({ child, group, showName }: { child: Student; group: Grou
             })()}
           </summary>
           <div style={{ marginTop: 10 }}>
-            <ParentSession s={s} child={child} units={data.units} done={data.checks.some((c) => c.sessionId === s.id && c.done)} />
+            <ParentSession s={s} child={child} units={data.units} check={data.checks.find((c) => c.sessionId === s.id)} />
           </div>
         </details>
       ))}
@@ -156,7 +156,7 @@ function ChildTutoring({ child, group, showName }: { child: Student; group: Grou
   );
 }
 
-function ParentSession({ s, child, units, done }: { s: TutoringSession; child: Student; units: Unit[]; done: boolean }) {
+function ParentSession({ s, child, units, check }: { s: TutoringSession; child: Student; units: Unit[]; check?: HomeworkCheck }) {
   const note = useLiveQuery(() => db.sessionNotes.get(`${s.id}|${child.id}|parents`), [s.id, child.id]);
   const files = useLiveQuery(() => db.tutoringFiles.where('sessionId').equals(s.id).sortBy('createdAt'), [s.id], []);
   const points = s.unitIds.map((id) => units.find((u) => u.id === id)).filter(Boolean) as Unit[];
@@ -181,7 +181,7 @@ function ParentSession({ s, child, units, done }: { s: TutoringSession; child: S
       {s.homework.trim() && (
         <div className="stack" style={{ gap: 4 }}>
           <b className="small">
-            Travail donné <span className={'tag ' + (done ? 'ok' : 'plain')}>{done ? 'fait' : 'pas encore coché'}</span>
+            Travail donné <HomeworkTag check={check} />
           </b>
           <RichText text={s.homework} />
         </div>
