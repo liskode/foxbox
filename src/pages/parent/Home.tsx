@@ -209,9 +209,9 @@ export function ParentMessages() {
             key={t}
             teacherId={t}
             studentId={cur.child.id}
-            thread="parents"
             me={{ id: fam.parent.id, name: fam.parent.name }}
-            hint={`Au sujet de ${cur.child.firstName}. ${cur.child.firstName} ne lit pas ces messages.`}
+            role="parent"
+            hint={`Au sujet de ${cur.child.firstName}. Seuls les destinataires cochés lisent votre message.`}
           />
         ))}
       <label className="row small" style={{ gap: 8, fontWeight: 700 }}>

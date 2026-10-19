@@ -169,7 +169,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'tarif à 0 (soutien gratuit) : aucun règlement ni montant affiché, ni pour vous ni pour les parents',
       'relevé mensuel et attestation annuelle (séances à domicile) à imprimer, avec vos coordonnées et votre SIRET',
       'récapitulatif global par mois et par élève (heures, montants, reçu, domicile / en ligne)',
-      'messages : un fil avec l’élève et un fil avec les parents, séparés ; photo, document ou mémo vocal ; pastille des messages non lus',
+      'messages : une conversation par élève, destinataires cochés à chaque message (l’élève, un ou plusieurs parents) ; chacun ne lit que ce qui lui est adressé ; photo, document ou mémo vocal ; message corrigeable après envoi ; pastille des messages non lus',
     ],
   },
   {
@@ -181,7 +181,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'séances : date, heure, durée, lieu, réglée ou non, contenu de la séance, travail donné et fait, documents, liens',
       'note pour les parents (jamais celle pour l’élève ni la note privée)',
       'règlements, avance ou reste à payer, relevé du mois',
-      'messages avec le professeur, que l’élève ne lit pas',
+      'messages avec le professeur : « répondre à tous » coché par défaut, chaque destinataire peut être décoché',
     ],
   },
   {
@@ -219,7 +219,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'notes des évaluations rendues avec histogramme des compétences',
       'documents de cours des séances faites',
       'soutien : page d’arrivée des élèves suivis, avec le bouton « Je révise mes flashcards CHAQUE JOUR » avec le nombre à revoir, prochaine séance en tête (date, heure, contenu prévu, documents), consignes de la dernière séance et travail à cocher, dépôt de documents ou de photos, historique des séances avec documents, liens et note personnelle',
-      'messages au professeur de soutien (photo, mémo vocal), que les parents ne lisent pas',
+      'messages au professeur de soutien (photo, mémo vocal), lus seulement par les destinataires cochés',
     ],
   },
   {

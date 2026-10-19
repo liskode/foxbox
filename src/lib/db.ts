@@ -392,6 +392,9 @@ export interface Message {
   authorName: string;
   text: string;
   attachments: { mediaId: string; name: string; size: number; type: string }[];
+  recipients?: string[]; // destinataires (élève, parents) ; le professeur lit toute la conversation
+  recipientNames?: Record<string, string>; // leurs noms, pour que chacun voie à qui le message est adressé
+  editedAt?: number; // message corrigé après envoi
   createdAt: number;
 }
 export interface MessageRead {

@@ -1,8 +1,8 @@
 // Fil de discussion (professeur, élève ou parents) : messages, photos, documents, mémos vocaux.
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Message, type Thread } from '../lib/db';
-import { markRead, sendMessage } from '../lib/messages';
+import { db, type Message } from '../lib/db';
+import { conversation, markRead, sendMessage } from '../lib/messages';
 import { frDate } from '../lib/dates';
 import { mediaUrl, RichText } from './CardFace';
 import { openDocument, sizeLabel } from './UnitDetails';
@@ -42,52 +42,97 @@ const time = (ts: number) => {
   return `${frDate(d.toISOString().slice(0, 10))} ${String(d.getHours()).padStart(2, '0')} h ${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+export interface Person {
+  id: string;
+  name: string;
+}
+
 export function Chat({
   teacherId,
   studentId,
-  thread,
   me,
+  role,
   title,
   hint,
 }: {
   teacherId: string;
   studentId: string;
-  thread: Thread;
-  me: { id: string; name: string };
+  me: Person;
+  role: 'prof' | 'eleve' | 'parent';
   title?: string;
   hint?: string;
 }) {
-  const msgs = useLiveQuery(
-    async () =>
-      (await db.messages.where('[studentId+thread]').equals([studentId, thread]).filter((m) => m.teacherId === teacherId).toArray()).sort(
-        (a, b) => a.createdAt - b.createdAt,
-      ),
-    [teacherId, studentId, thread],
-    [],
+  const msgs = useLiveQuery(() => conversation(teacherId, studentId, me.id), [teacherId, studentId, me.id], []);
+  // Destinataires possibles. Professeur : l'élève et ses parents. Élève ou parent : les personnes du dernier
+  // message reçu (« répondre à tous »), le professeur recevant toujours.
+  const people = useLiveQuery(
+    async () => {
+      if (role === 'prof') {
+        const st = await db.students.get(studentId);
+        const ps = await db.parents.where('studentIds').equals(studentId).toArray();
+        return [...(st ? [{ id: st.id, name: st.firstName }] : []), ...ps.map((p) => ({ id: p.id, name: p.name }))];
+      }
+      return [] as Person[];
+    },
+    [role, studentId],
+    [] as Person[],
   );
+  const last = msgs[msgs.length - 1];
+  const lastIn = [...msgs].reverse().find((m) => m.authorId !== me.id) ?? last;
+  const names = (m?: Message) => ({ ...(m?.recipientNames ?? {}), ...(m ? { [m.authorId]: m.authorName } : {}) });
+  const options: Person[] =
+    role === 'prof'
+      ? people
+      : lastIn
+        ? [...new Set([lastIn.authorId, ...(lastIn.recipients ?? [])])]
+            .filter((id) => id !== me.id && id !== teacherId)
+            .map((id) => ({ id, name: names(lastIn)[id] ?? (id === studentId ? 'l’élève' : 'un parent') }))
+        : [];
+  const defaults = (): string[] => {
+    const ids = options.map((o) => o.id);
+    if (role !== 'prof') return ids;
+    if (lastIn) {
+      const reply = [...new Set([lastIn.authorId, ...(lastIn.recipients ?? [])])].filter((id) => id !== me.id && ids.includes(id));
+      if (reply.length) return reply;
+    }
+    const parents = ids.filter((id) => id !== studentId);
+    return parents.length ? parents : ids;
+  };
+  const [to, setTo] = useState<string[] | null>(null); // null : choix par défaut
+  const chosen = to ?? defaults();
   const [text, setText] = useState('');
   const [files, setFiles] = useState<(File | Blob)[]>([]);
   const [busy, setBusy] = useState(false);
   const [rec, setRec] = useState<MediaRecorder | null>(null);
+  const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
   const end = useRef<HTMLDivElement>(null);
-  const last = msgs[msgs.length - 1];
 
-  // Le fil affiché est lu
+  // La conversation affichée est lue ; à chaque nouveau message, le choix des destinataires revient au défaut
   useEffect(() => {
-    if (last) markRead(me.id, teacherId, studentId, thread, last.createdAt);
+    if (last) markRead(me.id, teacherId, studentId, last.createdAt);
     end.current?.scrollIntoView({ block: 'nearest' });
-  }, [last?.id, me.id, teacherId, studentId, thread]); // eslint-disable-line react-hooks/exhaustive-deps
+    setTo(null);
+  }, [last?.id, me.id, teacherId, studentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function send() {
     if (!text.trim() && !files.length) return;
+    if (role === 'prof' && !chosen.length) return toast('Cochez au moins un destinataire', { error: true });
     setBusy(true);
     try {
-      await sendMessage({ teacherId, studentId, thread, authorId: me.id, authorName: me.name, text: text.trim() }, files);
+      const recipientNames = Object.fromEntries(options.filter((o) => chosen.includes(o.id)).map((o) => [o.id, o.name]));
+      await sendMessage({ teacherId, studentId, authorId: me.id, authorName: me.name, text: text.trim(), recipients: [...new Set(chosen)], recipientNames }, files);
       setText('');
       setFiles([]);
     } finally {
       setBusy(false);
     }
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    const m = msgs.find((x) => x.id === editing.id);
+    if (m && editing.text.trim() !== m.text) await db.messages.update(m.id, { text: editing.text.trim(), editedAt: Date.now() });
+    setEditing(null);
   }
 
   // Mémo vocal : appui pour démarrer, nouvel appui pour arrêter (le mémo est joint au message)
@@ -112,9 +157,19 @@ export function Chat({
       r.start();
       setRec(r);
     } catch {
-      toast("Micro refusé : autorisez-le dans les réglages du navigateur", { error: true });
+      toast('Micro refusé : autorisez-le dans les réglages du navigateur', { error: true });
     }
   }
+
+  // « à moi, Mère – …, Nino » : le professeur reçoit toujours les messages de l'élève et des parents
+  const known = Object.fromEntries(people.map((p) => [p.id, p.name]));
+  const toLabel = (m: Message) => {
+    const ids = [...new Set(m.recipients ?? [])].filter((id) => id !== me.id && id !== m.authorId);
+    const n = ids.map((id) => (m.recipientNames ?? {})[id] ?? known[id] ?? (id === studentId ? 'l’élève' : 'un parent'));
+    if (m.authorId !== teacherId) n.unshift(me.id === teacherId ? 'moi' : 'le professeur');
+    if (m.authorId !== me.id && me.id !== teacherId && m.recipients?.includes(me.id)) n.unshift('moi');
+    return n.length ? `à ${n.join(', ')}` : '';
+  };
 
   return (
     <div className="panel stack chat" style={{ gap: 10 }}>
@@ -127,17 +182,72 @@ export function Chat({
           return (
             <div key={m.id} className={'bubble' + (mine ? ' mine' : '')}>
               <div className="small muted">
-                {mine ? 'Moi' : m.authorName} · {time(m.createdAt)}
+                {mine ? 'Moi' : m.authorName} {toLabel(m)} · {time(m.createdAt)}
+                {m.editedAt ? ' · modifié' : ''}
               </div>
-              {m.text && <RichText text={m.text} />}
+              {editing?.id === m.id ? (
+                <div className="stack" style={{ gap: 6 }}>
+                  <textarea
+                    aria-label="Corriger le message"
+                    autoFocus
+                    value={editing.text}
+                    onChange={(e) => setEditing({ ...editing, text: e.target.value })}
+                    onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && saveEdit()}
+                    style={{ fontFamily: 'var(--font)', fontSize: '0.95rem', minHeight: 70, background: 'var(--paper)' }}
+                  />
+                  <div className="row" style={{ gap: 6 }}>
+                    <button className="btn small primary" onClick={saveEdit}>
+                      Enregistrer
+                    </button>
+                    <button className="btn small ghost" onClick={() => setEditing(null)}>
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                m.text && <RichText text={m.text} />
+              )}
               {m.attachments.map((a) => (
                 <Attachment key={a.mediaId} a={a} />
               ))}
+              {mine && !editing && m.text && (
+                <a href="#" className="small muted" style={{ alignSelf: 'flex-end' }} onClick={(e) => (e.preventDefault(), setEditing({ id: m.id, text: m.text }))}>
+                  modifier
+                </a>
+              )}
             </div>
           );
         })}
         <div ref={end} />
       </div>
+      {(options.length > 0 || role !== 'prof') && (
+        <div className="row small" style={{ gap: 12 }}>
+          <b>À :</b>
+          {role !== 'prof' && (
+            <label className="row" style={{ gap: 4 }}>
+              <input type="checkbox" checked disabled /> le professeur
+            </label>
+          )}
+          {options.map((o) => (
+            <label key={o.id} className="row" style={{ gap: 4, fontWeight: 700 }}>
+              <input
+                type="checkbox"
+                checked={chosen.includes(o.id)}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setTo((prev) => {
+                    const cur = prev ?? chosen;
+                    return on ? [...new Set([...cur, o.id])] : cur.filter((x) => x !== o.id);
+                  });
+                }}
+              />
+              {o.name}
+              {role === 'prof' && o.id === studentId ? ' (élève)' : ''}
+            </label>
+          ))}
+        </div>
+      )}
+      {role === 'prof' && !options.length && <span className="small muted">Pas encore de destinataire : l'élève et ses accès parents apparaîtront ici.</span>}
       {files.length > 0 && (
         <div className="row" style={{ gap: 6 }}>
           {files.map((f, i) => (

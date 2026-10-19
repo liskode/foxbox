@@ -45,7 +45,10 @@ const SPECS: Record<string, TableSpec> = {
   parents: { remote: 'parents', cols: () => ({}), updateOnly: true },
   billing: { remote: 'billing', cols: (b) => ({ teacher_id: b.teacherId, student_id: b.studentId }) },
   payments: { remote: 'payments', cols: (p) => ({ teacher_id: p.teacherId, student_id: p.studentId }) },
-  messages: { remote: 'messages', cols: (m) => ({ teacher_id: m.teacherId, student_id: m.studentId, thread: m.thread, author_id: m.authorId }) },
+  messages: {
+    remote: 'messages',
+    cols: (m) => ({ teacher_id: m.teacherId, student_id: m.studentId, thread: m.thread, author_id: m.authorId, ...(m.recipients ? { recipient_ids: m.recipients } : {}) }),
+  },
   messageReads: { remote: 'message_reads', cols: (r) => ({ user_id: r.userId }) },
   visits: { remote: 'visits', cols: (v) => ({ user_id: v.userId, student_ids: v.studentIds }) },
 };

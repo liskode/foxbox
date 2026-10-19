@@ -25,10 +25,10 @@ export function StudentMessages() {
           key={t.id}
           teacherId={t.id}
           studentId={st.id}
-          thread="eleve"
           me={{ id: st.id, name: st.firstName }}
+          role="eleve"
           title={data.teachers.length > 1 ? `Avec ${t.name ?? 'ton professeur'}` : undefined}
-          hint="Une question, un exercice qui bloque ? Écris, joins une photo ou enregistre un mémo vocal. Tes parents ne lisent pas ces messages."
+          hint="Une question, un exercice qui bloque ? Écris, joins une photo ou enregistre un mémo vocal. Seuls les destinataires cochés lisent ton message."
         />
       ))}
       <label className="field small">

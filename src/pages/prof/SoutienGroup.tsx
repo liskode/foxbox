@@ -41,7 +41,7 @@ export function SoutienGroup() {
   const unread = useLiveQuery(
     async () => {
       let n = 0;
-      for (const s of students) for (const t of ['eleve', 'parents'] as const) n += await unreadIn(session!.id, session!.id, s.id, t);
+      for (const s of students) n += await unreadIn(session!.id, session!.id, s.id);
       return n;
     },
     [students, session?.id],
@@ -427,10 +427,14 @@ function MessagesTab({ students }: { students: Student[] }) {
       {students.map((s) => (
         <div key={s.id} className="stack" style={{ gap: 8 }}>
           {students.length > 1 && <h2 style={{ margin: 0 }}>{s.firstName}</h2>}
-          <div className="grid2" style={{ alignItems: 'start' }}>
-            <Chat teacherId={me.id} studentId={s.id} thread="eleve" me={{ id: me.id, name: me.name }} title={`Avec ${s.firstName}`} hint="Lu par l'élève, pas par ses parents" />
-            <Chat teacherId={me.id} studentId={s.id} thread="parents" me={{ id: me.id, name: me.name }} title="Avec les parents" hint="Lu par les parents, pas par l'élève" />
-          </div>
+          <Chat
+            teacherId={me.id}
+            studentId={s.id}
+            me={{ id: me.id, name: me.name }}
+            role="prof"
+            title={`Conversation au sujet de ${s.firstName}`}
+            hint="Cochez les destinataires de chaque message : chacun ne lit que les messages qui lui sont adressés."
+          />
         </div>
       ))}
     </div>
