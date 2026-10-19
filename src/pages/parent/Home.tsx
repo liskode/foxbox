@@ -93,7 +93,7 @@ function ChildTutoring({ child, group, showName }: { child: Student; group: Grou
         <div className="panel stack" style={{ gap: 8 }}>
           <div className="spread">
             <h3 className="panel-title">
-              <Icon name="clipboard" size={16} /> Travail pour la prochaine fois
+              <Icon name="clipboard" size={16} /> Travail à faire par {child.firstName}
             </h3>
             <span className={'tag ' + (lastDone ? 'ok' : 'plain')}>{lastDone ? 'fait' : 'pas encore coché'}</span>
           </div>
