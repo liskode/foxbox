@@ -198,9 +198,13 @@ export function ParentMessages() {
   const teachers = [...new Set(cur?.groups.map((g) => g.teacherIds[0]) ?? [])];
   return (
     <div className="page narrow stack">
-      <h1 className="title" style={{ margin: 0 }}>
-        Messages
-      </h1>
+      <div>
+        <h1 className="title" style={{ margin: 0 }}>
+          Messages
+        </h1>
+        {/* « Père – Remy Tobler » → « Remy Tobler » */}
+        <span className="small muted">adressés à {fam.parent.name.split(' – ').pop()}</span>
+      </div>
       <ChildPicker names={fam.children.map((c) => ({ id: c.child.id, name: c.child.firstName }))} current={cur?.child.id ?? ''} onChange={setSel} />
       {cur && !teachers.length && <div className="notice">Pas encore de suivi pour {cur.child.firstName}.</div>}
       {cur &&
