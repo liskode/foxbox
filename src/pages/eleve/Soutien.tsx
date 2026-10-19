@@ -48,20 +48,22 @@ function DailyCards({ studentId }: { studentId: string }) {
   }, [studentId]);
   if (!today) return null;
   return (
-    <button
-      className="btn primary big stack"
-      style={{ gap: 4, width: '100%', alignItems: 'flex-start', textAlign: 'left', whiteSpace: 'normal' }}
-      onClick={() => nav(today.first ? `/eleve/revision/${encodeURIComponent(today.first.subject)}` : '/eleve')}
-    >
-      <span className="row" style={{ gap: 8 }}>
-        <Icon name="cards" /> Je révise mes flashcards CHAQUE JOUR
+    <button className="btn primary big daily-cards" onClick={() => nav(today.first ? `/eleve/revision/${encodeURIComponent(today.first.subject)}` : '/eleve')}>
+      <Icon name="cards" size={30} />
+      <span className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
+        <span>Je révise mes flashcards CHAQUE JOUR</span>
+        <span className="small" style={{ fontWeight: 700 }}>
+          {today.left
+            ? `${today.left} flashcard(s) à revoir aujourd'hui${today.done ? ` · ${today.done} déjà faite(s)` : ''}`
+            : today.done
+              ? `Fait pour aujourd'hui (${today.done}) : bravo ! Reviens demain.`
+              : "Rien à revoir aujourd'hui : reviens demain."}
+        </span>
       </span>
-      <span className="small" style={{ fontWeight: 700 }}>
-        {today.left
-          ? `${today.left} flashcard(s) à revoir aujourd'hui${today.done ? ` · ${today.done} déjà faite(s)` : ''}`
-          : today.done
-            ? `Fait pour aujourd'hui (${today.done}) : bravo ! Reviens demain.`
-            : "Rien à revoir aujourd'hui : reviens demain."}
+      {/* Flèche animée : on voit tout de suite qu'il faut appuyer */}
+      <span className="daily-go">
+        {today.left ? 'Réviser' : 'Ouvrir'}
+        <Icon name="arrowRight" size={22} stroke={2.5} />
       </span>
     </button>
   );
