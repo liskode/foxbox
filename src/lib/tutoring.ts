@@ -176,9 +176,11 @@ export async function tutoringsOf(studentId: string) {
 
 export const trackLabel = (t: Track) => `${t.subject} ${t.level}`;
 
-// Une séance est « à venir » jusqu'à sa fin (heure de début + durée ; sans heure : jusqu'au soir)
+// Une séance est « à venir » jusqu'à sa fin (heure de début + durée). Sans heure, elle est considérée comme faite
+// dès son jour (séance notée après coup) : elle n'est à venir que si sa date est dans le futur.
 export function sessionEnd(s: TutoringSession) {
-  const [h, m] = (s.start ?? '23:59').split(':').map(Number);
-  return new Date(`${s.date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`).getTime() + (s.start ? s.duration * 60000 : 0);
+  if (!s.start) return new Date(`${s.date}T00:00:00`).getTime();
+  const [h, m] = s.start.split(':').map(Number);
+  return new Date(`${s.date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`).getTime() + s.duration * 60000;
 }
 export const isUpcoming = (s: TutoringSession) => sessionEnd(s) > Date.now();
