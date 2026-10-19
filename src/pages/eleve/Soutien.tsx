@@ -8,7 +8,8 @@ import { FileList, SessionSummary, UploadButton, isUpcoming, placeLabel, whenLab
 import { durationLabel } from '../../lib/tutoring';
 import { RichText } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { studentSubjects, todaySession } from '../../lib/leitner';
 import { unreadTotal } from '../../lib/messages';
 
 export function StudentSoutien() {
@@ -28,11 +29,41 @@ export function StudentSoutien() {
           </Link>
         )}
       </div>
+      {groups.length > 0 && <DailyCards studentId={session!.id} />}
       {!groups.length && <div className="notice">Pas de soutien pour l'instant.</div>}
       {groups.map((g) => (
         <GroupBlock key={g.id} group={g} studentId={session!.id} showName={groups.length > 1} />
       ))}
     </div>
+  );
+}
+
+// Révision quotidienne des flashcards, rappelée en tête de la page Soutien
+function DailyCards({ studentId }: { studentId: string }) {
+  const nav = useNavigate();
+  const today = useLiveQuery(async () => {
+    const subs = await studentSubjects(studentId);
+    const all = await Promise.all(subs.map(async (subject) => ({ subject, ...(await todaySession(studentId, subject)) })));
+    return { left: all.reduce((a, x) => a + x.queue.length, 0), done: all.reduce((a, x) => a + x.done, 0), first: all.find((x) => x.queue.length) };
+  }, [studentId]);
+  if (!today) return null;
+  return (
+    <button
+      className="btn primary big stack"
+      style={{ gap: 4, width: '100%', alignItems: 'flex-start', textAlign: 'left', whiteSpace: 'normal' }}
+      onClick={() => nav(today.first ? `/eleve/revision/${encodeURIComponent(today.first.subject)}` : '/eleve')}
+    >
+      <span className="row" style={{ gap: 8 }}>
+        <Icon name="cards" /> Je révise mes flashcards CHAQUE JOUR
+      </span>
+      <span className="small" style={{ fontWeight: 700 }}>
+        {today.left
+          ? `${today.left} flashcard(s) à revoir aujourd'hui${today.done ? ` · ${today.done} déjà faite(s)` : ''}`
+          : today.done
+            ? `Fait pour aujourd'hui (${today.done}) : bravo ! Reviens demain.`
+            : "Rien à revoir aujourd'hui : reviens demain."}
+      </span>
+    </button>
   );
 }
 
