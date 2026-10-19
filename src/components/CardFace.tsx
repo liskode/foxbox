@@ -62,7 +62,9 @@ async function resolve(html: string): Promise<string> {
     // data-mid : permet de recharger l'image si l'affichage échoue
     out = out.split(`src="media:${id}"`).join(`data-mid="${id}" src="${u ?? ''}"`);
   }
-  return DOMPurify.sanitize(out, { ALLOWED_URI_REGEXP: /^(blob:|https?:|data:image\/)/i });
+  // Liens et images : seulement blob:, http(s): et images en data: ; les autres valeurs (réglages des figures SVG :
+  // viewBox, coordonnées, couleurs…) sont acceptées tant qu'elles ne ressemblent pas à une adresse d'un autre type
+  return DOMPurify.sanitize(out, { ALLOWED_URI_REGEXP: /^(?:(?:blob|https?):|data:image\/|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i });
 }
 
 // Réessaie (jusqu'à 3 fois) les images absentes ou qui n'ont pas pu s'afficher
