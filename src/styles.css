@@ -498,3 +498,11 @@ table.list tr.click:hover td { background: #faf7ef; }
 .msg-badge { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--ink-soft); background: var(--paper); display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 900; color: var(--ink); overflow: hidden; line-height: 1; }
 .msg-badge img { width: 100%; height: 100%; object-fit: cover; }
 .bubble-head { display: flex; align-items: center; gap: 8px; }
+
+/* Accueil Soutien : tableau de bord d'un suivi */
+.tile-soutien { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+.tile-soutien:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--line); }
+.tile-ind { position: relative; background: none; border: none; padding: 4px; cursor: pointer; color: var(--ink); border-radius: 8px; }
+.tile-ind:hover { background: var(--calm); }
+.tile-cards { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+.tile-cards .boxes.compact { flex: 1; min-width: 200px; }

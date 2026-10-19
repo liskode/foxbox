@@ -153,6 +153,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Soutien scolaire',
     text: 'Suivre des élèves en dehors de ses classes (cours particuliers), avec les mêmes outils : progression, flashcards, espace élève. Module à activer dans les Réglages.',
     details: [
+      'accueil : un tableau de bord par suivi (messages non lus, documents déposés non vus, prochaine séance, solde des règlements, régularité et boîtes des flashcards)',
       'un suivi par élève, ou pour 2-3 élèves ensemble (binôme, frères et sœurs)',
       'une ou plusieurs matières, chacune avec son niveau (du collège à la Terminale)',
       'un élève déjà dans une classe garde le même compte',

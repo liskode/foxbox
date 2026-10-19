@@ -1,5 +1,5 @@
 // Soutien scolaire : page d'un suivi (séances, programme, flashcards, élèves, réglages).
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isTutoring, type Group, type Student, type Track } from '../../lib/db';
@@ -20,6 +20,7 @@ import { Icon } from '../../components/Icon';
 import { TracksEditor } from './Soutien';
 import { BillingPanel } from '../../components/Billing';
 import { Chat } from '../../components/Chat';
+import { markFilesSeen } from '../../components/TutoringTile';
 import { unreadIn } from '../../lib/messages';
 import { resetParentPassword, removeParentAccess } from '../../lib/parents';
 
@@ -110,6 +111,10 @@ export function SoutienGroup() {
 
 function SessionsTab({ group }: { group: Group }) {
   const { session } = useAuth();
+  // Les documents déposés par l'élève sont « vus » dès que cet onglet est ouvert
+  useEffect(() => {
+    markFilesSeen(session!.id, group.id);
+  }, [session, group.id]);
   const sessions = useLiveQuery(async () => (await db.tutoringSessions.where('groupId').equals(group.id).toArray()).sort((a, b) => b.date.localeCompare(a.date) || (b.start ?? '').localeCompare(a.start ?? '')), [group.id], []);
   const waiting = useLiveQuery(() => db.tutoringFiles.where('groupId').equals(group.id).filter((f) => !f.sessionId).sortBy('createdAt'), [group.id], []);
   const checks = useLiveQuery(() => db.homeworkChecks.where('sessionId').anyOf(sessions.map((s) => s.id)).toArray(), [sessions], []);

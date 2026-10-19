@@ -17,6 +17,7 @@ import { themeColor } from '../../components/widgets';
 import { frDate } from '../../lib/dates';
 import { toast } from '../../components/Toast';
 import { LineTag } from '../../components/Billing';
+import { markFilesSeen } from '../../components/TutoringTile';
 import { money, loadLedger } from '../../lib/billing';
 import { Icon } from '../../components/Icon';
 
@@ -277,6 +278,9 @@ function NoteField({ title, who, value, onSave }: { title: string; who: string; 
 
 function DocumentsPanel({ s }: { s: TutoringSession }) {
   const { session } = useAuth();
+  useEffect(() => {
+    markFilesSeen(session!.id, s.groupId);
+  }, [session, s.groupId]);
   const files = useLiveQuery(() => db.tutoringFiles.where('sessionId').equals(s.id).sortBy('createdAt'), [s.id], []);
   return (
     <div className="panel stack" style={{ gap: 8 }}>

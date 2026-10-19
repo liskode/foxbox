@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { TabBar } from '../../components/TabBar';
 import { GlobalSummary } from '../../components/Billing';
+import { TutoringTile } from '../../components/TutoringTile';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isTutoring, SUBJECTS, type Track } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
@@ -62,25 +63,8 @@ export function Soutien() {
         </div>
       )}
       <div className="grid3">
-        {active.map(({ g, count, minutes, last, waiting }) => (
-          <Link key={g.id} to={`/prof/soutien/${g.id}`} className="panel strong stack" style={{ gap: 8 }}>
-            <h2 style={{ margin: 0 }}>{g.name}</h2>
-            <div className="row" style={{ gap: 6 }}>
-              {(g.tracks ?? []).map((t) => (
-                <span key={t.subject} className="tag plain">
-                  {trackLabel(t)}
-                </span>
-              ))}
-            </div>
-            <span className="small muted">
-              {count ? `${count} séance(s) · ${durationLabel(minutes)} · dernière le ${frDate(last!)}` : 'Aucune séance'}
-            </span>
-            {waiting > 0 && (
-              <span className="tag warn" style={{ alignSelf: 'flex-start' }}>
-                <Icon name="file" size={14} /> {waiting} document(s) déposé(s) pour la prochaine séance
-              </span>
-            )}
-          </Link>
+        {active.map(({ g }) => (
+          <TutoringTile key={g.id} group={g} teacherId={session!.id} />
         ))}
       </div>
       {archived.length > 0 && (
