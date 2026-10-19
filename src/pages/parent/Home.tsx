@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
 import { db, isTutoring, type Group, type Student, type TutoringSession, type Unit } from '../../lib/db';
-import { buildLedger, euros, monthLabel, monthOf, billingId } from '../../lib/billing';
+import { buildLedger, money, monthLabel, monthOf, billingId } from '../../lib/billing';
 import { frDate, today } from '../../lib/dates';
 import { unitLabel } from '../../lib/units';
 import { BalanceTag, LineTag } from '../../components/Billing';
@@ -112,7 +112,7 @@ function ChildTutoring({ child, group, showName }: { child: Student; group: Grou
           .map((p) => (
             <div key={p.id} className="row small" style={{ gap: 8 }}>
               <span style={{ width: 90 }}>{frDate(p.date)}</span>
-              <b>{euros(p.amount)}</b>
+              <b>{money(p.amount, data.ledger.currency)}</b>
               <span className="muted">
                 {p.method}
                 {p.label ? ` · ${p.label}` : ''}

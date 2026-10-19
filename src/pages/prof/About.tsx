@@ -163,7 +163,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'flashcards ajoutées pendant la séance (choix en plein écran, les plus récentes en haut, celles choisies grisées), et celles des points travaillés, dans les révisions de l’élève',
       'travail coché « fait » par l’élève',
       'fiche : établissement, classe, objectifs, famille',
-      'tarif horaire avec date d’effet ; montant de chaque séance calculé au tarif en vigueur à sa date',
+      'tarif horaire propre à chaque élève, avec date d’effet et devise (euro, franc suisse, livre, dollar…) ; montant de chaque séance calculé au tarif en vigueur à sa date',
       'règlements : à la séance, forfait payé d’avance (avance restante en heures) ou en fin de mois ; séances réglées, en partie ou à régler',
       'relevé mensuel et attestation annuelle (séances à domicile) à imprimer, avec vos coordonnées et votre SIRET',
       'récapitulatif global par mois et par élève (heures, montants, reçu, domicile / en ligne)',

@@ -173,3 +173,10 @@ export async function tutoringsOf(studentId: string) {
 }
 
 export const trackLabel = (t: Track) => `${t.subject} ${t.level}`;
+
+// Une séance est « à venir » jusqu'à sa fin (heure de début + durée ; sans heure : jusqu'au soir)
+export function sessionEnd(s: TutoringSession) {
+  const [h, m] = (s.start ?? '23:59').split(':').map(Number);
+  return new Date(`${s.date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`).getTime() + (s.start ? s.duration * 60000 : 0);
+}
+export const isUpcoming = (s: TutoringSession) => sessionEnd(s) > Date.now();

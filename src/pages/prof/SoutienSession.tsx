@@ -17,7 +17,7 @@ import { themeColor } from '../../components/widgets';
 import { frDate } from '../../lib/dates';
 import { toast } from '../../components/Toast';
 import { LineTag } from '../../components/Billing';
-import { euros, loadLedger } from '../../lib/billing';
+import { money, loadLedger } from '../../lib/billing';
 import { Icon } from '../../components/Icon';
 
 const DURATIONS = [30, 45, 60, 75, 90, 105, 120, 150, 180];
@@ -156,17 +156,23 @@ export function SoutienSession() {
 function SessionAmounts({ s, students, groupId }: { s: TutoringSession; students: Student[]; groupId: string }) {
   const { session } = useAuth();
   const rows = useLiveQuery(
-    () => Promise.all(students.map(async (st) => ({ st, line: (await loadLedger(session!.id, st.id)).ledger.lines.find((l) => l.session.id === s.id) }))),
+    () =>
+      Promise.all(
+        students.map(async (st) => {
+          const { ledger } = await loadLedger(session!.id, st.id);
+          return { st, currency: ledger.currency, line: ledger.lines.find((l) => l.session.id === s.id) };
+        }),
+      ),
     [students, s.id, s.date, s.duration, session?.id],
     [],
   );
   if (!rows.length) return null;
   return (
     <div className="row small" style={{ gap: 12 }}>
-      {rows.map(({ st, line }) => (
+      {rows.map(({ st, line, currency }) => (
         <span key={st.id} className="row" style={{ gap: 6 }}>
           {students.length > 1 && <b>{st.firstName} :</b>}
-          {line?.amount ? <b>{euros(line.amount)}</b> : null}
+          {line?.amount ? <b>{money(line.amount, currency)}</b> : null}
           {line && <LineTag l={line} />}
         </span>
       ))}

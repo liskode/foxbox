@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ? 'Adresse e-mail pas encore confirmée : cliquez sur le lien reçu par e-mail.'
             : login.includes('@')
               ? 'Adresse e-mail ou mot de passe incorrect.'
-              : `Identifiant ou mot de passe incorrect. L'identifiant est de la forme prenom.nom (ici : « ${normalizeLogin(login)} »).`,
+              : `Identifiant ou mot de passe incorrect. Élève : l'identifiant est de la forme prenom.nom (ici : « ${normalizeLogin(login)} »). Parent : l'identifiant est en général votre adresse e-mail.`,
         };
       }
       // Nouvelle connexion : rien d'une session précédente ne doit être envoyé au nom de ce compte

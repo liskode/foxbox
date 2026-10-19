@@ -2,6 +2,7 @@
 // Les règlements couvrent les séances dans l'ordre chronologique : une séance est « réglée » quand le total payé
 // atteint le total dû jusqu'à elle. Cela marche pour les trois façons de payer : à la séance, forfait payé
 // d'avance (le reste du forfait apparaît comme une avance), en fin de mois (un règlement pour le mois).
+import { isUpcoming } from './tutoring';
 import { db, type Billing, type Group, type PayMode, type Payment, type TutoringSession } from './db';
 
 export const PAY_MODES: { key: PayMode; label: string; hint: string }[] = [
@@ -11,7 +12,17 @@ export const PAY_MODES: { key: PayMode; label: string; hint: string }[] = [
 ];
 export const METHODS = ['Virement', 'Chèque', 'Espèces', 'CESU', 'Autre'];
 
-export const euros = (n: number) => n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+// Devises proposées (chaque élève a la sienne, l'euro par défaut)
+export const CURRENCIES: { code: string; label: string }[] = [
+  { code: 'EUR', label: 'Euro (€)' },
+  { code: 'CHF', label: 'Franc suisse (CHF)' },
+  { code: 'GBP', label: 'Livre sterling (£)' },
+  { code: 'USD', label: 'Dollar américain ($)' },
+  { code: 'CAD', label: 'Dollar canadien ($ CA)' },
+  { code: 'XPF', label: 'Franc pacifique (XPF)' },
+  { code: 'MAD', label: 'Dirham marocain (MAD)' },
+];
+export const money = (n: number, currency = 'EUR') => n.toLocaleString('fr-FR', { style: 'currency', currency });
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export const billingId = (teacherId: string, studentId: string) => `${teacherId}|${studentId}`;
@@ -39,11 +50,13 @@ export interface Ledger {
   balance: number; // > 0 : avance ; < 0 : reste à payer
   missingRate: boolean;
   hours: number;
+  currency: string;
 }
 
 export function buildLedger(studentId: string, sessions: TutoringSession[], billing: Billing | undefined, payments: Payment[], groups: Group[] = []): Ledger {
+  // Seules les séances terminées sont dues (une séance préparée à l'avance n'est pas encore facturée)
   const mine = sessions
-    .filter((s) => s.studentIds.includes(studentId))
+    .filter((s) => s.studentIds.includes(studentId) && !isUpcoming(s))
     .sort((a, b) => a.date.localeCompare(b.date) || (a.start ?? '').localeCompare(b.start ?? ''));
   const paid = round2(payments.reduce((a, p) => a + p.amount, 0));
   let cum = 0;
@@ -65,6 +78,7 @@ export function buildLedger(studentId: string, sessions: TutoringSession[], bill
     balance: round2(paid - cum),
     missingRate,
     hours: lines.reduce((a, l) => a + l.hours, 0),
+    currency: billing?.currency || 'EUR',
   };
 }
 

@@ -367,6 +367,7 @@ export interface Billing {
   studentId: string;
   rates: { from: string; hourly: number }[]; // tarif horaire et date d'effet
   mode: PayMode;
+  currency?: string; // devise (EUR par défaut), propre à chaque élève
   issuer?: TutorProfile; // nom et coordonnées du professeur, pour le relevé vu par les parents
 }
 // Règlement reçu (lu aussi par les parents)
