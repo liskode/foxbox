@@ -3,8 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
 import { db, type Group } from '../../lib/db';
 import { tutoringsOf } from '../../lib/tutoring';
-import { frDate } from '../../lib/dates';
-import { FileList, SessionSummary, UploadButton, isUpcoming, placeLabel, whenLabel, dayName } from '../../components/Soutien';
+import { frDate, today as todayISO } from '../../lib/dates';
+import { FileList, SessionSummary, UploadButton, hLabel, isUpcoming, localWhen, placeLabel, whenLabel, dayName } from '../../components/Soutien';
 import { durationLabel } from '../../lib/tutoring';
 import { RichText } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
@@ -24,17 +24,44 @@ export function StudentSoutien() {
           Soutien
         </h1>
         {groups.length > 0 && (
-          <Link className="btn" to="/eleve/messages">
-            <Icon name="message" /> Poser une question {unread > 0 && <span className="badge">{unread}</span>}
-          </Link>
+          <div className="row" style={{ gap: 8 }}>
+            <Link className="btn" to="/eleve/notes?nouveau=1">
+              <Icon name="alert" /> Signaler un DS à venir
+            </Link>
+            <Link className="btn" to="/eleve/messages">
+              <Icon name="message" /> Poser une question {unread > 0 && <span className="badge">{unread}</span>}
+            </Link>
+          </div>
         )}
       </div>
       {groups.length > 0 && <DailyCards studentId={session!.id} />}
+      {groups.length > 0 && <UpcomingAssessments studentId={session!.id} />}
       {!groups.length && <div className="notice">Pas de soutien pour l'instant.</div>}
       {groups.map((g) => (
         <GroupBlock key={g.id} group={g} studentId={session!.id} showName={groups.length > 1} />
       ))}
     </div>
+  );
+}
+
+// Évaluations annoncées (DS, contrôles) : rappel en tête de la page Soutien
+function UpcomingAssessments({ studentId }: { studentId: string }) {
+  const list = useLiveQuery(async () => (await db.assessments.where('studentId').equals(studentId).toArray()).filter((a) => a.date >= todayISO()).sort((a, b) => a.date.localeCompare(b.date)), [studentId], []);
+  if (!list.length) return null;
+  return (
+    <Link to="/eleve/notes" className="panel strong stack" style={{ gap: 6, textDecoration: 'none' }}>
+      <h3 className="panel-title">
+        <Icon name="alert" size={16} /> Évaluations à venir
+      </h3>
+      {list.map((a) => (
+        <span key={a.id}>
+          <b>
+            {dayName(a.date)} {frDate(a.date)}
+          </b>{' '}
+          · {a.subject} {a.title && `· ${a.title}`}
+        </span>
+      ))}
+    </Link>
   );
 }
 
@@ -102,8 +129,10 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
             <Icon name="calendar" size={16} /> Prochaine séance
           </h3>
           <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1.25 }}>
-            {dayName(next.date)} {frDate(next.date)}
-            {next.start ? ` à ${next.start.replace(':', ' h ')}` : ''}
+            {(() => {
+              const w = localWhen(next);
+              return `${dayName(w.date)} ${frDate(w.date)}${w.start ? ` à ${hLabel(w.start)}` : ''}${w.shifted ? ' (heure locale)' : ''}`;
+            })()}
           </div>
           <span className="row small" style={{ gap: 6 }}>
             {durationLabel(next.duration)} <span className="tag plain">{placeLabel(next)}</span>

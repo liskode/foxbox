@@ -51,6 +51,7 @@ const SPECS: Record<string, TableSpec> = {
   },
   messageReads: { remote: 'message_reads', cols: (r) => ({ user_id: r.userId }) },
   visits: { remote: 'visits', cols: (v) => ({ user_id: v.userId, student_ids: v.studentIds }) },
+  assessments: { remote: 'assessments', cols: (a) => ({ student_id: a.studentId, author_id: a.authorId }) },
 };
 
 // ---------- Envoi ----------

@@ -6,7 +6,7 @@ import { db, isTutoring, type Group, type Student, type Track } from '../../lib/
 import { useAuth } from '../../lib/auth';
 import { addStudents, durationLabel, lastSeen, newSession, setUnitStatus, STATES, trackLabel, unitState } from '../../lib/tutoring';
 import { byProgression, themeLabel, unitLabel, unitSubject } from '../../lib/units';
-import { frDate } from '../../lib/dates';
+import { frDate, today } from '../../lib/dates';
 import { resetPassword } from '../../lib/students';
 import { TabBar } from '../../components/TabBar';
 import { RichText } from '../../components/CardFace';
@@ -18,9 +18,11 @@ import { showInfo } from '../../components/Dialog';
 import { toast } from '../../components/Toast';
 import { Icon } from '../../components/Icon';
 import { TracksEditor } from './Soutien';
+import { ZONES } from '../../lib/time';
 import { BillingPanel } from '../../components/Billing';
 import { Chat } from '../../components/Chat';
 import { markFilesSeen } from '../../components/TutoringTile';
+import { AssessmentsPanel } from '../../components/Assessments';
 import { unreadIn } from '../../lib/messages';
 import { resetParentPassword, removeParentAccess } from '../../lib/parents';
 
@@ -37,7 +39,7 @@ export function SoutienGroup() {
     [],
   );
   const [params, setParams] = useSearchParams();
-  type Tab = 'seances' | 'programme' | 'flashcards' | 'reglements' | 'messages' | 'eleves' | 'reglages';
+  type Tab = 'seances' | 'programme' | 'flashcards' | 'evaluations' | 'reglements' | 'messages' | 'eleves' | 'reglages';
   const { session } = useAuth();
   const unread = useLiveQuery(
     async () => {
@@ -55,6 +57,7 @@ export function SoutienGroup() {
     ['seances', 'Séances'],
     ['programme', 'Programme'],
     ['flashcards', 'Flashcards'],
+    ['evaluations', 'Évaluations'],
     ['reglements', 'Règlements'],
     ['messages', unread ? `Messages (${unread})` : 'Messages'],
     ['eleves', students.length > 1 ? 'Élèves' : 'Élève'],
@@ -95,6 +98,7 @@ export function SoutienGroup() {
           ))}
         </div>
       )}
+      {tab === 'evaluations' && <EvaluationsTab group={group} students={students} />}
       {tab === 'reglements' && (
         <div className="stack">
           {students.map((s) => (
@@ -153,7 +157,7 @@ function SessionsTab({ group }: { group: Group }) {
             </div>
             <div className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
               <div className="row" style={{ gap: 8 }}>
-                <b>{whenLabel(s)}</b>
+                <b>{whenLabel(s, group.timezone)}</b>
                 {isUpcoming(s) && <span className="tag warn">À venir</span>}
                 <span className="tag plain">
                   <Icon name={s.place === 'en ligne' ? 'laptop' : 'home'} size={13} /> {placeLabel(s)}
@@ -178,6 +182,18 @@ function SessionsTab({ group }: { group: Group }) {
 function ProgrammeTab({ group }: { group: Group }) {
   const units = useLiveQuery(() => db.units.toArray(), [], []);
   const sessions = useLiveQuery(() => db.tutoringSessions.where('groupId').equals(group.id).toArray(), [group.id], []);
+  // Points du programme d'une évaluation à venir de l'élève
+  const evals = useLiveQuery(
+    async () => {
+      const ids = (await db.memberships.where('groupId').equals(group.id).toArray()).map((m) => m.studentId);
+      const m = new Map<string, string>();
+      for (const a of await db.assessments.where('studentId').anyOf(ids).toArray())
+        if (a.date >= today()) for (const u of a.unitIds) if (!m.has(u) || a.date < m.get(u)!) m.set(u, a.date);
+      return m;
+    },
+    [group.id],
+    new Map<string, string>(),
+  );
   const nav = useNavigate();
   const seen = lastSeen(sessions, units);
   return (
@@ -229,10 +245,10 @@ function ProgrammeTab({ group }: { group: Group }) {
                       {themeLabel(q.theme, q.level, t.subject)}
                     </div>
                   )}
-                  <ProgItem group={group} unit={q} seen={seen} bold />
+                  <ProgItem group={group} unit={q} seen={seen} evalDate={evals.get(q.id)} bold />
                   {kids.map((k) => (
                     <div key={k.id} style={{ paddingLeft: 16 }}>
-                      <ProgItem group={group} unit={k} seen={seen} />
+                      <ProgItem group={group} unit={k} seen={seen} evalDate={evals.get(k.id)} />
                     </div>
                   ))}
                 </div>
@@ -245,7 +261,7 @@ function ProgrammeTab({ group }: { group: Group }) {
   );
 }
 
-function ProgItem({ group, unit, seen, bold = false }: { group: Group; unit: import('../../lib/db').Unit; seen: Map<string, string>; bold?: boolean }) {
+function ProgItem({ group, unit, seen, evalDate, bold = false }: { group: Group; unit: import('../../lib/db').Unit; seen: Map<string, string>; evalDate?: string; bold?: boolean }) {
   const st = unitState(group, seen, unit);
   const def = STATES.find((s) => s.key === st)!;
   return (
@@ -253,6 +269,11 @@ function ProgItem({ group, unit, seen, bold = false }: { group: Group; unit: imp
       <span className="name small" style={{ fontWeight: bold ? 800 : 500 }}>
         {unitLabel(unit)}
       </span>
+      {evalDate && (
+        <span className="tag bad" title="Au programme d'une évaluation à venir">
+          <Icon name="alert" size={12} /> éval. {evalDate.slice(8, 10)}/{evalDate.slice(5, 7)}
+        </span>
+      )}
       {seen.has(unit.id) && <span className="small muted">{seen.get(unit.id)!.slice(8, 10)}/{seen.get(unit.id)!.slice(5, 7)}</span>}
       <select
         className={'tag ' + def.cls}
@@ -422,6 +443,21 @@ export function ParentAccesses({ student }: { student: Student }) {
   );
 }
 
+// Évaluations de l'élève dans son établissement (vues dès que l'onglet est ouvert)
+function EvaluationsTab({ group, students }: { group: Group; students: Student[] }) {
+  const { session } = useAuth();
+  useEffect(() => {
+    for (const s of students) db.messageReads.put({ id: `${session!.id}|evals|${s.id}`, userId: session!.id, at: Date.now() });
+  }, [session, students, group.id]);
+  return (
+    <div className="stack">
+      {students.map((s) => (
+        <AssessmentsPanel key={s.id} studentId={s.id} meId={session!.id} canGrade firstName={students.length > 1 ? s.firstName : undefined} />
+      ))}
+    </div>
+  );
+}
+
 // Messages : pour chaque élève, le fil avec l'élève et le fil avec ses parents (séparés)
 function MessagesTab({ students }: { students: Student[] }) {
   const { session } = useAuth();
@@ -456,6 +492,20 @@ function SettingsTab({ group }: { group: Group }) {
         <label className="field" style={{ maxWidth: 360 }}>
           Nom du suivi
           <input defaultValue={group.name} onBlur={(e) => e.target.value.trim() && db.groups.update(group.id, { name: e.target.value.trim() })} />
+        </label>
+        <label className="field" style={{ maxWidth: 360 }}>
+          Fuseau horaire de l'élève
+          <select value={group.timezone ?? ''} onChange={(e) => db.groups.update(group.id, { timezone: e.target.value || undefined })}>
+            <option value="">Le même que le mien</option>
+            {ZONES.map((z) => (
+              <option key={z.zone} value={z.zone}>
+                {z.label}
+              </option>
+            ))}
+          </select>
+          <span className="small muted" style={{ fontWeight: 500 }}>
+            S'il vit ailleurs, ses séances s'affichent aussi à son heure (« 16 h (10 h à Ottawa) »). De son côté, il voit tout à l'heure de son appareil.
+          </span>
         </label>
         <TracksEditor tracks={tracks} onChange={setTracks} />
         {changed && (

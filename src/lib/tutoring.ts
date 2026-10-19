@@ -8,6 +8,7 @@ import { shareTeacherProfile } from './relations';
 import { ONLINE } from './supabase';
 import { push } from './sync';
 import { today } from './dates';
+import { browserZone, DEFAULT_ZONE, zonedToUtc } from './time';
 
 export function schoolYear() {
   const d = new Date();
@@ -76,6 +77,7 @@ export async function newSession(group: Group): Promise<TutoringSession> {
     groupId: group.id,
     date: today(),
     start: now(),
+    tz: browserZone(),
     duration: prev?.duration ?? 60,
     place: prev?.place ?? 'domicile',
     studentIds: ms.map((m) => m.studentId),
@@ -179,8 +181,8 @@ export const trackLabel = (t: Track) => `${t.subject} ${t.level}`;
 // Une séance est « à venir » jusqu'à sa fin (heure de début + durée). Sans heure, elle est considérée comme faite
 // dès son jour (séance notée après coup) : elle n'est à venir que si sa date est dans le futur.
 export function sessionEnd(s: TutoringSession) {
-  if (!s.start) return new Date(`${s.date}T00:00:00`).getTime();
-  const [h, m] = s.start.split(':').map(Number);
-  return new Date(`${s.date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`).getTime() + s.duration * 60000;
+  const zone = s.tz ?? DEFAULT_ZONE;
+  if (!s.start) return zonedToUtc(s.date, '00:00', zone);
+  return zonedToUtc(s.date, s.start, zone) + s.duration * 60000;
 }
 export const isUpcoming = (s: TutoringSession) => sessionEnd(s) > Date.now();

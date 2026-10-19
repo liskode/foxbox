@@ -505,4 +505,12 @@ table.list tr.click:hover td { background: #faf7ef; }
 .tile-ind { position: relative; background: none; border: none; padding: 4px; cursor: pointer; color: var(--ink); border-radius: 8px; }
 .tile-ind:hover { background: var(--calm); }
 .tile-cards { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
-.tile-cards .boxes.compact { flex: 1; min-width: 200px; }
+.tile-cards .boxes.compact { flex: none; width: 210px; min-width: 0; height: 104px; }
+.tile-soutien { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 16px; }
+@media (max-width: 700px) { .tile-soutien { grid-template-columns: 1fr; } }
+.tile-money { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-weight: 900; font-size: 0.9rem; padding: 4px 10px; }
+.tile-deadlines { border-left: 1.5px solid var(--soft-line); padding-left: 16px; }
+@media (max-width: 700px) { .tile-deadlines { border-left: none; padding-left: 0; border-top: 1.5px solid var(--soft-line); padding-top: 10px; } }
+.tile-deadline { display: flex; gap: 8px; align-items: flex-start; text-align: left; font: inherit; background: var(--calm); border: none; border-radius: 10px; padding: 6px 10px; cursor: pointer; color: var(--ink); }
+.tile-deadline.eval { background: var(--bad-bg); }
+.tile-deadline .icon { margin-top: 3px; }

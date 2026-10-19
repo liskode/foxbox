@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type TutoringFile, type TutoringSession, type Unit } from '../lib/db';
 import { addFiles, durationLabel } from '../lib/tutoring';
 import { frDate } from '../lib/dates';
+import { browserZone, DEFAULT_ZONE, inZone, zonedToUtc, zoneLabel } from '../lib/time';
 import { unitLabel } from '../lib/units';
 import { openDocument, sizeLabel } from './UnitDetails';
 import { RichText } from './CardFace';
@@ -96,8 +97,24 @@ export function LinkList({ links }: { links: TutoringSession['links'] }) {
 export { isUpcoming, sessionEnd } from '../lib/tutoring';
 
 export const placeLabel = (s: TutoringSession) => (s.place === 'en ligne' ? 'En ligne' : 'À domicile');
-export const whenLabel = (s: TutoringSession) =>
-  `${dayName(s.date)} ${frDate(s.date)}${s.start ? ` à ${s.start.replace(':', ' h ')}` : ''} · ${durationLabel(s.duration)}`;
+// Date et heure d'une séance dans un fuseau (par défaut celui de l'appareil) ; sans heure, la date ne change pas
+export function localWhen(s: TutoringSession, zone = browserZone()): { date: string; start?: string; shifted: boolean } {
+  const tz = s.tz ?? DEFAULT_ZONE;
+  if (!s.start || zone === tz) return { date: s.date, start: s.start, shifted: false };
+  const p = inZone(zonedToUtc(s.date, s.start, tz), zone);
+  return { date: p.date, start: p.time, shifted: true };
+}
+export const hLabel = (t: string) => t.replace(':00', ' h').replace(':', ' h ');
+// « jeu. 22 oct. 2026 à 16 h · 1 h 30 » ; `other` : fuseau de l'élève, montré en plus au professeur
+export const whenLabel = (s: TutoringSession, other?: string) => {
+  const w = localWhen(s);
+  const o = other && s.start ? localWhen(s, other) : null;
+  return (
+    `${dayName(w.date)} ${frDate(w.date)}${w.start ? ` à ${hLabel(w.start)}${w.shifted ? ' (heure locale)' : ''}` : ''}` +
+    (o?.shifted ? ` (${hLabel(o.start!)} à ${zoneLabel(other!)})` : '') +
+    ` · ${durationLabel(s.duration)}`
+  );
+};
 
 // Résumé d'une séance pour l'élève : contenu de la séance, sa note, le travail, documents, liens
 export function SessionSummary({ session, studentId, units }: { session: TutoringSession; studentId: string; units: Unit[] }) {

@@ -9,7 +9,7 @@ import { deleteSession, durationLabel, syncPublications, trackLabel } from '../.
 import { byProgression, unitLabel, unitSubject } from '../../lib/units';
 import { themesOf } from '../../lib/themes';
 import { cardCode, defaultOrigin } from '../../lib/cardCodes';
-import { FileList, UploadButton, dayName } from '../../components/Soutien';
+import { FileList, UploadButton, dayName, whenLabel } from '../../components/Soutien';
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
 import { CardFace, RichText } from '../../components/CardFace';
@@ -51,10 +51,7 @@ export function SoutienSession() {
         <h1 className="title" style={{ margin: 0 }}>
           Séance
         </h1>
-        <b>
-          {dayName(s.date)} {frDate(s.date)}
-          {s.start ? ` à ${s.start.replace(':', ' h ')}` : ''} · {durationLabel(s.duration)}
-        </b>
+        <b>{whenLabel(s, group.timezone)}</b>
       </div>
 
       <div className="panel stack" style={{ gap: 12 }}>

@@ -247,7 +247,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
         : [
             ['/eleve', 'Flashcards'],
             ...(soutien ? [['/eleve/soutien', 'Soutien']] : []),
-            ['/eleve/notes', 'Notes'],
+            ['/eleve/notes', 'Évaluations'],
             ['/eleve/documents', 'Documents de cours'],
           ];
   const icons: Record<string, string> = {

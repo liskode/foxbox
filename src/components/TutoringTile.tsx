@@ -11,6 +11,7 @@ import { boxDistribution, heatmapCounts } from '../lib/stats';
 import { addDays, today } from '../lib/dates';
 import { Boxes, Heatmap } from './widgets';
 import { Icon } from './Icon';
+import { hLabel } from './Soutien';
 
 // Documents déposés par l'élève : vus quand le professeur ouvre les séances du suivi
 export const filesSeenId = (teacherId: string, groupId: string) => `${teacherId}|files|${groupId}`;
@@ -21,8 +22,8 @@ export async function markFilesSeen(teacherId: string, groupId: string) {
 
 const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 // « Mar 27/10 · 13 h »
-const nextLabel = (date: string, start?: string) =>
-  `${DAYS[new Date(date + 'T12:00').getDay()]} ${date.slice(8, 10)}/${date.slice(5, 7)}${start ? ` · ${start.replace(':00', ' h').replace(':', ' h ')}` : ''}`;
+export const shortWhen = (date: string, start?: string) =>
+  `${DAYS[new Date(date + 'T12:00').getDay()]} ${date.slice(8, 10)}/${date.slice(5, 7)}${start ? ` · ${hLabel(start)}` : ''}`;
 
 function Badge({ n }: { n: number }) {
   return n > 0 ? (
@@ -54,7 +55,28 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
         return { s, ledger, counts: heatmapCounts(reviews), dist };
       }),
     );
-    return { students, files, unread, next, done: done.length, minutes: done.reduce((a, s) => a + s.duration, 0), per };
+    // Échéances : séances à venir et évaluations annoncées ; évaluations ajoutées ou modifiées depuis la dernière visite
+    const t = today();
+    const evals = (await db.assessments.where('studentId').anyOf(students.map((s) => s.id)).toArray()).filter((a) => a.date >= t);
+    let newEvals = 0;
+    for (const s of students) {
+      const seenE = (await db.messageReads.get(`${teacherId}|evals|${s.id}`))?.at ?? 0;
+      newEvals += (await db.assessments.where('studentId').equals(s.id).toArray()).filter((a) => a.updatedAt > seenE && a.authorId !== teacherId).length;
+    }
+    const upcoming = sessions.filter(isUpcoming);
+    const deadlines = [
+      ...upcoming.map((x) => ({ key: x.id, date: x.date, label: shortWhen(x.date, x.start), what: 'Séance', kind: 'seance' as const })),
+      ...evals.map((a) => ({
+        key: a.id,
+        date: a.date,
+        label: shortWhen(a.date),
+        what: `${a.subject}${a.title ? ` · ${a.title}` : ''}${students.length > 1 ? ` (${students.find((s) => s.id === a.studentId)?.firstName})` : ''}`,
+        kind: 'eval' as const,
+      })),
+    ]
+      .sort((x, y) => x.date.localeCompare(y.date))
+      .slice(0, 5);
+    return { students, files, unread, next, newEvals, deadlines, done: done.length, minutes: done.reduce((a, s) => a + s.duration, 0), per };
   }, [group.id, teacherId]);
 
   const go = (tab: string) => (e: React.MouseEvent) => {
@@ -62,60 +84,72 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
     nav(`/prof/soutien/${group.id}?onglet=${tab}`);
   };
   return (
-    <div className="panel strong stack tile-soutien" role="link" tabIndex={0} onClick={() => nav(`/prof/soutien/${group.id}`)} onKeyDown={(e) => e.key === 'Enter' && nav(`/prof/soutien/${group.id}`)}>
-      <div className="spread" style={{ alignItems: 'flex-start' }}>
-        <div className="stack" style={{ gap: 6 }}>
+    <div className="panel strong tile-soutien" role="link" tabIndex={0} onClick={() => nav(`/prof/soutien/${group.id}`)} onKeyDown={(e) => e.key === 'Enter' && nav(`/prof/soutien/${group.id}`)}>
+      <div className="stack" style={{ gap: 10, minWidth: 0 }}>
+        <div className="row" style={{ gap: 10 }}>
           <h2 style={{ margin: 0 }}>{group.name}</h2>
-          <div className="row" style={{ gap: 6 }}>
-            {(group.tracks ?? []).map((t) => (
-              <span key={t.subject} className="tag plain">
-                {trackLabel(t)}
-              </span>
-            ))}
-          </div>
+          {(group.tracks ?? []).map((t) => (
+            <span key={t.subject} className="tag plain">
+              {trackLabel(t)}
+            </span>
+          ))}
         </div>
         {d && (
-          <div className="row" style={{ gap: 14 }}>
-            <button className="tile-ind" title={d.unread ? `${d.unread} message(s) non lu(s)` : 'Messages'} onClick={go('messages')}>
-              <Icon name="mail" size={22} />
-              <Badge n={d.unread} />
-            </button>
-            <button className="tile-ind" title={d.files ? `${d.files} document(s) déposé(s) non vu(s)` : 'Documents'} onClick={go('seances')}>
-              <Icon name="file" size={22} />
-              <Badge n={d.files} />
-            </button>
-          </div>
+          <>
+            <div className="row" style={{ gap: 18 }}>
+              <button className="tile-ind" title={d.unread ? `${d.unread} message(s) non lu(s)` : 'Messages'} onClick={go('messages')}>
+                <Icon name="mail" size={28} />
+                <Badge n={d.unread} />
+              </button>
+              <button className="tile-ind" title={d.files ? `${d.files} document(s) déposé(s) non vu(s)` : 'Documents'} onClick={go('seances')}>
+                <Icon name="file" size={28} />
+                <Badge n={d.files} />
+              </button>
+              <button className="tile-ind" title={d.newEvals ? `${d.newEvals} évaluation(s) nouvelle(s) ou complétée(s)` : 'Évaluations'} onClick={go('evaluations')}>
+                <Icon name="eval" size={28} />
+                <Badge n={d.newEvals} />
+              </button>
+              {d.per.map(({ s, ledger }) => {
+                if (ledger.free) return null;
+                const color = ledger.balance < 0 ? 'var(--bad)' : ledger.balance > 0 ? 'var(--ok)' : '#9a968d';
+                const bg = ledger.balance < 0 ? 'var(--bad-bg)' : ledger.balance > 0 ? 'var(--ok-bg)' : 'var(--calm)';
+                return (
+                  <button key={s.id} className="tile-ind tile-money" style={{ color, background: bg }} onClick={go('reglements')} title="Solde des règlements">
+                    <Icon name="wallet" size={28} />
+                    <span>
+                      {d.students.length > 1 ? `${s.firstName} : ` : ''}
+                      {ledger.balance < 0 ? money(-ledger.balance, ledger.currency) : ledger.balance > 0 ? `+${money(ledger.balance, ledger.currency)}` : 'à jour'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {d.per.map(({ s, counts, dist }) => (
+              <div key={s.id} className="tile-cards" onClick={go('flashcards')} title="Flashcards">
+                {d.students.length > 1 && <b className="small">{s.firstName}</b>}
+                <Heatmap counts={counts} weeks={12} />
+                <Boxes dist={dist} compact />
+              </div>
+            ))}
+            <span className="small muted">{d.done ? `${d.done} séance(s) faite(s) · ${durationLabel(d.minutes)}` : 'aucune séance faite'}</span>
+          </>
         )}
       </div>
       {d && (
-        <>
-          <div className="row" style={{ gap: 10 }}>
-            <span className="tag plain" title="Prochaine séance">
-              <Icon name="calendar" size={14} /> {d.next ? nextLabel(d.next.date, d.next.start) : 'pas de séance prévue'}
-            </span>
-            {d.per.map(({ s, ledger }) => {
-              if (ledger.free) return null;
-              const cls = ledger.balance < 0 ? 'bad' : ledger.balance > 0 ? 'ok' : 'plain';
-              return (
-                <button key={s.id} className={'tag ' + cls} style={{ border: 'none', cursor: 'pointer', font: 'inherit', fontWeight: 800, fontSize: '0.8rem' }} onClick={go('reglements')} title="Solde des règlements">
-                  <Icon name="wallet" size={14} />
-                  {d.students.length > 1 ? `${s.firstName} : ` : ''}
-                  {ledger.balance < 0 ? `${money(-ledger.balance, ledger.currency)} à régler` : ledger.balance > 0 ? `avance ${money(ledger.balance, ledger.currency)}` : 'à jour'}
-                </button>
-              );
-            })}
-            <span className="small muted">
-              {d.done ? `${d.done} séance(s) · ${durationLabel(d.minutes)}` : 'aucune séance faite'}
-            </span>
-          </div>
-          {d.per.map(({ s, counts, dist }) => (
-            <div key={s.id} className="tile-cards" onClick={go('flashcards')} title="Flashcards">
-              {d.students.length > 1 && <b className="small">{s.firstName}</b>}
-              <Heatmap counts={counts} weeks={12} />
-              <Boxes dist={dist} compact />
-            </div>
+        <div className="tile-deadlines stack" style={{ gap: 6 }}>
+          <b className="small">Échéances</b>
+          {!d.deadlines.length && <span className="small muted">Rien de prévu.</span>}
+          {d.deadlines.map((x) => (
+            <button key={x.key} className={'tile-deadline ' + x.kind} onClick={go(x.kind === 'eval' ? 'evaluations' : 'seances')}>
+              <Icon name={x.kind === 'eval' ? 'alert' : 'calendar'} size={15} />
+              <span>
+                <b>{x.label}</b>
+                <br />
+                <span className="small">{x.what}</span>
+              </span>
+            </button>
           ))}
-        </>
+        </div>
       )}
     </div>
   );

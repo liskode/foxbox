@@ -12,6 +12,7 @@ import { BalanceTag, LineTag } from '../../components/Billing';
 import { FileList, LinkList, placeLabel, whenLabel, dayName } from '../../components/Soutien';
 import { RichText } from '../../components/CardFace';
 import { Chat } from '../../components/Chat';
+import { AssessmentsPanel } from '../../components/Assessments';
 import { Icon } from '../../components/Icon';
 
 // Enfants du parent et leurs groupes de soutien
@@ -67,6 +68,7 @@ export function ParentHome() {
       {cur?.groups.map((g) => (
         <ChildTutoring key={g.id} child={cur.child} group={g} showName={cur.groups.length > 1} />
       ))}
+      {cur && cur.groups.length > 0 && <AssessmentsPanel studentId={cur.child.id} meId={fam.parent.id} canGrade={false} firstName={cur.child.firstName} />}
     </div>
   );
 }

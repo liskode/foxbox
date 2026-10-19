@@ -153,7 +153,9 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Soutien scolaire',
     text: 'Suivre des élèves en dehors de ses classes (cours particuliers), avec les mêmes outils : progression, flashcards, espace élève. Module à activer dans les Réglages.',
     details: [
-      'accueil : un tableau de bord par suivi (messages non lus, documents déposés non vus, prochaine séance, solde des règlements, régularité et boîtes des flashcards)',
+      'accueil : un tableau de bord par suivi (messages non lus, documents déposés non vus, évaluations nouvelles, solde des règlements, régularité et boîtes des flashcards, échéances : séances et évaluations à venir)',
+      'évaluations de l’élève dans son établissement : signalées par l’élève, un parent ou vous, avec programme, documents et note ; repérées dans l’onglet Programme',
+      'fuseaux horaires : séances à l’heure locale de l’élève et des parents, et double heure pour vous (« 16 h (10 h à Ottawa) »)',
       'un suivi par élève, ou pour 2-3 élèves ensemble (binôme, frères et sœurs)',
       'une ou plusieurs matières, chacune avec son niveau (du collège à la Terminale)',
       'un élève déjà dans une classe garde le même compte',
@@ -184,6 +186,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'note pour les parents (jamais celle pour l’élève ni la note privée)',
       'règlements, avance ou reste à payer, relevé du mois',
       'messages avec le professeur : « répondre à tous » coché par défaut, chaque destinataire peut être décoché',
+      'évaluations de l’enfant : signaler un DS à venir, voir les copies, les notes et le graphique de progression',
     ],
   },
   {
@@ -219,7 +222,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'pensé pour le téléphone : flashcard en grand, boutons de réponse sous le pouce, menu en bas de l’écran',
       'réponses « Je ne sais pas », « Dur », « Facile »',
       'progrès : série, régularité, boîtes',
-      'notes des évaluations rendues avec histogramme des compétences',
+      'onglet Évaluations : « Signaler un DS à venir » (date, matière, programme par points cochés, texte ou capture Pronote), puis copie, corrigé et note ; graphique de progression par matière ; notes des évaluations rendues en classe',
       'documents de cours des séances faites',
       'soutien : page d’arrivée des élèves suivis, avec le bouton « Je révise mes flashcards CHAQUE JOUR » avec le nombre à revoir, prochaine séance en tête (date, heure, contenu prévu, documents), consignes de la dernière séance et travail à cocher, dépôt de documents ou de photos, historique des séances avec documents, liens et note personnelle',
       'messages au professeur de soutien (photo, mémo vocal), lus seulement par les destinataires cochés',

@@ -65,6 +65,7 @@ export interface Group {
   tracks?: Track[]; // matières suivies et niveau de chacune
   unitStatus?: Record<string, UnitStatus>; // état des points du programme fixé à la main (sinon : « vu » s'il a été travaillé)
   teacherPhotoId?: string; // photo du professeur, recopiée pour l'élève et les parents (messages)
+  timezone?: string; // fuseau horaire de l'élève (s'il vit ailleurs : Ottawa, Dallas…)
   relations?: import('./relations').Relation[]; // interlocuteurs et leurs codes, recopiés depuis les Réglages
 }
 export interface Track {
@@ -316,7 +317,8 @@ export interface TutoringSession {
   id: string;
   groupId: string;
   date: string; // AAAA-MM-JJ
-  start?: string; // HH:MM
+  start?: string; // HH:MM, dans le fuseau `tz`
+  tz?: string; // fuseau du professeur à la création (Europe/Paris si absent)
   duration: number; // minutes
   place: 'domicile' | 'en ligne';
   studentIds: string[]; // élèves présents
@@ -405,6 +407,24 @@ export interface MessageRead {
   id: string; // userId|teacherId|studentId|thread
   userId: string;
   at: number; // date du dernier message lu
+}
+
+// Évaluation de l'élève dans son établissement (DS, contrôle), signalée par l'élève, un parent ou le professeur
+export type AssessmentDocKind = 'programme' | 'sujet' | 'copie' | 'corrige' | 'autre';
+export interface Assessment {
+  id: string;
+  studentId: string;
+  authorId: string;
+  date: string; // AAAA-MM-JJ
+  subject: string;
+  title: string; // « DS de mécanique »
+  unitIds: string[]; // points du programme concernés
+  program: string; // programme en texte libre
+  documents: { mediaId: string; name: string; size: number; type: string; kind: AssessmentDocKind }[];
+  score?: number;
+  outOf?: number; // barème (20 par défaut)
+  createdAt: number;
+  updatedAt: number;
 }
 
 // Connexion d'un élève ou d'un parent (lue par les professeurs de l'élève)
@@ -496,6 +516,7 @@ class FoxBoxDB extends Dexie {
   messages!: Table<Message, string>;
   messageReads!: Table<MessageRead, string>;
   visits!: Table<Visit, string>;
+  assessments!: Table<Assessment, string>;
 
   constructor() {
     super(ONLINE ? 'foxbox-online' : 'foxbox-v2');
@@ -541,6 +562,7 @@ class FoxBoxDB extends Dexie {
       messageReads: 'id',
     });
     this.version(11).stores({ visits: 'id, userId, *studentIds' });
+    this.version(12).stores({ assessments: 'id, studentId, date' });
   }
 }
 
