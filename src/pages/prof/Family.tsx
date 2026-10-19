@@ -31,7 +31,8 @@ export function Family() {
   const { family, flags, setFamily } = useNote(id!);
   const evals = useStudentEvals(id!);
   // Accès parents : proposés pour les élèves suivis en soutien (l'espace parents ne montre encore que le soutien)
-  const tutored = groups.some((g) => isTutoring(g));
+  const tutoring = groups.find((g) => isTutoring(g));
+  const tutored = !!tutoring;
   const parents = useLiveQuery(() => db.parents.where('studentIds').equals(id!).toArray(), [id], []);
   const log = useLiveQuery(
     async () => (await db.parentMessages.where('studentId').equals(id!).toArray()).sort((a, b) => b.date.localeCompare(a.date)),
@@ -168,10 +169,20 @@ export function Family() {
 
       <div className="panel stack">
         <div className="spread">
-          <h2 style={{ margin: 0 }}>Suivi des échanges</h2>
+          <div>
+            <h2 style={{ margin: 0 }}>Suivi des échanges</h2>
+            <span className="small muted">
+              <Icon name="lock" size={13} /> Votre journal privé (appels, mails, entretiens) : rien n'est envoyé aux parents.
+            </span>
+          </div>
           <div className="row" style={{ gap: 6 }}>
+            {tutoring && (
+              <Link className="btn small" to={`/prof/soutien/${tutoring.id}?onglet=messages`} title="Écrire aux parents ou à l'élève dans FoxBox">
+                <Icon name="message" size={16} /> Message FoxBox
+              </Link>
+            )}
             <button className="btn small primary" onClick={() => setEntry({ ...blank })}>
-              + Nouvelle entrée
+              + Noter un échange
             </button>
             <button className="btn small" disabled={!emails.length} title={emails.length ? '' : 'Ajoutez d’abord une adresse e-mail'} onClick={() => prefillMail(evals[0]?.ev!.id ?? '')}>
               <Icon name="mail" size={16} /> Écrire un mail
