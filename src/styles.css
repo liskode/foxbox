@@ -483,3 +483,6 @@ table.list tr.click:hover td { background: #faf7ef; }
 .bubble.mine { align-self: flex-end; background: #fdf0c4; border-radius: 12px 12px 4px 12px; }
 .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 0.7rem; font-weight: 900; }
 @media print { .statement { border: none; padding: 0; } }
+
+/* Espace élève : prochaine séance mise en avant */
+.panel.next-session { background: #fdf0c4; border: 2px solid var(--matiere); }

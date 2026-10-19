@@ -318,7 +318,7 @@ export interface TutoringSession {
   studentIds: string[]; // élèves présents
   unitIds: string[]; // points du programme travaillés (séquences ou séances de la progression, toutes matières)
   cardIds: string[]; // flashcards ajoutées pendant la séance
-  done: string; // ce qui a été fait
+  done: string; // contenu de la séance (prévu à l'avance, puis ce qui a été fait)
   homework: string; // travail pour la prochaine fois
   links: { url: string; label: string }[];
   createdAt: number;

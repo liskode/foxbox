@@ -13,7 +13,7 @@ import { RichText } from '../../components/CardFace';
 import { Avatar } from '../../components/Avatar';
 import { StudentReport } from '../../components/StudentReport';
 import { useNote } from '../../components/StudentNote';
-import { FileList, UploadButton, placeLabel, whenLabel } from '../../components/Soutien';
+import { FileList, UploadButton, isUpcoming, placeLabel, whenLabel } from '../../components/Soutien';
 import { showInfo } from '../../components/Dialog';
 import { toast } from '../../components/Toast';
 import { Icon } from '../../components/Icon';
@@ -149,6 +149,7 @@ function SessionsTab({ group }: { group: Group }) {
             <div className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
               <div className="row" style={{ gap: 8 }}>
                 <b>{whenLabel(s)}</b>
+                {isUpcoming(s) && <span className="tag warn">À venir</span>}
                 <span className="tag plain">
                   <Icon name={s.place === 'en ligne' ? 'laptop' : 'home'} size={13} /> {placeLabel(s)}
                 </span>

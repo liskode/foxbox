@@ -93,11 +93,18 @@ export function LinkList({ links }: { links: TutoringSession['links'] }) {
   );
 }
 
+// Une séance est « à venir » jusqu'à sa fin (heure de début + durée ; sans heure : jusqu'au soir)
+export function sessionEnd(s: TutoringSession) {
+  const [h, m] = (s.start ?? '23:59').split(':').map(Number);
+  return new Date(`${s.date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`).getTime() + (s.start ? s.duration * 60000 : 0);
+}
+export const isUpcoming = (s: TutoringSession) => sessionEnd(s) > Date.now();
+
 export const placeLabel = (s: TutoringSession) => (s.place === 'en ligne' ? 'En ligne' : 'À domicile');
 export const whenLabel = (s: TutoringSession) =>
   `${dayName(s.date)} ${frDate(s.date)}${s.start ? ` à ${s.start.replace(':', ' h ')}` : ''} · ${durationLabel(s.duration)}`;
 
-// Résumé d'une séance pour l'élève : ce qui a été fait, sa note, le travail, documents, liens
+// Résumé d'une séance pour l'élève : contenu de la séance, sa note, le travail, documents, liens
 export function SessionSummary({ session, studentId, units }: { session: TutoringSession; studentId: string; units: Unit[] }) {
   const note = useLiveQuery(() => db.sessionNotes.get(`${session.id}|${studentId}|eleve`), [session.id, studentId]);
   const files = useLiveQuery(() => db.tutoringFiles.where('sessionId').equals(session.id).sortBy('createdAt'), [session.id], []);

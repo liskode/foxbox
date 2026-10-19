@@ -1,4 +1,4 @@
-// Soutien scolaire : fiche d'une séance (quand, programme travaillé, ce qui a été fait, travail, notes, documents, liens, flashcards).
+// Soutien scolaire : fiche d'une séance (quand, programme travaillé, contenu de la séance, travail, notes, documents, liens, flashcards).
 // Tout est enregistré au fil de la saisie (en quittant un champ).
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -109,7 +109,13 @@ export function SoutienSession() {
 
       <ProgrammePicker group={group} s={s} />
 
-      <TextPanel title="Ce qui a été fait" icon="check" value={s.done} placeholder="Notions revues, exercices traités, difficultés rencontrées…" onSave={(done) => set({ done })} />
+      <TextPanel
+        title="Contenu de la séance"
+        icon="check"
+        value={s.done}
+        placeholder="Ce qui est prévu (à préparer, à apporter), puis ce qui a été fait : notions, exercices, difficultés…"
+        onSave={(done) => set({ done })}
+      />
 
       <div className="panel stack" style={{ gap: 8 }}>
         <TextBlock

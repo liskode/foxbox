@@ -4,7 +4,8 @@ import { useAuth } from '../../lib/auth';
 import { db, type Group } from '../../lib/db';
 import { tutoringsOf } from '../../lib/tutoring';
 import { frDate } from '../../lib/dates';
-import { FileList, SessionSummary, UploadButton, placeLabel, whenLabel, dayName } from '../../components/Soutien';
+import { FileList, SessionSummary, UploadButton, isUpcoming, placeLabel, whenLabel, dayName } from '../../components/Soutien';
+import { durationLabel } from '../../lib/tutoring';
 import { RichText } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
 import { Link } from 'react-router-dom';
@@ -45,7 +46,12 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
   );
   const waiting = useLiveQuery(() => db.tutoringFiles.where('groupId').equals(group.id).filter((f) => !f.sessionId).sortBy('createdAt'), [group.id], []);
   const units = useLiveQuery(() => db.units.toArray(), [], []);
-  const last = sessions?.find((s) => s.homework.trim());
+  // Séances à venir (la plus proche d'abord) et séances passées (la plus récente d'abord)
+  const upcoming = (sessions ?? []).filter(isUpcoming).reverse();
+  const past = (sessions ?? []).filter((s) => !isUpcoming(s));
+  const next = upcoming[0];
+  const last = past[0];
+  const note = useLiveQuery(async () => (last ? db.sessionNotes.get(`${last.id}|${studentId}|eleve`) : undefined), [last?.id, studentId]);
   const check = useLiveQuery(async () => (last ? db.homeworkChecks.get(`${last.id}|${studentId}`) : undefined), [last?.id, studentId]);
   if (!sessions) return null;
 
@@ -57,25 +63,54 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
   return (
     <>
       {showName && <h2 style={{ margin: '8px 0 0' }}>{group.name}</h2>}
-      {last && (
+      {next ? (
+        <div className="panel stack next-session" style={{ gap: 10 }}>
+          <h3 className="panel-title">
+            <Icon name="calendar" size={16} /> Prochaine séance
+          </h3>
+          <div style={{ fontSize: '1.25rem', fontWeight: 900, lineHeight: 1.25 }}>
+            {dayName(next.date)} {frDate(next.date)}
+            {next.start ? ` à ${next.start.replace(':', ' h ')}` : ''}
+          </div>
+          <span className="row small" style={{ gap: 6 }}>
+            {durationLabel(next.duration)} <span className="tag plain">{placeLabel(next)}</span>
+          </span>
+          <SessionSummary session={next} studentId={studentId} units={units} />
+        </div>
+      ) : (
+        <div className="panel calm small muted">Pas encore de prochaine séance prévue.</div>
+      )}
+
+      {last && (last.homework.trim() || note?.text.trim()) && (
         <div className="panel stack" style={{ gap: 10 }}>
           <h3 className="panel-title">
-            <Icon name="clipboard" size={16} /> Pour la prochaine fois
+            <Icon name="clipboard" size={16} /> Consignes de la dernière séance
           </h3>
-          <RichText text={last.homework} />
           <span className="small muted">
-            Donné le {dayName(last.date)} {frDate(last.date)}
+            Séance du {dayName(last.date)} {frDate(last.date)}
           </span>
-          <button className={'btn big' + (check?.done ? '' : ' primary')} onClick={toggle}>
-            <Icon name="check" /> {check?.done ? 'Travail fait (appuie pour annuler)' : "J'ai fait mon travail"}
-          </button>
+          {note?.text.trim() && (
+            <div className="panel note stack" style={{ gap: 4, padding: '10px 14px' }}>
+              <b className="small">Pour toi</b>
+              <RichText text={note.text} />
+            </div>
+          )}
+          {last.homework.trim() && (
+            <>
+              <b className="small">Travail à faire</b>
+              <RichText text={last.homework} />
+              <button className={'btn big' + (check?.done ? '' : ' primary')} onClick={toggle}>
+                <Icon name="check" /> {check?.done ? 'Travail fait (appuie pour annuler)' : "J'ai fait mon travail"}
+              </button>
+            </>
+          )}
         </div>
       )}
 
       <div className="panel stack" style={{ gap: 8 }}>
         <div className="spread">
           <h3 className="panel-title">
-            <Icon name="file" size={16} /> Pour la prochaine séance
+            <Icon name="file" size={16} /> Documents pour la prochaine séance
           </h3>
           <UploadButton groupId={group.id} authorId={studentId} byStudent label="Déposer" />
         </div>
@@ -86,10 +121,26 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
         )}
       </div>
 
-      <h2 style={{ margin: '8px 0 0' }}>Mes séances</h2>
-      {!sessions.length && <div className="notice">Aucune séance pour l'instant.</div>}
-      {sessions.map((s, i) => (
-        <details key={s.id} className="panel" open={i === 0}>
+      {upcoming.length > 1 && (
+        <>
+          <h2 style={{ margin: '8px 0 0' }}>Séances suivantes</h2>
+          {upcoming.slice(1).map((s) => (
+            <details key={s.id} className="panel">
+              <summary style={{ cursor: 'pointer', fontWeight: 800 }}>
+                {whenLabel(s)} <span className="tag plain">{placeLabel(s)}</span>
+              </summary>
+              <div style={{ marginTop: 10 }}>
+                <SessionSummary session={s} studentId={studentId} units={units} />
+              </div>
+            </details>
+          ))}
+        </>
+      )}
+
+      <h2 style={{ margin: '8px 0 0' }}>Séances passées</h2>
+      {!past.length && <div className="notice">Aucune séance pour l'instant.</div>}
+      {past.map((s) => (
+        <details key={s.id} className="panel">
           <summary style={{ cursor: 'pointer', fontWeight: 800 }}>
             {whenLabel(s)} <span className="tag plain">{placeLabel(s)}</span>
           </summary>
