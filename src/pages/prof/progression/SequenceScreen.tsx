@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ask } from '../../../components/Dialog';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { unitSubject } from '../../../lib/units';
 import { db, uid, SUBJECTS, type Group, type Unit, shortName } from '../../../lib/db';
 import { themesOf } from '../../../lib/themes';
 import { CardBrowser } from '../../../components/CardBrowser';
@@ -47,6 +48,24 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
       .filter((c) => c && !c.deleted)
       .map((c) => ({ card: c!, own: links.some((l) => l.cardId === c!.id && l.unitId === unit.id) }))
       .sort((a, b) => a.card.code.localeCompare(b.card.code));
+  }, [sel, units]);
+
+  // Flashcards déjà dans la progression de ce niveau (même matière) : grisées dans le choix, avec la séance où elles sont
+  const inProgression = useLiveQuery(async () => {
+    if (!unit) return new Map<string, string>();
+    const seqOf = (u: (typeof units)[number]) => (u.kind === 'sequence' ? u : units.find((x) => x.id === u.parentId));
+    const mine = seqOf(unit);
+    const same = units.filter((u) => {
+      const sq = seqOf(u);
+      return sq && sq.level === mine?.level && unitSubject(sq) === (mine ? unitSubject(mine) : '');
+    });
+    const byId = new Map(same.map((u) => [u.id, u]));
+    const m = new Map<string, string>();
+    for (const l of await db.unitCards.where('unitId').anyOf([...byId.keys()]).toArray()) {
+      const u = byId.get(l.unitId)!;
+      if (!m.has(l.cardId)) m.set(l.cardId, `déjà en ${u.code ?? u.name.slice(0, 20)}`);
+    }
+    return m;
   }, [sel, units]);
 
   // Écran d'un niveau : seules ses séquences sont listées (on peut masquer celles terminées par toutes les classes)
@@ -310,7 +329,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                       setPicked(n);
                     }}
                     onOpen={(c, ids) => (setSiblings(ids), setOpen(c.id))}
-                    exclude={new Set(cardsInUnit?.filter((x) => x.own).map((x) => x.card.id))}
+                    exclude={inProgression}
                   />
                 </div>
               ) : (

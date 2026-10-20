@@ -45,7 +45,7 @@ export function CardBrowser({
   onToggle?: (id: string) => void;
   onToggleMany?: (ids: string[], on: boolean) => void;
   onOpen?: (c: Card, ids: string[]) => void; // ids : flashcards affichées, dans l'ordre
-  exclude?: Set<string>; // flashcards déjà rattachées : affichées grisées, non cochables
+  exclude?: Set<string> | Map<string, string>; // flashcards déjà attribuées : affichées grisées, non cochables (Map : où elles le sont)
   onCreate?: () => void; // tuile « + » en fin de liste pour créer une flashcard
   onExport?: (cards: Card[]) => void; // export des flashcards affichées (filtres appliqués)
   subjects?: string[]; // matières proposées (toutes par défaut)
@@ -182,11 +182,11 @@ export function CardBrowser({
             key={c.id}
             className={'thumb' + (selected?.has(c.id) ? ' selected' : '') + (exclude?.has(c.id) ? ' linked' : '')}
             onClick={() => (exclude?.has(c.id) ? undefined : onToggle ? onToggle(c.id) : onOpen?.(c, list.map((x) => x.id)))}
-            title={exclude?.has(c.id) ? 'Déjà rattachée' : c.ocrFront || undefined}
+            title={exclude?.has(c.id) ? 'Déjà attribuée' : c.ocrFront || undefined}
           >
             <div className="bar" style={{ background: themeColor(c.theme) }} />
             {onToggle && <div className="check">{selected?.has(c.id) || exclude?.has(c.id) ? '✓' : ''}</div>}
-            {exclude?.has(c.id) && <span className="linked-tag">déjà rattachée</span>}
+            {exclude?.has(c.id) && <span className="linked-tag">{(exclude instanceof Map && exclude.get(c.id)) || 'déjà attribuée'}</span>}
             <div className="face">
               <CardFace html={c.front} />
             </div>

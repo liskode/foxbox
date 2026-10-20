@@ -415,6 +415,24 @@ function ProgrammePicker({ group, s }: { group: Group; s: TutoringSession }) {
 
 function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
   const cards = useLiveQuery(async () => (await db.cards.bulkGet(s.cardIds)).filter((c) => c && !c.deleted).map((c) => c!), [s.cardIds], []);
+  // Flashcards déjà données à l'élève (séances du suivi, points de la progression faits) : grisées dans le choix
+  const given = useLiveQuery(
+    async () => {
+      const m = new Map<string, string>();
+      for (const id of s.cardIds) m.set(id, 'dans cette séance');
+      const all = await db.tutoringSessions.where('groupId').equals(s.groupId).toArray();
+      for (const x of all.sort((a, b) => a.date.localeCompare(b.date)))
+        for (const id of x.cardIds) if (!m.has(id)) m.set(id, `déjà le ${x.date.slice(8, 10)}/${x.date.slice(5, 7)}`);
+      const unitIds = [...(await db.publications.where('groupId').equals(s.groupId).toArray()).map((p) => p.unitId), ...all.flatMap((x) => x.unitIds ?? [])];
+      for (const uid of new Set(unitIds)) {
+        const units = [uid, ...(await db.units.where('parentId').equals(uid).primaryKeys())];
+        for (const l of await db.unitCards.where('unitId').anyOf(units).toArray()) if (!m.has(l.cardId)) m.set(l.cardId, 'déjà attribuée');
+      }
+      return m;
+    },
+    [s.id, s.groupId, s.cardIds.join(',')],
+    new Map<string, string>(),
+  );
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<{ id: string; edit: boolean } | null>(null);
@@ -512,7 +530,7 @@ function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
             <CardBrowser
               picker
               selected={picked}
-              exclude={new Set(s.cardIds)}
+              exclude={given}
               onToggle={(cid) =>
                 setPicked((prev) => {
                   const n = new Set(prev);
