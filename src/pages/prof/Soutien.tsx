@@ -62,7 +62,7 @@ export function Soutien() {
           Aucun élève suivi pour l'instant. Un suivi réunit un élève (ou 2-3 élèves travaillant ensemble) et les matières travaillées.
         </div>
       )}
-      <div className="grid3">
+      <div className="stack" style={{ gap: 12 }}>
         {active.map(({ g }) => (
           <TutoringTile key={g.id} group={g} teacherId={session!.id} />
         ))}

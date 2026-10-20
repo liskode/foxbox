@@ -513,7 +513,15 @@ table.list tr.click:hover td { background: #faf7ef; }
 @media (max-width: 700px) { .tile-deadlines { border-left: none; padding-left: 0; border-top: 1.5px solid var(--soft-line); padding-top: 10px; } }
 .tile-deadline { display: flex; gap: 8px; align-items: flex-start; text-align: left; font: inherit; background: var(--calm); border: none; border-radius: 10px; padding: 6px 10px; cursor: pointer; color: var(--ink); }
 .tile-deadline.eval { background: var(--bad-bg); }
-.tile-deadline .icon { margin-top: 3px; }
+.tile-deadline .icon { margin-top: 0; }
+/* Cadre d'un suivi moins haut : une ligne par échéance, détail au survol */
+.tile-soutien { padding: 12px 18px; }
+.tile-main { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; }
+.tile-cards .heatmap .cell { width: 10px; height: 10px; }
+.tile-cards .heatmap, .tile-cards .heatmap .col { gap: 2px; }
+.tile-cards .boxes.compact { height: 74px; width: 190px; }
+.tile-deadline { align-items: center; padding: 4px 10px; white-space: nowrap; }
+.tile-deadlines { gap: 4px !important; }
 
 /* Travail à faire : réponses de l'élève */
 .hw-choice { border: none; cursor: pointer; font: inherit; font-weight: 800; font-size: 0.95rem; padding: 8px 14px; border-radius: 999px; white-space: normal; }
@@ -522,3 +530,4 @@ table.list tr.click:hover td { background: #faf7ef; }
 .stat-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
 .stat-row .panel { padding: 8px 12px; }
 .stat-n { font-size: 1.3rem; font-weight: 900; white-space: nowrap; }
+.tile-cards .legend { display: none; }

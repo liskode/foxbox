@@ -96,7 +96,9 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
         </div>
         {d && (
           <>
-            <div className="row" style={{ gap: 18 }}>
+            {/* Ordinateur : pictos, calendrier des révisions et boîtes sur une même ligne (cadre moins haut) */}
+            <div className="tile-main">
+            <div className="row" style={{ gap: 14 }}>
               <button className="tile-ind" title={d.unread ? `${d.unread} message(s) non lu(s)` : 'Messages'} onClick={go('messages')}>
                 <Icon name="mail" size={28} />
                 <Badge n={d.unread} />
@@ -131,6 +133,7 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
                 <Boxes dist={dist} compact />
               </div>
             ))}
+            </div>
             <span className="small muted">{d.done ? `${d.done} séance(s) faite(s) · ${durationLabel(d.minutes)}` : 'aucune séance faite'}</span>
           </>
         )}
@@ -140,13 +143,14 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
           <b className="small">Échéances</b>
           {!d.deadlines.length && <span className="small muted">Rien de prévu.</span>}
           {d.deadlines.map((x) => (
-            <button key={x.key} className={'tile-deadline ' + x.kind} onClick={go(x.kind === 'eval' ? 'evaluations' : 'seances')}>
+            <button
+              key={x.key}
+              className={'tile-deadline ' + x.kind}
+              onClick={go(x.kind === 'eval' ? 'evaluations' : 'seances')}
+              title={`${x.label} — ${x.what}`}
+            >
               <Icon name={x.kind === 'eval' ? 'alert' : 'calendar'} size={15} />
-              <span>
-                <b>{x.label}</b>
-                <br />
-                <span className="small">{x.what}</span>
-              </span>
+              <b>{x.label}</b>
             </button>
           ))}
         </div>
