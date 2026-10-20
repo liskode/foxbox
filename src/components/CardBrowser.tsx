@@ -63,6 +63,7 @@ export function CardBrowser({
   const [levels, setLevels] = useState<Set<string>>(new Set());
   const [tag, setTag] = useState('');
   const [orphans, setOrphans] = useState(false);
+  const [hover, setHover] = useState<string | null>(null); // écran de choix : verso au survol
 
   const allThemes = useMemo(
     () => ALL_THEMES.map(([, t]) => t).filter((t) => cards.some((c) => c.theme === t)),
@@ -182,13 +183,15 @@ export function CardBrowser({
             key={c.id}
             className={'thumb' + (selected?.has(c.id) ? ' selected' : '') + (exclude?.has(c.id) ? ' linked' : '')}
             onClick={() => (exclude?.has(c.id) ? undefined : onToggle ? onToggle(c.id) : onOpen?.(c, list.map((x) => x.id)))}
-            title={exclude?.has(c.id) ? 'Déjà attribuée' : c.ocrFront || undefined}
+            title={exclude?.has(c.id) ? 'Déjà attribuée' : onToggle ? undefined : c.ocrFront || undefined}
+            onMouseEnter={onToggle ? () => setHover(c.id) : undefined}
+            onMouseLeave={onToggle ? () => setHover(null) : undefined}
           >
             <div className="bar" style={{ background: themeColor(c.theme) }} />
             {onToggle && <div className="check">{selected?.has(c.id) || exclude?.has(c.id) ? '✓' : ''}</div>}
             {exclude?.has(c.id) && <span className="linked-tag">{(exclude instanceof Map && exclude.get(c.id)) || 'déjà attribuée'}</span>}
             <div className="face">
-              <CardFace html={c.front} />
+              <CardFace html={hover === c.id ? c.back : c.front} />
             </div>
             <div className="meta">
               <span className="code">{c.code}</span>

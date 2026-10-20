@@ -36,6 +36,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'durée de chaque séance',
       'descriptif et documents PDF téléchargeables par les élèves',
       'flashcards rattachées à chaque séance (au moment d’en ajouter, celles déjà dans la progression du niveau restent visibles, grisées, avec la séance où elles sont ; en soutien, celles déjà données à l’élève)',
+      'au moment de choisir des flashcards, verso affiché au survol de la souris',
       'case « faite » par classe à la date du cours, qui publie les flashcards',
       'message de confirmation avec « Annuler »',
       'dates prévues calculées d’après l’emploi du temps et le calendrier',
