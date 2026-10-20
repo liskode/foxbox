@@ -45,7 +45,7 @@ export function CardBrowser({
   onToggle?: (id: string) => void;
   onToggleMany?: (ids: string[], on: boolean) => void;
   onOpen?: (c: Card, ids: string[]) => void; // ids : flashcards affichées, dans l'ordre
-  exclude?: Set<string>;
+  exclude?: Set<string>; // flashcards déjà rattachées : affichées grisées, non cochables
   onCreate?: () => void; // tuile « + » en fin de liste pour créer une flashcard
   onExport?: (cards: Card[]) => void; // export des flashcards affichées (filtres appliqués)
   subjects?: string[]; // matières proposées (toutes par défaut)
@@ -78,7 +78,6 @@ export function CardBrowser({
   const words = tokens.filter((w) => !/[*?]/.test(w)).map(normalize).filter(Boolean);
   const patterns = tokens.filter((w) => /[*?]/.test(w)).map(wildcard);
   const list = cards
-    .filter((c) => !exclude?.has(c.id))
     .filter((c) => !themes.size || themes.has(c.theme ?? ''))
     .filter((c) => !levels.size || levels.has(c.level ?? ''))
     .filter((c) => !tag || c.tags.includes(tag))
@@ -99,7 +98,8 @@ export function CardBrowser({
     else n.add(t);
     setThemes(n);
   };
-  const allSelected = !!selected && list.length > 0 && list.every((c) => selected.has(c.id));
+  const pickable = list.filter((c) => !exclude?.has(c.id));
+  const allSelected = !!selected && pickable.length > 0 && pickable.every((c) => selected.has(c.id));
 
   return (
     <div className="stack">
@@ -169,8 +169,8 @@ export function CardBrowser({
             </button>
           )}
           {onToggleMany && (
-            <button className="btn small" onClick={() => onToggleMany(list.map((c) => c.id), !allSelected)} disabled={!list.length}>
-              {allSelected ? 'Tout décocher' : `Tout cocher (${list.length})`}
+            <button className="btn small" onClick={() => onToggleMany(pickable.map((c) => c.id), !allSelected)} disabled={!pickable.length}>
+              {allSelected ? 'Tout décocher' : `Tout cocher (${pickable.length})`}
             </button>
           )}
         </div>
@@ -180,12 +180,13 @@ export function CardBrowser({
         {list.map((c) => (
           <button
             key={c.id}
-            className={'thumb' + (selected?.has(c.id) ? ' selected' : '')}
-            onClick={() => (onToggle ? onToggle(c.id) : onOpen?.(c, list.map((x) => x.id)))}
-            title={c.ocrFront || undefined}
+            className={'thumb' + (selected?.has(c.id) ? ' selected' : '') + (exclude?.has(c.id) ? ' linked' : '')}
+            onClick={() => (exclude?.has(c.id) ? undefined : onToggle ? onToggle(c.id) : onOpen?.(c, list.map((x) => x.id)))}
+            title={exclude?.has(c.id) ? 'Déjà rattachée' : c.ocrFront || undefined}
           >
             <div className="bar" style={{ background: themeColor(c.theme) }} />
-            {onToggle && <div className="check">{selected?.has(c.id) ? '✓' : ''}</div>}
+            {onToggle && <div className="check">{selected?.has(c.id) || exclude?.has(c.id) ? '✓' : ''}</div>}
+            {exclude?.has(c.id) && <span className="linked-tag">déjà rattachée</span>}
             <div className="face">
               <CardFace html={c.front} />
             </div>

@@ -531,3 +531,8 @@ table.list tr.click:hover td { background: #faf7ef; }
 .stat-row .panel { padding: 8px 12px; }
 .stat-n { font-size: 1.3rem; font-weight: 900; white-space: nowrap; }
 .tile-cards .legend { display: none; }
+
+/* Choix de flashcards : celles déjà rattachées restent visibles, grisées */
+.thumb.linked { opacity: 0.45; cursor: default; filter: grayscale(0.6); }
+.thumb.linked .check { background: var(--soft-line); color: var(--ink-soft); }
+.linked-tag { position: absolute; top: 8px; right: 8px; z-index: 2; background: var(--ink); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 6px; }
