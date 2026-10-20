@@ -5,6 +5,9 @@
 - Vocabulaire de l'interface : « flashcard » (jamais « carte »), « séquence », « séance », « Évaluations ».
 - Données privées (notes, aménagements, famille, absences, notes de classe) : tables propres au professeur, protégées par les règles d'accès du serveur ; ne jamais les rendre lisibles aux élèves ni à d'autres professeurs.
 - Vérifier chaque modification dans la démo locale avant publication ; publier par `git push` (déploiement GitHub Pages).
+- **Nouvelle table Supabase** (à partir du 30/10/2026, Supabase ne donne plus automatiquement l'accès aux nouvelles tables) : dans la migration qui crée la table, toujours activer les règles d'accès (`alter table … enable row level security` + policies) **et** ajouter les droits explicites :
+  `grant select, insert, update, delete on public.ma_table to authenticated;` et `grant select, insert, update, delete on public.ma_table to service_role;`.
+  Pas de droit pour `anon` (FoxBox n'a besoin d'aucune lecture sans connexion). Sans ces lignes, l'appli reçoit « permission denied ».
 
 ## Charte graphique (maquette validée le 14/10/2026)
 
