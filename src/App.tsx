@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { HashRouter, Navigate, NavLink, Route, Routes, Link, useLocation } from 'react-router-dom';
+import { HashRouter, Navigate, NavLink, Route, Routes, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isClass, isTutoring, shortName } from './lib/db';
 import { AuthProvider, useAuth, homeOf } from './lib/auth';
@@ -14,12 +14,14 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { DialogHost } from './components/Dialog';
 import { ToastHost } from './components/Toast';
 import { Icon } from './components/Icon';
+import { isDemo } from './lib/demoMode';
 
 // Pages chargées à la demande : un élève ne télécharge pas la partie professeur (ni les outils d'import)
 const Timetable = lazy(() => import('./pages/prof/Timetable').then((m) => ({ default: m.Timetable })));
 const Competences = lazy(() => import('./pages/prof/Competences').then((m) => ({ default: m.Competences })));
 const Settings = lazy(() => import('./pages/prof/Settings').then((m) => ({ default: m.Settings })));
 const PlanScreen = lazy(() => import('./pages/prof/PlanScreen').then((m) => ({ default: m.PlanScreen })));
+const Demo = lazy(() => import('./pages/Demo').then((m) => ({ default: m.Demo })));
 const About = lazy(() => import('./pages/prof/About').then((m) => ({ default: m.About })));
 const Rooms = lazy(() => import('./pages/prof/Rooms').then((m) => ({ default: m.Rooms })));
 const Family = lazy(() => import('./pages/prof/Family').then((m) => ({ default: m.Family })));
@@ -201,6 +203,23 @@ function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }
   );
 }
 
+// Bandeau de la démo : rappel « rien n'est enregistré » et sortie
+function DemoBanner() {
+  const { logout } = useAuth();
+  const nav = useNavigate();
+  if (!isDemo()) return null;
+  return (
+    <div className="demo-banner noprint">
+      <span>
+        <b>Démo en lecture seule</b> — vous pouvez cliquer partout, rien n’est enregistré.
+      </span>
+      <button className="btn small" onClick={() => logout().then(() => nav('/demo'))}>
+        Changer de profil
+      </button>
+    </div>
+  );
+}
+
 function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children: ReactNode }) {
   const { session, ready, logout } = useAuth();
   const { pathname } = useLocation();
@@ -262,6 +281,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
   const badge = (to: string) => (to === badgeOn && unread > 0 ? <span className="badge">{unread}</span> : null);
   return (
     <div className={role !== 'prof' ? 'eleve-shell' + (pathname.startsWith('/eleve/revision') ? ' reviewing' : '') : undefined}>
+      <DemoBanner />
       <header className={'topbar noprint' + (role === 'prof' ? ' thin' : '')}>
         <Link to={role === 'prof' ? '/prof/about' : home} className="brand" title={role === 'prof' ? 'À propos de FoxBox' : 'Accueil'}>
           <img src="./logo.png" alt="FoxBox" />
@@ -334,6 +354,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/inscription" element={<Signup />} />
+          <Route path="/demo" element={<Demo />} />
           <Route path="/prof" element={<Shell role="prof"><Dashboard /></Shell>} />
           <Route path="/prof/flashcards" element={<Shell role="prof"><Flashcards /></Shell>} />
           <Route path="/prof/cartes" element={<Navigate to="/prof/flashcards" replace />} />

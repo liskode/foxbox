@@ -536,3 +536,11 @@ table.list tr.click:hover td { background: #faf7ef; }
 .thumb.linked { opacity: 0.45; cursor: default; filter: grayscale(0.6); }
 .thumb.linked .check { background: var(--soft-line); color: var(--ink-soft); }
 .linked-tag { position: absolute; top: 8px; right: 8px; z-index: 2; background: var(--ink); color: #fff; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 6px; }
+
+/* Démo */
+.demo-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px; align-items: start; }
+.demo-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--matiere); border: var(--border); display: flex; align-items: center; justify-content: center; }
+.demo-features { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--ink-soft); }
+.demo-banner { position: relative; z-index: 30; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+  background: var(--ink); color: #fff; padding: 6px 12px; font-size: 0.85rem; }
+.demo-banner .btn { color: var(--ink); }

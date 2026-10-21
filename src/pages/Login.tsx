@@ -60,6 +60,8 @@ export function Login() {
           Élève : utilise l'identifiant et le mot de passe donnés par ton professeur.
           <br />
           Professeur : <Link to="/inscription">créer mon compte</Link>
+          <br />
+          <Link to="/demo">Découvrir FoxBox (démo)</Link>
         </p>
       ) : (
       <div className="notice small" style={{ marginTop: 20 }}>

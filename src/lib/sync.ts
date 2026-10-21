@@ -5,6 +5,7 @@
 import Dexie, { type Transaction } from 'dexie';
 import { db } from './db';
 import { ONLINE, supabase } from './supabase';
+import { isDemo } from './demoMode';
 
 type Obj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -78,6 +79,7 @@ export function subscribeSync(l: Listener) {
 
 function enqueue(table: string, id: string, del: boolean) {
   if (!me) return; // aucune modification n'est notée hors session (ex. pendant la déconnexion)
+  if (isDemo()) return; // démo : on peut cliquer partout, rien n'est envoyé
   db.outbox.put({ key: `${table}|${id}`, table, id, del }).then(async () => {
     emit({ pending: await db.outbox.count() });
     schedulePush();

@@ -1,5 +1,64 @@
 // À propos : présentation de FoxBox et de ses fonctionnalités.
 // ⚠️ À tenir à jour à chaque ajout ou modification de fonctionnalité (voir CLAUDE.md).
+// Page « Démo » : ce que chaque profil peut découvrir (à tenir à jour avec les sections ci-dessous)
+export const DEMO_COLUMNS: { key: 'prof' | 'eleve' | 'soutien' | 'parent'; icon: string; title: string; sub: string; features: string[] }[] = [
+  {
+    key: 'prof',
+    icon: 'screen',
+    title: 'Professeur',
+    sub: 'Préparer, enseigner, suivre ses classes',
+    features: [
+      'tableau de bord : emploi du temps A / B, alertes, liste À faire',
+      'progression par niveau, séquences et séances, dates prévues selon l’emploi du temps',
+      'évaluations par critères et compétences, correction au clavier, résultats',
+      'flashcards : création (formules, images), import Anki et PDF, export Anki',
+      'classes : trombinoscope, plans de classe, appel, notes privées',
+      'fiches élèves : évaluations, compétences, absences, famille',
+      'module « Soutien » pour les cours particuliers : séances, programme, règlements, messagerie',
+    ],
+  },
+  {
+    key: 'eleve',
+    icon: 'cap',
+    title: 'Élève en classe',
+    sub: 'Réviser un peu chaque jour',
+    features: [
+      'révision quotidienne des flashcards par boîtes (objectif du jour)',
+      'pensé pour le téléphone : réponses sous le pouce',
+      'progrès : série, régularité, avancement',
+      'notes des évaluations et histogramme des compétences',
+      'documents de cours des séances faites',
+    ],
+  },
+  {
+    key: 'soutien',
+    icon: 'handshake',
+    title: 'Élève en soutien',
+    sub: 'Module « Soutien » : cours particuliers',
+    features: [
+      'prochaine séance : date, heure, contenu prévu, documents',
+      'travail à faire et bouton « Travail fait ? »',
+      'flashcards de chaque séance, à réviser chaque jour',
+      'dépôt de documents ou de photos',
+      'évaluations de son établissement : signaler un DS, suivre ses notes',
+      'messagerie avec le professeur',
+    ],
+  },
+  {
+    key: 'parent',
+    icon: 'family',
+    title: 'Parent',
+    sub: 'Suivre le soutien de son enfant',
+    features: [
+      'séances : contenu, travail donné et fait, documents',
+      'note du professeur pour les parents',
+      'évaluations, copies, notes et graphique de progression',
+      'règlements et relevé du mois',
+      'messagerie avec le professeur',
+    ],
+  },
+];
+
 const SECTIONS: { title: string; text: string; details: string[] }[] = [
   {
     title: 'Tableau de bord',
@@ -208,6 +267,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'salles',
       'référentiel de compétences',
       'modules à activer (soutien scolaire), coordonnées des relevés et attestations',
+      'démo en lecture seule : lien à partager, profils proposés (professeur, élève en classe, élève en soutien, parent), mot d’accueil, fermeture de la démo',
       'messages : votre photo ou logo, interlocuteurs de la famille et leur code (Mère M, Père P, Grand-mère GM…)',
       'notification par e-mail des nouveaux messages (professeur, élève, parents : chacun choisit)',
       'origines des flashcards (ER, MM…)',
@@ -255,7 +315,7 @@ export function About() {
           <h1 className="title" style={{ margin: 0 }}>
             FoxBox
           </h1>
-          <div className="muted">Révisions, progression, évaluations et suivi des élèves en physique-chimie — conçu par et pour un professeur.</div>
+          <div className="muted">Révisions, progression, évaluations et suivi des élèves, en classe et en cours particuliers — conçu par et pour un professeur.</div>
         </div>
       </div>
       {SECTIONS.map((s) => (

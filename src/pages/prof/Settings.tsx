@@ -10,6 +10,7 @@ import { usePhoto } from '../../components/Avatar';
 import { Groups } from './Groups';
 import { DEFAULT_ORIGINS, loadOrigins, type Origin } from '../../lib/cardCodes';
 import { Icon } from '../../components/Icon';
+import { DemoSettings } from '../../components/DemoSettings';
 
 export function Settings() {
   const { session, logout } = useAuth();
@@ -36,6 +37,7 @@ export function Settings() {
       </div>
       <ModulesPanel />
       <OriginsPanel />
+      <DemoSettings />
       <Groups embedded />
       <div className="panel spread">
         <span>

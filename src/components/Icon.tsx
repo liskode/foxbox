@@ -48,6 +48,7 @@ const PATHS: Record<string, string> = {
   message: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
   wallet: 'M3 7h18v13H3zM3 7l3-4h12l3 4M16 13h2',
   chevronDown: 'M6 9l6 6 6-6',
+  cap: 'M22 10 12 5 2 10l10 5 10-5zM6 12v5c3 2.5 9 2.5 12 0v-5M22 10v6',
   home: 'M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10',
   arrowLeft: 'M19 12H5M12 19l-7-7 7-7',
   arrowRight: 'M5 12h14M12 5l7 7-7 7',

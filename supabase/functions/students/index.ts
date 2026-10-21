@@ -29,6 +29,14 @@ Deno.serve(async (req) => {
     const { data: who } = await admin.auth.getUser(token);
     const uid = who.user?.id;
     if (!uid) return json({ error: 'Non connecté' }, 401);
+    // Démo en lecture seule : aucune action depuis une session de démo
+    try {
+      const sid = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).session_id;
+      const { data: demo } = await admin.from('demo_sessions').select('id').eq('id', sid).maybeSingle();
+      if (demo) return json({ error: 'Démo : rien n’est enregistré.' }, 403);
+    } catch {
+      /* jeton illisible : refusé plus haut par getUser */
+    }
     const { data: teacher } = await admin.from('teachers').select('school_id').eq('id', uid).eq('deleted', false).maybeSingle();
     if (!teacher) return json({ error: 'Réservé aux professeurs' }, 403);
 

@@ -8,6 +8,7 @@
 - **Nouvelle table Supabase** (à partir du 30/10/2026, Supabase ne donne plus automatiquement l'accès aux nouvelles tables) : dans la migration qui crée la table, toujours activer les règles d'accès (`alter table … enable row level security` + policies) **et** ajouter les droits explicites :
   `grant select, insert, update, delete on public.ma_table to authenticated;` et `grant select, insert, update, delete on public.ma_table to service_role;`.
   Pas de droit pour `anon` (FoxBox n'a besoin d'aucune lecture sans connexion). Sans ces lignes, l'appli reçoit « permission denied ».
+- **Démo en lecture seule** (lien `#/demo`, réglée dans Réglages › Démo) : toute nouvelle table doit aussi recevoir les 3 règles restrictives `demo_readonly_ins/upd/del` (`as restrictive … not public.is_demo_session()`, voir la migration `20261025000000_demo.sql`), et toute fonction serveur qui modifie des données doit refuser les sessions de `demo_sessions`.
 
 ## Charte graphique (maquette validée le 14/10/2026)
 

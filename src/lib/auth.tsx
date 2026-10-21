@@ -3,6 +3,7 @@ import { db } from './db';
 import { ONLINE, supabase, loginToEmail, normalizeLogin } from './supabase';
 import { startSync, stopSync } from './sync';
 import { stopVisits } from './visits';
+import { clearLocalData, isDemo, setDemoProfile, type DemoProfile } from './demoMode';
 
 export interface Session {
   role: 'prof' | 'eleve' | 'parent';
@@ -32,6 +33,7 @@ const Ctx = createContext<{
   session: Session | null;
   ready: boolean;
   login: (login: string, password: string) => Promise<Session | { error: string }>;
+  demoLogin: (profile: DemoProfile) => Promise<Session | { error: string }>;
   logout: () => Promise<void>;
 }>(null!);
 
@@ -79,6 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // Nouvelle connexion : rien d'une session précédente ne doit être envoyé au nom de ce compte
       await db.outbox.clear();
+      if (isDemo()) {
+        setDemoProfile(null);
+        await clearLocalData();
+      }
       const s = await roleOf(data.user.id);
       if (!s) {
         await supabase.auth.signOut();
@@ -107,6 +113,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return s;
   }
 
+  // Démo : session ouverte par le serveur sur le profil choisi, en lecture seule
+  async function demoLogin(profile: DemoProfile): Promise<Session | { error: string }> {
+    if (!ONLINE) return { error: 'Démo indisponible hors ligne.' };
+    const { data, error } = await supabase.functions.invoke('demo', { body: { action: 'login', profile } });
+    let msg = error?.message;
+    if (error) {
+      try {
+        msg = (await (error as { context?: Response }).context?.json())?.error ?? msg;
+      } catch {
+        /* message brut */
+      }
+      return { error: msg ?? 'Connexion impossible.' };
+    }
+    await stopSync();
+    await clearLocalData();
+    setDemoProfile(profile);
+    const { data: sd, error: e2 } = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+    const s = !e2 && sd.user ? await roleOf(sd.user.id) : null;
+    if (!s) {
+      setDemoProfile(null);
+      await supabase.auth.signOut();
+      return { error: 'Connexion impossible.' };
+    }
+    await startSync(s.id);
+    save(s);
+    setSession(s);
+    return s;
+  }
+
   async function logout() {
     stopVisits();
     if (ONLINE) {
@@ -115,9 +150,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setSession(null);
     save(null);
+    // Sortie de la démo : rien du profil ne reste dans ce navigateur
+    if (isDemo()) {
+      setDemoProfile(null);
+      await clearLocalData();
+    }
   }
 
-  return <Ctx.Provider value={{ session, ready, login, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ session, ready, login, demoLogin, logout }}>{children}</Ctx.Provider>;
 }
 
 export const useAuth = () => useContext(Ctx);
