@@ -93,7 +93,7 @@ export function SoutienGroup() {
           {students.map((s) => (
             <div key={s.id} className="stack" style={{ gap: 8 }}>
               {students.length > 1 && <h2 style={{ margin: 0 }}>{s.firstName}</h2>}
-              <StudentReport studentId={s.id} />
+              <StudentReport studentId={s.id} compact />
             </div>
           ))}
         </div>

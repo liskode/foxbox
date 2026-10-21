@@ -10,7 +10,40 @@ import { CardDetail } from './CardDetail';
 import { Icon } from './Icon';
 
 // teacherView : présentation compacte sur une ligne (réglages, chiffres, régularité, boîtes) ; settings : réglages à y insérer
-export function StudentReport({ studentId, teacherView = false, settings }: { studentId: string; teacherView?: boolean; settings?: ReactNode }) {
+// Séances de révision : révisions espacées de moins de 30 min regroupées ; les plus récentes d'abord
+function revisionSessions(reviews: { ts: number }[], max = 7) {
+  const ts = reviews.map((r) => r.ts).sort((a, b) => b - a);
+  const out: { start: number; n: number }[] = [];
+  for (const t of ts) {
+    const last = out[out.length - 1];
+    if (last && last.start - t < 30 * 60 * 1000) {
+      last.start = t;
+      last.n++;
+    } else {
+      if (out.length === max) break;
+      out.push({ start: t, n: 1 });
+    }
+  }
+  return out;
+}
+const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const when = (t: number) => {
+  const d = new Date(t);
+  return `${DAYS[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} · ${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
+// compact (soutien, vue professeur) : chiffres en pictos, régularité, boîtes et dernières révisions sur une ligne
+export function StudentReport({
+  studentId,
+  teacherView = false,
+  settings,
+  compact = false,
+}: {
+  studentId: string;
+  teacherView?: boolean;
+  settings?: ReactNode;
+  compact?: boolean;
+}) {
   const subjects = useLiveQuery(() => studentSubjects(studentId), [studentId], []);
   const [subject, setSubject] = useState<string | null>(null);
   const subj = subject ?? subjects[0];
@@ -46,7 +79,33 @@ export function StudentReport({ studentId, teacherView = false, settings }: { st
           ))}
         </div>
       )}
-      {teacherView ? (
+      {compact ? (
+        <div className="panel report-line">
+          <div className="report-stats">
+            <span title="Série en cours (jours de révision d'affilée)">
+              <Icon name="flame" size={22} /> <b>{streak(counts)} j</b>
+            </span>
+            <span title="Jours de révision sur les 30 derniers jours">
+              <Icon name="calendar" size={22} /> <b>{sum.activeDays} / 30</b>
+            </span>
+            <span title="Réussite sur les 30 derniers jours">
+              <Icon name="target" size={22} /> <b>{sum.total ? <Pct v={sum.success} /> : '—'}</b>
+            </span>
+          </div>
+          <div className="tile-cards">
+            <Heatmap counts={counts} weeks={20} />
+            <Boxes dist={data.dist} compact />
+          </div>
+          <div className="report-sessions" title="Dernières séances de révision">
+            {revisionSessions(data.reviews).map((x) => (
+              <span key={x.start} title={`${x.n} flashcard(s)`}>
+                {when(x.start)}
+              </span>
+            ))}
+            {!data.reviews.length && <span className="muted">Aucune révision pour l'instant.</span>}
+          </div>
+        </div>
+      ) : teacherView ? (
         <div className="row" style={{ gap: 12, alignItems: 'stretch' }}>
           {settings && (
             <div className="panel stack" style={{ gap: 6, padding: '12px 14px' }}>

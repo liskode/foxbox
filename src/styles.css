@@ -544,3 +544,10 @@ table.list tr.click:hover td { background: #faf7ef; }
 .demo-banner { position: relative; z-index: 30; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
   background: var(--ink); color: #fff; padding: 6px 12px; font-size: 0.85rem; }
 .demo-banner .btn { color: var(--ink); }
+
+/* Soutien › Flashcards : tout sur une ligne (pictos, régularité, boîtes, dernières révisions) */
+.report-line { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px; padding: 14px 18px; }
+.report-stats { display: flex; flex-direction: column; gap: 10px; }
+.report-stats span { display: flex; align-items: center; gap: 8px; font-size: 1rem; white-space: nowrap; }
+.report-sessions { display: flex; flex-direction: column; gap: 0; font-size: 0.7rem; line-height: 1.15; color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.report-sessions span:first-child { color: var(--ink); font-weight: 800; }
