@@ -126,7 +126,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { error: msg ?? 'Connexion impossible.' };
     }
+    // Une session déjà ouverte (compte réel ou autre profil de démo) est d'abord fermée
+    stopVisits();
     await stopSync();
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    setSession(null);
+    save(null);
     await clearLocalData();
     setDemoProfile(profile);
     const { data: sd, error: e2 } = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });

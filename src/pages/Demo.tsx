@@ -1,7 +1,8 @@
 // Page publique « Démo » : courte présentation, puis un profil à essayer par colonne (professeur, élève en classe,
 // élève en soutien, parent), avec ses fonctionnalités. Les profils sont choisis par le professeur dans ses Réglages.
 import { useEffect, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { isDemo } from '../lib/demoMode';
 import { supabase, ONLINE } from '../lib/supabase';
 import { homeOf, useAuth } from '../lib/auth';
 import { DEMO_COLUMNS } from './prof/About';
@@ -26,14 +27,15 @@ export function Demo() {
       .then(({ data }) => setInfo(data ?? { enabled: false, intro: '', profiles: {} }))
       .catch(() => setInfo({ enabled: false, intro: '', profiles: { prof: false, eleve: false, soutien: false, parent: false } }));
   }, []);
-  if (session) return <Navigate to={homeOf(session.role)} replace />;
+  const nav = useNavigate();
 
   async function open(p: DemoProfile) {
     setBusy(p);
     setErr('');
     const r = await demoLogin(p);
     setBusy(null);
-    if ('error' in r) setErr(r.error); // sinon : redirection vers la page d'arrivée du profil
+    if ('error' in r) setErr(r.error);
+    else nav(homeOf(r.role));
   }
 
   const cols = DEMO_COLUMNS.filter((c) => info?.profiles[c.key]);
@@ -65,6 +67,9 @@ export function Demo() {
         </div>
       )}
       {err && <div className="notice">{err}</div>}
+      {session && !isDemo() && info?.enabled && (
+        <div className="notice small">Vous êtes connecté(e) à votre compte : essayer un profil vous en déconnecte (reconnectez-vous ensuite normalement).</div>
+      )}
       {cols.length > 0 && (
         <div className="demo-cols">
           {cols.map((c) => (
