@@ -1,9 +1,10 @@
 // Statistiques d'un élève — partagé entre la vue professeur et la vue élève.
 import { useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { db, type Card } from '../lib/db';
+import { today } from '../lib/dates';
 import { boxDistribution, difficultForStudent, heatmapCounts, streak, summarize } from '../lib/stats';
-import { studentSubjects } from '../lib/leitner';
+import { availableCards, studentSubjects } from '../lib/leitner';
 import { Boxes, Heatmap, Pct, RateBar } from './widgets';
 import { CardFace } from './CardFace';
 import { CardDetail } from './CardDetail';
@@ -53,12 +54,25 @@ export function StudentReport({
     const dist = await boxDistribution(studentId, subj);
     const hard = difficultForStudent(reviews);
     const cards = await db.cards.bulkGet(hard.map((h) => h.cardId));
+    // Soutien : flashcards en cours (boîtes 1 à 7), avec leur prochaine date de révision
+    const byBox: { card: Card; due: string }[][] = [[], [], [], [], [], [], [], []];
+    if (compact) {
+      const avail = new Set((await availableCards(studentId, subj)).map((a) => a.cardId));
+      const scs = (await db.studentCards.where('studentId').equals(studentId).toArray()).filter((sc) => avail.has(sc.cardId) && sc.box > 0);
+      const cs = await db.cards.bulkGet(scs.map((sc) => sc.cardId));
+      scs.forEach((sc, i) => {
+        const c = cs[i];
+        if (c && !c.deleted) byBox[Math.min(7, sc.box)].push({ card: c, due: sc.due });
+      });
+      byBox.forEach((l) => l.sort((a, b) => a.due.localeCompare(b.due) || a.card.code.localeCompare(b.card.code)));
+    }
     return {
+      byBox,
       reviews,
       dist,
       hard: hard.map((h, i) => ({ agg: h, card: cards[i] })).filter((x) => x.card && !x.card.deleted),
     };
-  }, [studentId, subj]);
+  }, [studentId, subj, compact]);
   const [open, setOpen] = useState<string | null>(null);
 
   if (!subjects.length) return <div className="notice">Pas encore de classe : rien à afficher.</div>;
@@ -188,12 +202,43 @@ export function StudentReport({
           </div>
         </>
       )}
+      {compact && (
+        <div className="panel stack">
+          <h3 style={{ margin: 0 }}>Flashcards en cours ({data.byBox.reduce((a, l) => a + l.length, 0)})</h3>
+          {data.byBox.every((l) => !l.length) && <span className="muted">Aucune flashcard commencée pour l'instant.</span>}
+          {data.byBox.map(
+            (list, box) =>
+              list.length > 0 && (
+                <div key={box} className="stack" style={{ gap: 8 }}>
+                  <b className="small">
+                    Boîte {box} <span className="muted" style={{ fontWeight: 500 }}>· {list.length} flashcard(s)</span>
+                  </b>
+                  <div className="cardgrid">
+                    {list.map(({ card, due }) => (
+                      <div key={card.id} className="thumb" onClick={() => setOpen(card.id)}>
+                        <div className="face">
+                          <CardFace html={card.front} />
+                        </div>
+                        <div className="meta">
+                          <span className="code">{card.code}</span>
+                          <span className="small muted" title="Prochaine révision">
+                            {due <= today() ? 'à revoir' : `le ${due.slice(8, 10)}/${due.slice(5, 7)}`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ),
+          )}
+        </div>
+      )}
       <div className="panel stack">
         <h3 style={{ margin: 0 }}>Flashcards difficiles ({data.hard.length})</h3>
         {data.hard.length ? (
           <div className="cardgrid">
             {data.hard.slice(0, 18).map(({ agg, card }) => (
-              <div key={card!.id} className="thumb" onClick={() => teacherView && setOpen(card!.id)}>
+              <div key={card!.id} className="thumb" onClick={() => (teacherView || compact) && setOpen(card!.id)}>
                 <div className="face">
                   <CardFace html={card!.front} />
                 </div>
