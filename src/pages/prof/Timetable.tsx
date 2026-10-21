@@ -21,6 +21,7 @@ import {
 import { WeekGrid, groupOfSlot, useGroups, useTimetable } from '../../components/TimetableView';
 import { isStaleVersionError } from '../../components/UpdateBanner';
 import { Icon } from '../../components/Icon';
+import { TimeInput } from '../../components/TimeInput';
 
 const WEEK_COLORS = { A: '#f2c14e', B: '#7fb8e6' };
 
@@ -114,11 +115,11 @@ function SlotEditor({ slot, onSave, onDelete, onClose }: { slot: Slot; onSave: (
         </label>
         <label className="field">
           Début
-          <input type="time" value={s.start} onChange={(e) => set({ start: e.target.value })} />
+          <TimeInput value={s.start} onChange={(v) => set({ start: v })} />
         </label>
         <label className="field">
           Fin
-          <input type="time" value={s.end} onChange={(e) => set({ end: e.target.value })} />
+          <TimeInput value={s.end} onChange={(v) => set({ end: v })} />
         </label>
         <label className="field">
           Semaine

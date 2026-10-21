@@ -20,6 +20,7 @@ import { LineTag } from '../../components/Billing';
 import { markFilesSeen } from '../../components/TutoringTile';
 import { money, loadLedger } from '../../lib/billing';
 import { Icon } from '../../components/Icon';
+import { TimeInput } from '../../components/TimeInput';
 
 const DURATIONS = [30, 45, 60, 75, 90, 105, 120, 150, 180];
 const FORMULA_HINT = 'Formules entre $ … $ (ex. $\\frac{1}{2}mv^2$), gras entre ** … **';
@@ -62,7 +63,7 @@ export function SoutienSession() {
           </label>
           <label className="field">
             Heure
-            <input type="time" value={s.start ?? ''} step={300} onChange={(e) => set({ start: e.target.value || undefined })} />
+            <TimeInput value={s.start} step={300} onChange={(v) => set({ start: v || undefined })} />
           </label>
           <label className="field">
             Durée
