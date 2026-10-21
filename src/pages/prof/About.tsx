@@ -27,7 +27,7 @@ export const DEMO_COLUMNS: { key: 'prof' | 'eleve' | 'soutien' | 'parent'; icon:
       'pensé pour le téléphone : réponses sous le pouce',
       'progrès : série, régularité, avancement',
       'notes des évaluations et histogramme des compétences',
-      'documents de cours des séances faites',
+      'documents de cours des séances faites, et documents et liens de chaque séance de soutien (onglet Documents)',
     ],
   },
   {

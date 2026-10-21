@@ -226,8 +226,8 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
 
       <h2 style={{ margin: '8px 0 0' }}>Séances passées</h2>
       {!past.length && <div className="notice">Aucune séance pour l'instant.</div>}
-      {past.map((s) => (
-        <details key={s.id} className="panel">
+      {past.map((s, i) => (
+        <details key={s.id} className="panel" open={i === 0}>
           <summary style={{ cursor: 'pointer', fontWeight: 800 }}>
             {whenLabel(s)} <span className="tag plain">{placeLabel(s)}</span>
           </summary>
