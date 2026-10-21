@@ -4,6 +4,7 @@ import renderMathInElement from 'katex/contrib/auto-render';
 import 'katex/dist/katex.min.css';
 import { db } from '../lib/db';
 import { fetchMedia } from '../lib/sync';
+import { newlinesToBr } from '../lib/mathText';
 
 const urlCache = new Map<string, string>();
 
@@ -56,7 +57,7 @@ async function resolve(html: string): Promise<string> {
   // **mot** → gras
   let out = html.replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
   // Retours à la ligne tapés au clavier (sauf contenu HTML déjà mis en forme, ex. import Anki)
-  if (!/<(br|div|p|li|tr)\b/i.test(out)) out = out.replace(/\n/g, '<br>');
+  if (!/<(br|div|p|li|tr)\b/i.test(out)) out = newlinesToBr(out);
   for (const id of ids) {
     const u = await mediaUrl(id);
     // data-mid : permet de recharger l'image si l'affichage échoue

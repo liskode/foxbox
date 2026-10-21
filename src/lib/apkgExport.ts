@@ -8,6 +8,7 @@ import { fetchMedia } from './sync';
 import { ALL_THEMES } from './themes';
 import { byProgression } from './units';
 import type { Origin } from './cardCodes';
+import { newlinesToBr } from './mathText';
 
 export type ExportMode = 'niveau' | 'progression';
 
@@ -50,7 +51,7 @@ function themeName(c: Card) {
 // Texte FoxBox → HTML Anki : gras, retours à la ligne, formules ($…$ → \(…\)), images
 function toAnki(html: string, media: Map<string, string>) {
   let out = html.replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
-  if (!/<(br|div|p|li|tr)\b/i.test(out)) out = out.replace(/\n/g, '<br>');
+  if (!/<(br|div|p|li|tr)\b/i.test(out)) out = newlinesToBr(out);
   out = out.replace(/\$\$([\s\S]+?)\$\$/g, '\\[$1\\]').replace(/(^|[^\\])\$([^$\n]+?)\$/g, '$1\\($2\\)');
   return out.replace(/src="media:([^"]+)"/g, (_, id: string) => `src="${media.get(id) ?? ''}"`);
 }
