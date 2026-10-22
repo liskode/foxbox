@@ -12,7 +12,7 @@ import { Icon } from './Icon';
 
 // teacherView : présentation compacte sur une ligne (réglages, chiffres, régularité, boîtes) ; settings : réglages à y insérer
 // Séances de révision : révisions espacées de moins de 30 min regroupées ; les plus récentes d'abord
-function revisionSessions(reviews: { ts: number }[], max = 7) {
+export function revisionSessions(reviews: { ts: number }[], max = 7) {
   const ts = reviews.map((r) => r.ts).sort((a, b) => b - a);
   const out: { start: number; n: number }[] = [];
   for (const t of ts) {
@@ -28,7 +28,7 @@ function revisionSessions(reviews: { ts: number }[], max = 7) {
   return out;
 }
 const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-const when = (t: number) => {
+export const when = (t: number) => {
   const d = new Date(t);
   return `${DAYS[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} · ${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
 };
@@ -121,8 +121,8 @@ export function StudentReport({
           </div>
           <div className="report-sessions" title="Dernières séances de révision">
             {revisionSessions(data.reviews).map((x) => (
-              <span key={x.start} title={`${x.n} flashcard(s)`}>
-                {when(x.start)}
+              <span key={x.start} title={`${x.n} flashcard(s) révisée(s)`}>
+                {when(x.start)} · {x.n}
               </span>
             ))}
             {!data.reviews.length && <span className="muted">Aucune révision pour l'instant.</span>}

@@ -12,6 +12,7 @@ import { addDays, today } from '../lib/dates';
 import { Boxes, Heatmap } from './widgets';
 import { Icon } from './Icon';
 import { hLabel } from './Soutien';
+import { revisionSessions, when } from './StudentReport';
 
 // Documents déposés par l'élève : vus quand le professeur ouvre les séances du suivi
 export const filesSeenId = (teacherId: string, groupId: string) => `${teacherId}|files|${groupId}`;
@@ -52,7 +53,7 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
         const reviews = (await db.reviews.where('studentId').equals(s.id).toArray()).filter((r) => r.date >= since);
         const dist = [0, 0, 0, 0, 0, 0, 0, 0];
         for (const subj of await studentSubjects(s.id)) (await boxDistribution(s.id, subj)).forEach((n, i) => (dist[i] += n));
-        return { s, ledger, counts: heatmapCounts(reviews), dist };
+        return { s, ledger, counts: heatmapCounts(reviews), dist, sessions: revisionSessions(reviews) };
       }),
     );
     // Échéances : séances à venir et évaluations annoncées ; évaluations ajoutées ou modifiées depuis la dernière visite
@@ -126,11 +127,20 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
                 );
               })}
             </div>
-            {d.per.map(({ s, counts, dist }) => (
+            {d.per.map(({ s, counts, dist, sessions }) => (
               <div key={s.id} className="tile-cards" onClick={go('flashcards')} title="Flashcards">
                 {d.students.length > 1 && <b className="small">{s.firstName}</b>}
                 <Heatmap counts={counts} weeks={12} />
                 <Boxes dist={dist} compact />
+                {/* Dernières séances de révision : date, heure, nombre de flashcards */}
+                <div className="report-sessions" title="Dernières séances de révision (date, heure · flashcards)">
+                  {sessions.map((x) => (
+                    <span key={x.start}>
+                      {when(x.start)} · {x.n}
+                    </span>
+                  ))}
+                  {!sessions.length && <span className="muted">Aucune révision</span>}
+                </div>
               </div>
             ))}
             </div>
