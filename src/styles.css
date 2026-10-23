@@ -552,16 +552,20 @@ table.list tr.click:hover td { background: #faf7ef; }
 .report-sessions { display: flex; flex-direction: column; gap: 0; font-size: 0.7rem; line-height: 1.15; color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .report-sessions span:first-child { color: var(--ink); font-weight: 800; }
 
-/* Bandeau professeur : onglets Classes / Soutien (Soutien en gris, module à part) */
-.mode-tabs { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: var(--calm); border: 1.5px solid var(--soft-line); margin-right: 6px; flex: none; }
-.topbar .nav .mode-tabs a.mode-tab { padding: 3px 12px; border-radius: 999px; border: 2px solid transparent; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
-.topbar .nav .mode-tabs a.mode-tab.on { background: var(--matiere); border-color: var(--line); }
-.topbar .nav .mode-tabs a.mode-tab.soutien { background: #e1ded7; color: #4a4843; }
-.topbar .nav .mode-tabs a.mode-tab.soutien.on { background: #a8a49b; color: #fff; border-color: var(--line); }
-.topbar .nav a.nav-suivi { background: #e1ded7; }
-.topbar .nav a.nav-suivi.on { background: #a8a49b; color: #fff; }
-.menu-panel .mode-tabs { align-self: flex-start; margin: 4px 8px 8px; }
+/* Onglets façon navigateur au-dessus du bandeau professeur : Classes / Soutien (Soutien = un autre plan, en gris) */
+.btabs { display: flex; align-items: flex-end; gap: 4px; padding: 6px 12px 0; background: #d9d5cc; }
+.btab { display: inline-flex; align-items: center; gap: 8px; padding: 6px 18px 7px; min-width: 150px; border-radius: 10px 10px 0 0;
+  font-weight: 800; font-size: 0.9rem; text-decoration: none; color: #55534e; background: #c9c5bc; position: relative; }
+.btab img { width: 18px; height: 18px; object-fit: contain; }
+.btab:hover:not(.on) { background: #bfbbb2; }
+.btab.on { background: var(--paper); color: var(--ink); }
+.btab.soutien.on { background: #e3e0da; }
+.topbar.soutien-plane { background: #e3e0da; }
+.topbar .nav a.nav-suivi { background: var(--paper); }
+.topbar .nav a.nav-suivi.on { border-width: 2px; box-shadow: 2px 2px 0 var(--line); }
+.menu-panel .mode-tabs { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: var(--calm); border: 1.5px solid var(--soft-line); align-self: flex-start; margin: 4px 8px 8px; }
 .menu-panel .mode-tabs a.mode-tab { padding: 6px 16px; border-radius: 999px; border: 2px solid transparent; font-weight: 800; text-decoration: none; color: var(--ink); }
 .menu-panel .mode-tabs a.mode-tab.on { background: var(--matiere); border-color: var(--line); }
 .menu-panel .mode-tabs a.mode-tab.soutien { background: #e1ded7; }
 .menu-panel .mode-tabs a.mode-tab.soutien.on { background: #a8a49b; color: #fff; border-color: var(--line); }
+@media (max-width: 760px) { .btabs { display: none; } }

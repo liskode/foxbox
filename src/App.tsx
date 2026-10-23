@@ -139,7 +139,23 @@ function TopClassChips() {
   );
 }
 
-// Deux onglets en tête du bandeau : Classes (tout le reste) et Soutien (module à part, onglet gris)
+// Deux onglets façon navigateur au-dessus du bandeau : Classes (tout le reste) et Soutien (module à part, en gris)
+function BrowserTabs({ unread }: { unread: number }) {
+  const { pathname } = useLocation();
+  const soutienMode = pathname.startsWith('/prof/soutien');
+  return (
+    <div className="btabs noprint">
+      <Link to="/prof" className={'btab' + (soutienMode ? '' : ' on')}>
+        <img src="./logo.png" alt="" /> Classes
+      </Link>
+      <Link to="/prof/soutien" className={'btab soutien' + (soutienMode ? ' on' : '')}>
+        <Icon name="handshake" size={15} /> Soutien {unread > 0 && <span className="badge">{unread}</span>}
+      </Link>
+    </div>
+  );
+}
+
+// Même choix dans le menu du téléphone
 function ModeTabs({ unread }: { unread: number }) {
   const { pathname } = useLocation();
   const soutienMode = pathname.startsWith('/prof/soutien');
@@ -348,13 +364,13 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
   return (
     <div className={role !== 'prof' ? 'eleve-shell' + (pathname.startsWith('/eleve/revision') ? ' reviewing' : '') : undefined}>
       <DemoBanner />
-      <header className={'topbar noprint' + (role === 'prof' ? ' thin' : '')}>
+      {role === 'prof' && soutien && <BrowserTabs unread={unread} />}
+      <header className={'topbar noprint' + (role === 'prof' ? ' thin' : '') + (role === 'prof' && pathname.startsWith('/prof/soutien') ? ' soutien-plane' : '')}>
         <Link to={role === 'prof' ? '/prof/about' : home} className="brand" title={role === 'prof' ? 'À propos de FoxBox' : 'Accueil'}>
           <img src="./logo.png" alt="FoxBox" />
           {role !== 'prof' && <span>FoxBox</span>}
         </Link>
         <nav className="nav">
-          {role === 'prof' && soutien && <ModeTabs unread={unread} />}
           {role === 'prof' && pathname.startsWith('/prof/soutien') ? (
             <TopTutoringChips />
           ) : (
