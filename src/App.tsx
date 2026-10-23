@@ -139,8 +139,52 @@ function TopClassChips() {
   );
 }
 
+// Deux onglets en tête du bandeau : Classes (tout le reste) et Soutien (module à part, onglet gris)
+function ModeTabs({ unread }: { unread: number }) {
+  const { pathname } = useLocation();
+  const soutienMode = pathname.startsWith('/prof/soutien');
+  return (
+    <span className="mode-tabs">
+      <Link to="/prof" className={'mode-tab' + (soutienMode ? '' : ' on')}>
+        Classes
+      </Link>
+      <Link to="/prof/soutien" className={'mode-tab soutien' + (soutienMode ? ' on' : '')}>
+        Soutien {unread > 0 && <span className="badge">{unread}</span>}
+      </Link>
+    </span>
+  );
+}
+
+// Onglet Soutien : une pastille par suivi (accès direct)
+function TopTutoringChips() {
+  const groups = useLiveQuery(
+    async () => (await db.groups.filter((g) => !g.archived && isTutoring(g)).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr')),
+    [],
+    [],
+  );
+  const { pathname } = useLocation();
+  return (
+    <>
+      <NavLink to="/prof/soutien" end>
+        Suivis
+      </NavLink>
+      {groups.length > 0 && <span className="nav-sep" />}
+      {groups.map((g) => (
+        <Link
+          key={g.id}
+          to={`/prof/soutien/${g.id}`}
+          className={'chip cchip nav-class nav-suivi' + (pathname.startsWith(`/prof/soutien/${g.id}`) ? ' on' : '')}
+          title={g.name}
+        >
+          {g.name}
+        </Link>
+      ))}
+    </>
+  );
+}
+
 // Menu du professeur sur téléphone : un bouton « Menu » ouvre la liste des pages et des classes
-function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }) {
+function MobileMenu({ links, logout, soutien, unread }: { links: string[][]; logout: () => void; soutien: boolean; unread: number }) {
   const [open, setOpen] = useState(false);
   const { pathname, search } = useLocation();
   useEffect(() => setOpen(false), [pathname, search]);
@@ -149,7 +193,14 @@ function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }
     [],
     [],
   );
+  const tutoring = useLiveQuery(
+    async () => (await db.groups.filter((g) => !g.archived && isTutoring(g)).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr')),
+    [],
+    [],
+  );
+  const soutienMode = pathname.startsWith('/prof/soutien');
   const current =
+    (soutienMode ? tutoring.find((g) => pathname.startsWith(`/prof/soutien/${g.id}`))?.name ?? 'Soutien' : undefined) ??
     links.find(([to]) => to !== '/prof' && pathname.startsWith(to))?.[1] ??
     groups.find((g) => pathname.startsWith(`/prof/classes/${g.id}`))?.name.split('_')[0] ??
     (pathname === '/prof' ? 'Tableau de bord' : pathname.startsWith('/prof/reglages') ? 'Réglages' : '');
@@ -164,6 +215,20 @@ function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }
         <>
           <div className="menu-bg" onClick={() => setOpen(false)} />
           <div className="menu-panel">
+            {soutien && <ModeTabs unread={unread} />}
+            {soutienMode ? (
+              <>
+                <NavLink to="/prof/soutien" end className="menu-link">
+                  Suivis
+                </NavLink>
+                {tutoring.map((g) => (
+                  <NavLink key={g.id} to={`/prof/soutien/${g.id}`} className="menu-link">
+                    {g.name}
+                  </NavLink>
+                ))}
+              </>
+            ) : (
+              <>
             {links.map(([to, label]) => (
               <NavLink key={to} to={to} end={to === '/prof'} className="menu-link">
                 {label}
@@ -184,6 +249,8 @@ function MobileMenu({ links, logout }: { links: string[][]; logout: () => void }
                     </Link>
                   ))}
                 </div>
+              </>
+            )}
               </>
             )}
             <div className="menu-sub" />
@@ -256,7 +323,6 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
           ['/prof/correction', 'Évaluations'],
           ['/prof/flashcards', 'Flashcards'],
           ['/prof/eleves', 'Élèves'],
-          ...(soutien ? [['/prof/soutien', 'Soutien']] : []),
         ]
       : role === 'parent'
         ? [
@@ -288,6 +354,11 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
           {role !== 'prof' && <span>FoxBox</span>}
         </Link>
         <nav className="nav">
+          {role === 'prof' && soutien && <ModeTabs unread={unread} />}
+          {role === 'prof' && pathname.startsWith('/prof/soutien') ? (
+            <TopTutoringChips />
+          ) : (
+            <>
           {links.map(([to, label], i) =>
             to === '|' ? (
               <span key={i} className="nav-sep" />
@@ -302,8 +373,10 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
             ),
           )}
           {role === 'prof' && <TopClassChips />}
+            </>
+          )}
         </nav>
-        {role === 'prof' && <MobileMenu links={links} logout={logout} />}
+        {role === 'prof' && <MobileMenu links={links} logout={logout} soutien={soutien} unread={unread} />}
         <OcrBadge />
         {ONLINE && <SyncBadge />}
         {role === 'prof' ? (
