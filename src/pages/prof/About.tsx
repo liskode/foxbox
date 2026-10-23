@@ -211,7 +211,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
   },
   {
     title: 'Soutien scolaire',
-    text: 'Suivre des élèves en dehors de ses classes (cours particuliers), avec les mêmes outils : progression, flashcards, espace élève. Module à activer dans les Réglages ; il a son propre onglet gris « Soutien » dans le bandeau, à côté de « Classes ».',
+    text: 'Suivre des élèves en dehors de ses classes (cours particuliers), avec les mêmes outils : progression, flashcards, espace élève. Module à activer dans les Réglages.',
     details: [
       'accueil : un tableau de bord par suivi (messages non lus, documents déposés non vus, évaluations nouvelles, solde des règlements, régularité et boîtes des flashcards, dernières séances de révision (date, heure, nombre), échéances : séances et évaluations à venir)',
       'évaluations de l’élève dans son établissement : signalées par l’élève, un parent ou vous, avec programme, documents et note ; repérées dans l’onglet Programme',

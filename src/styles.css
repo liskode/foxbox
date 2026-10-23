@@ -551,17 +551,3 @@ table.list tr.click:hover td { background: #faf7ef; }
 .report-stats span { display: flex; align-items: center; gap: 8px; font-size: 1rem; white-space: nowrap; }
 .report-sessions { display: flex; flex-direction: column; gap: 0; font-size: 0.7rem; line-height: 1.15; color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .report-sessions span:first-child { color: var(--ink); font-weight: 800; }
-
-/* Bandeau professeur : onglets Classes / Soutien (Soutien en gris, module à part) */
-.mode-tabs { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border-radius: 999px; background: var(--calm); border: 1.5px solid var(--soft-line); margin-right: 6px; flex: none; }
-.topbar .nav .mode-tabs a.mode-tab { padding: 3px 12px; border-radius: 999px; border: 2px solid transparent; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
-.topbar .nav .mode-tabs a.mode-tab.on { background: var(--matiere); border-color: var(--line); }
-.topbar .nav .mode-tabs a.mode-tab.soutien { background: #e1ded7; color: #4a4843; }
-.topbar .nav .mode-tabs a.mode-tab.soutien.on { background: #a8a49b; color: #fff; border-color: var(--line); }
-.topbar .nav a.nav-suivi { background: #e1ded7; }
-.topbar .nav a.nav-suivi.on { background: #a8a49b; color: #fff; }
-.menu-panel .mode-tabs { align-self: flex-start; margin: 4px 8px 8px; }
-.menu-panel .mode-tabs a.mode-tab { padding: 6px 16px; border-radius: 999px; border: 2px solid transparent; font-weight: 800; text-decoration: none; color: var(--ink); }
-.menu-panel .mode-tabs a.mode-tab.on { background: var(--matiere); border-color: var(--line); }
-.menu-panel .mode-tabs a.mode-tab.soutien { background: #e1ded7; }
-.menu-panel .mode-tabs a.mode-tab.soutien.on { background: #a8a49b; color: #fff; border-color: var(--line); }
