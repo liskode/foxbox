@@ -26,7 +26,7 @@ export function StatsTab({ groupId }: { groupId: string }) {
       <div className="grid2">
         <div className="panel stack">
           <h3 style={{ margin: 0 }}>Régularité de la classe</h3>
-          <Heatmap counts={heatmapCounts(data.reviews)} weeks={16} />
+          <Heatmap counts={heatmapCounts(data.reviews)} />
         </div>
         <div className="panel stack">
           <h3 className="panel-title"><Icon name="alert" size={16} /> À relancer ({dropped.length})</h3>

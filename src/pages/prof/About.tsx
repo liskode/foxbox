@@ -151,6 +151,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'export pour Anki (.apkg) des flashcards affichées, rangées par niveau › thème › origine ou par niveau › séquence › séance',
       'lecture automatique du texte des images pour la recherche',
       'statistiques par classe : flashcards difficiles, régularité, classement',
+      'calendrier de régularité : 7 semaines, une ligne par semaine, du lundi au dimanche (la semaine en cours en bas)',
     ],
   },
   {

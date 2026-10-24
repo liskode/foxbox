@@ -130,7 +130,7 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
             {d.per.map(({ s, counts, dist, sessions }) => (
               <div key={s.id} className="tile-cards" onClick={go('flashcards')} title="Flashcards">
                 {d.students.length > 1 && <b className="small">{s.firstName}</b>}
-                <Heatmap counts={counts} weeks={12} />
+                <Heatmap counts={counts} />
                 <Boxes dist={dist} compact />
                 {/* Dernières séances de révision : date, heure, nombre de flashcards */}
                 <div className="report-sessions" title="Dernières séances de révision (date, heure · flashcards)">

@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { addDays, fromISO, today, frDate } from '../lib/dates';
 import type { CardAgg } from '../lib/stats';
 
@@ -28,43 +27,38 @@ export const themeColor = (t?: string) =>
 
 const SHADES = ['#e9e5dc', '#c8eadf', '#95d6c3', '#5fbfa4', '#2f8f75'];
 
-// Damier de régularité façon Anki : une colonne par semaine, du lundi au dimanche.
-export function Heatmap({ counts, weeks = 20 }: { counts: Map<string, number>; weeks?: number }) {
+// Calendrier de régularité : une ligne par semaine (la plus ancienne en haut, la semaine en cours en bas),
+// 7 colonnes du lundi au dimanche ; se lit de gauche à droite, ligne par ligne.
+export function Heatmap({ counts, weeks = 7 }: { counts: Map<string, number>; weeks?: number }) {
   const end = today();
-  const endDate = fromISO(end);
-  const dow = (endDate.getDay() + 6) % 7; // lundi = 0
+  const dow = (fromISO(end).getDay() + 6) % 7; // lundi = 0
   const start = addDays(end, -dow - 7 * (weeks - 1));
   const max = Math.max(1, ...counts.values());
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    // Sur petit écran, afficher d'abord les semaines les plus récentes
-    if (ref.current) ref.current.scrollLeft = ref.current.scrollWidth;
-  }, []);
-  const cols = [];
-  for (let w = 0; w < weeks; w++) {
-    const cells = [];
+  const cells = [];
+  for (let w = 0; w < weeks; w++)
     for (let d = 0; d < 7; d++) {
       const day = addDays(start, w * 7 + d);
       const n = counts.get(day) ?? 0;
       const level = n === 0 ? 0 : Math.min(4, 1 + Math.floor((n / max) * 3.999));
       cells.push(
         <div
-          key={d}
-          className="cell"
+          key={day}
+          className={'cell' + (day === end ? ' today' : '')}
           title={`${frDate(day)} : ${n} flashcard${n > 1 ? 's' : ''}`}
           style={{ background: day > end ? 'transparent' : SHADES[level] }}
         />,
       );
     }
-    cols.push(
-      <div key={w} className="col">
-        {cells}
-      </div>,
-    );
-  }
   return (
     <div>
-      <div className="heatmap" ref={ref}>{cols}</div>
+      <div className="heatmap heatmap7">
+        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((l, i) => (
+          <span key={i} className="day">
+            {l}
+          </span>
+        ))}
+        {cells}
+      </div>
       <div className="legend">
         Moins {SHADES.map((c) => <div key={c} className="cell" style={{ width: 11, height: 11, borderRadius: 3, background: c }} />)} Plus
       </div>

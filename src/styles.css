@@ -551,3 +551,8 @@ table.list tr.click:hover td { background: #faf7ef; }
 .report-stats span { display: flex; align-items: center; gap: 8px; font-size: 1rem; white-space: nowrap; }
 .report-sessions { display: flex; flex-direction: column; gap: 0; font-size: 0.7rem; line-height: 1.15; color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .report-sessions span:first-child { color: var(--ink); font-weight: 800; }
+
+/* Calendrier de régularité : 7 colonnes (lundi → dimanche), une ligne par semaine */
+.heatmap.heatmap7 { display: grid; grid-template-columns: repeat(7, auto); justify-content: start; gap: 3px; overflow: visible; }
+.heatmap7 .day { font-size: 0.65rem; font-weight: 800; color: var(--ink-soft); text-align: center; line-height: 1; }
+.heatmap7 .cell.today { outline: 2px solid var(--ink); outline-offset: 1px; }

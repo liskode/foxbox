@@ -116,7 +116,7 @@ export function StudentReport({
             </span>
           </div>
           <div className="tile-cards">
-            <Heatmap counts={counts} weeks={20} />
+            <Heatmap counts={counts} />
             <Boxes dist={data.dist} compact />
           </div>
           <div className="report-sessions" title="Dernières séances de révision">
