@@ -269,7 +269,15 @@ export function StudentReport({
           <span className="muted">Aucune flashcard difficile pour l'instant.</span>
         )}
       </div>
-      {open && <CardDetail cardId={open} onClose={() => setOpen(null)} />}
+      {open && (
+        <CardDetail
+          key={open}
+          cardId={open}
+          siblings={[...(data.byBox ? [...data.byBox.slice(1), data.byBox[0]].flat().map((x) => x.card.id) : []), ...data.hard.slice(0, 18).map((x) => x.card!.id)].filter((id, i, a) => a.indexOf(id) === i)}
+          onNavigate={(id) => setOpen(id)}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </div>
   );
 }

@@ -118,7 +118,15 @@ export function StatsTab({ groupId }: { groupId: string }) {
           </table>
         </div>
       </div>
-      {open && <CardDetail cardId={open} onClose={() => setOpen(null)} />}
+      {open && (
+        <CardDetail
+          key={open}
+          cardId={open}
+          siblings={(cards ?? []).slice(0, 12).filter(Boolean).map((c) => c!.id)}
+          onNavigate={(id) => setOpen(id)}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </div>
   );
 }

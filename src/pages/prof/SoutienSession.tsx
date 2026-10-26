@@ -436,7 +436,8 @@ function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
   );
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [open, setOpen] = useState<{ id: string; edit: boolean } | null>(null);
+  // ids : flashcards de la liste d'où l'on vient, pour passer à la précédente / suivante (◀ ▶)
+  const [open, setOpen] = useState<{ id: string; edit: boolean; ids?: string[] } | null>(null);
   const set = (cardIds: string[]) => db.tutoringSessions.update(s.id, { cardIds });
 
   async function create(subject: string, level: string) {
@@ -456,7 +457,7 @@ function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
       ocrDone: true,
     });
     await set([...s.cardIds, id]);
-    setOpen({ id, edit: true });
+    setOpen({ id, edit: true, ids: [...cards.map((c) => c.id), id] });
   }
 
   return (
@@ -479,7 +480,7 @@ function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
       {cards.length ? (
         <div className="cardgrid">
           {cards.map((c) => (
-            <div key={c.id} className="thumb" onClick={() => setOpen({ id: c.id, edit: false })}>
+            <div key={c.id} className="thumb" onClick={() => setOpen({ id: c.id, edit: false, ids: cards.map((x) => x.id) })}>
               <div className="bar" style={{ background: themeColor(c.theme) }} />
               <div className="face">
                 <CardFace html={c.front} />
@@ -547,12 +548,21 @@ function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
                   return n;
                 })
               }
-              onOpen={(c) => setOpen({ id: c.id, edit: false })}
+              onOpen={(c, ids) => setOpen({ id: c.id, edit: false, ids })}
             />
           </div>
         </>
       )}
-      {open && <CardDetail key={open.id} cardId={open.id} startEditing={open.edit} onClose={() => setOpen(null)} />}
+      {open && (
+        <CardDetail
+          key={open.id}
+          cardId={open.id}
+          startEditing={open.edit}
+          siblings={open.ids}
+          onNavigate={(id, edit) => setOpen({ ...open, id, edit })}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </div>
   );
 }

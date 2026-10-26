@@ -146,7 +146,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'gras (**mot**), italique, souligné',
       'formules LaTeX entre $ … $',
       'images : fichier, lien internet, collage ou glisser-déposer, sans doublon',
-      'flashcard précédente ou suivante avec ← →',
+      'flashcard précédente ou suivante avec ← → (◀ ▶), partout où une flashcard s’ouvre : liste, séquence, séance de soutien, fiche élève, statistiques',
       'import de paquets Anki et de planches PDF recto / verso, avec annulation',
       'export pour Anki (.apkg) des flashcards affichées, rangées par niveau › thème › origine ou par niveau › séquence › séance',
       'lecture automatique du texte des images pour la recherche',
