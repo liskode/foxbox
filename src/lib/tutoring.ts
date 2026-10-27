@@ -186,3 +186,12 @@ export function sessionEnd(s: TutoringSession) {
   return zonedToUtc(s.date, s.start, zone) + s.duration * 60000;
 }
 export const isUpcoming = (s: TutoringSession) => sessionEnd(s) > Date.now();
+
+// Suspendre une flashcard pour un élève (elle sort de ses révisions, garde sa boîte) ou la reprendre
+export async function setSuspended(studentId: string, cardId: string, on: boolean) {
+  for (const g of await tutoringsOf(studentId)) {
+    const cur = g.suspended?.[studentId] ?? [];
+    const next = on ? [...new Set([...cur, cardId])] : cur.filter((x) => x !== cardId);
+    await db.groups.update(g.id, { suspended: { ...(g.suspended ?? {}), [studentId]: next } });
+  }
+}

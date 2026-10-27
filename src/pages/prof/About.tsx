@@ -219,6 +219,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'fuseaux horaires : séances à l’heure locale de l’élève et des parents, et double heure pour vous (« 16 h (10 h à Ottawa) »)',
       'un suivi par élève, ou pour 2-3 élèves ensemble (binôme, frères et sœurs)',
       'onglet Flashcards : série, jours et réussite, régularité, boîtes et 7 dernières séances de révision (date, heure) sur une ligne, puis toutes les flashcards en cours, boîte par boîte (de 1 à 7), et celles en attente (pas encore vues)',
+      'suspendre une flashcard pour un élève : elle sort de ses révisions sans être supprimée, et reprend plus tard dans sa boîte',
       'une ou plusieurs matières, chacune avec son niveau (du collège à la Terminale)',
       'un élève déjà dans une classe garde le même compte',
       'séances : date, heure, durée, à domicile ou en ligne',

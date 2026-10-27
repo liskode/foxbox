@@ -9,6 +9,8 @@ import { Boxes, Heatmap, Pct, RateBar } from './widgets';
 import { CardFace } from './CardFace';
 import { CardDetail } from './CardDetail';
 import { Icon } from './Icon';
+import { toast } from './Toast';
+import { setSuspended, tutoringsOf } from '../lib/tutoring';
 
 // teacherView : présentation compacte sur une ligne (réglages, chiffres, régularité, boîtes) ; settings : réglages à y insérer
 // Séances de révision : révisions espacées de moins de 30 min regroupées ; les plus récentes d'abord
@@ -75,13 +77,21 @@ export function StudentReport({
       });
       byBox.slice(1).forEach((l) => l.sort((a, b) => a.due.localeCompare(b.due) || a.card.code.localeCompare(b.card.code)));
     }
+    // Flashcards suspendues pour cet élève (soutien) : hors révisions, avec la boîte où elles en sont
+    const suspended: { card: Card; box: number }[] = [];
+    if (compact) {
+      const ids = [...new Set((await tutoringsOf(studentId)).flatMap((g) => g.suspended?.[studentId] ?? []))];
+      const cs = await db.cards.bulkGet(ids);
+      for (const c of cs) if (c && !c.deleted && (c.subject === subj || subjects.length < 2)) suspended.push({ card: c, box: (await db.studentCards.get(`${studentId}|${c.id}`))?.box ?? 0 });
+    }
     return {
       byBox,
+      suspended,
       reviews,
       dist,
       hard: hard.map((h, i) => ({ agg: h, card: cards[i] })).filter((x) => x.card && !x.card.deleted),
     };
-  }, [studentId, subj, compact]);
+  }, [studentId, subj, compact, subjects.length]);
   const [open, setOpen] = useState<string | null>(null);
 
   if (!subjects.length) return <div className="notice">Pas encore de classe : rien à afficher.</div>;
@@ -240,6 +250,19 @@ export function StudentReport({
                           <span className="small muted" title="Prochaine révision">
                             {!due ? 'nouvelle' : due <= today() ? 'à revoir' : `le ${due.slice(8, 10)}/${due.slice(5, 7)}`}
                           </span>
+                          <span
+                            className="small"
+                            style={{ textDecoration: 'underline', marginLeft: 'auto' }}
+                            title="Sortir cette flashcard de ses révisions, sans la supprimer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSuspended(studentId, card.id, true).then(() =>
+                                toast(`Flashcard ${card.code} suspendue`, { undo: () => setSuspended(studentId, card.id, false) }),
+                              );
+                            }}
+                          >
+                            suspendre
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -247,6 +270,40 @@ export function StudentReport({
                 </div>
               ),
           )}
+        </div>
+      )}
+      {compact && data.suspended.length > 0 && (
+        <div className="panel calm stack">
+          <h3 style={{ margin: 0 }}>
+            Suspendues ({data.suspended.length})
+            <span className="muted small" style={{ fontWeight: 600 }}>
+              {' '}
+              · hors de ses révisions ; elles reprennent dans leur boîte
+            </span>
+          </h3>
+          <div className="cardgrid">
+            {data.suspended.map(({ card, box }) => (
+              <div key={card.id} className="thumb" style={{ opacity: 0.75 }} onClick={() => setOpen(card.id)}>
+                <div className="face">
+                  <CardFace html={card.front} />
+                </div>
+                <div className="meta">
+                  <span className="code">{card.code}</span>
+                  <span className="small muted">{box ? `boîte ${box}` : 'pas encore vue'}</span>
+                  <span
+                    className="small"
+                    style={{ textDecoration: 'underline', marginLeft: 'auto' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSuspended(studentId, card.id, false).then(() => toast(`Flashcard ${card.code} reprise`, { undo: () => setSuspended(studentId, card.id, true) }));
+                    }}
+                  >
+                    reprendre
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       <div className="panel stack">
