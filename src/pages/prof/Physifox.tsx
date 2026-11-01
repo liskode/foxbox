@@ -146,17 +146,39 @@ function ChapterEditor({ ch, notions, onClose }: { ch: PfChapter; notions: PfNot
   const unplaced = items.filter((x) => !placed.has(x.key));
   const [openCard, setOpenCard] = useState<{ id: string; edit: boolean } | null>(null);
   const [openDraft, setOpenDraft] = useState<string | null>(null);
+  const [linking, setLinking] = useState<string | null>(null);
   const draft = items.find((x) => x.draft?.id === openDraft)?.draft;
   function place(key: string, target: string) {
     const without = (s: PfSection) => (s.cardIds ?? []).filter((k) => keyOf(k) !== key);
     save({ sections: ch.sections.map((s) => (s.cardIds?.length || s.id === target ? { ...s, cardIds: s.id === target ? [...without(s), key] : without(s) } : s)) });
   }
-  // Nouvelle flashcard : rangée dans la notion la plus présente sous cette partie, visible dès qu'elle est enregistrée
-  async function addCard(s: PfSection) {
+  // Notion la plus présente sous cette partie : c'est là qu'on range une flashcard ajoutée ou rattachée
+  async function notionOf(s: PfSection) {
     const links = await db.pfCardNotions.where('notionId').anyOf(ch.notionIds).toArray();
     const here = new Set(sectionItems(s).map((x) => x.key));
     const tally = ch.notionIds.map((n) => [n, links.filter((l) => l.notionId === n && here.has(l.cardId)).length] as const);
-    const notionId = tally.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+    return tally.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+  }
+  // Flashcard existante : elle n'est pas modifiée. Déjà dans le chapitre, elle change simplement de partie.
+  async function attach(s: PfSection, card: Card) {
+    const before = ch.sections;
+    const inChapter = items.some((x) => x.key === card.id);
+    const linkId = inChapter ? null : `${await notionOf(s)}|${card.id}`;
+    if (linkId) await db.pfCardNotions.put({ id: linkId, notionId: linkId.split('|')[0], cardId: card.id });
+    await save({ sections: ch.sections.map((x) => {
+      const rest = (x.cardIds ?? []).filter((k) => keyOf(k) !== card.id);
+      return x.id === s.id ? { ...x, cardIds: [...rest, card.id] } : x.cardIds ? { ...x, cardIds: rest } : x;
+    }) });
+    toast('Flashcard rattachée à cette partie', {
+      undo: () => {
+        if (linkId) db.pfCardNotions.delete(linkId);
+        save({ sections: before });
+      },
+    });
+  }
+  // Nouvelle flashcard : visible dès qu'elle est enregistrée
+  async function addCard(s: PfSection) {
+    const notionId = await notionOf(s);
     const now = Date.now();
     const base = { level: ch.level, theme: ch.theme, origin: 'ER' };
     const card: Card = { id: uid(), code: await cardCode(base), ...base, subject: SUBJECTS[0], tags: [], front: '', back: '', createdAt: now, updatedAt: now };
@@ -253,8 +275,12 @@ function ChapterEditor({ ch, notions, onClose }: { ch: PfChapter; notions: PfNot
             <div className="panel calm stack pf-sc" style={{ gap: 8 }}>
               <div className="spread">
                 <b className="small">{sectionItems(s).length ? `Flashcards de cette partie (${sectionItems(s).length})` : 'Aucune flashcard sur cette partie'}</b>
-                <button className="btn small" onClick={() => addCard(s)}><Icon name="plus" size={14} /> Ajouter une flashcard</button>
+                <div className="row" style={{ gap: 8 }}>
+                  <button className="btn small" onClick={() => setLinking(linking === s.id ? null : s.id)}><Icon name="link" size={14} /> Rattacher une flashcard</button>
+                  <button className="btn small" onClick={() => addCard(s)}><Icon name="plus" size={14} /> Ajouter une flashcard</button>
+                </div>
               </div>
+              {linking === s.id && <CardSearch exclude={sectionItems(s).map((x) => x.key)} level={ch.level} onPick={(c) => attach(s, c)} onClose={() => setLinking(null)} />}
               {list(sectionItems(s), s.id)}
             </div>
           </div>
@@ -294,6 +320,38 @@ function ChapterEditor({ ch, notions, onClose }: { ch: PfChapter; notions: PfNot
         <div className="panel-title">Notions et flashcards rattachées</div>
         {own.map((n) => <NotionCards key={n.id} notion={n} />)}
       </div>
+    </div>
+  );
+}
+
+// Recherche dans toutes les flashcards par mot, code ou texte lu dans les images ; celles du niveau du chapitre d'abord
+function CardSearch({ exclude, level, onPick, onClose }: { exclude: string[]; level: string; onPick: (c: Card) => void; onClose: () => void }) {
+  const [q, setQ] = useState('');
+  const found = useLiveQuery(async () => {
+    const words = folded(q).split(/\s+/).filter(Boolean);
+    if (!words.length) return [];
+    const hay = (c: Card) => folded(`${c.code} ${c.sourceRef ?? ''} ${(c.aliases ?? []).join(' ')} ${c.front} ${c.back} ${c.ocrFront ?? ''} ${c.ocrBack ?? ''}`.replace(/<[^>]+>/g, ' '));
+    const all = await db.cards.filter((c) => !c.deleted && !exclude.includes(c.id) && words.every((w) => hay(c).includes(w))).toArray();
+    return all.sort((a, b) => Number(b.level === level) - Number(a.level === level) || a.code.localeCompare(b.code));
+  }, [q, exclude.join(), level], [] as Card[]);
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      <div className="row" style={{ gap: 8 }}>
+        <input autoFocus style={{ flex: 1, minWidth: 0 }} placeholder="Mot-clé ou code de la flashcard" aria-label="Chercher une flashcard" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button className="btn small ghost" onClick={onClose}>Fermer</button>
+      </div>
+      {q.trim() && !found.length && <span className="small muted">Aucune autre flashcard trouvée.</span>}
+      {found.length > 30 && <span className="small muted">{found.length} flashcards trouvées, les 30 premières sont affichées : précisez la recherche.</span>}
+      {found.slice(0, 30).map((c) => (
+        <div key={c.id} className="pf-sc-row">
+          <CardFace html={c.front} />
+          <CardFace html={c.back} />
+          <div className="row pf-sc-tools">
+            <span className="small muted">{c.code}</span>
+            <button className="btn small" onClick={() => onPick(c)}><Icon name="link" size={14} /> Rattacher</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
