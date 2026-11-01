@@ -219,7 +219,7 @@ export function PfSignup() {
         password: f.password,
         options: {
           data: { pf_visitor: 'true', pseudo: f.pseudo.trim(), ...extras },
-          emailRedirectTo: location.origin + location.pathname + '#/physifox/connexion',
+          emailRedirectTo: location.origin + location.pathname,
         },
       });
       setBusy(false);

@@ -7,6 +7,7 @@ import { cardCode } from './cardCodes';
 import { ONLINE } from './supabase';
 import { pullPublic } from './sync';
 import { SEED_CHAPTERS, SEED_DRAFTS, SEED_NOTIONS } from './physifoxSeed';
+import { SEED_LINKS } from './physifoxSeedCards';
 
 // Plan, notions et flashcards rédigées : ajoutés une seule fois, sans jamais écraser ce que le professeur a modifié
 export async function ensureSeed(ownerId: string) {
@@ -18,6 +19,16 @@ export async function ensureSeed(ownerId: string) {
   await missing(db.pfNotions, SEED_NOTIONS);
   await missing(db.pfChapters, SEED_CHAPTERS);
   await missing(db.cardDrafts, SEED_DRAFTS);
+  // Flashcards existantes : rattachées une seule fois par chapitre (un lien retiré ensuite ne revient pas)
+  const todo = (await db.pfChapters.toArray()).filter((c) => !c.linksSeeded);
+  if (!todo.length) return;
+  const cards = await db.cards.where('code').anyOf(Object.keys(SEED_LINKS)).toArray();
+  if (ONLINE && !cards.length) return; // flashcards pas encore reçues : ce sera pour la prochaine ouverture
+  const wanted = new Set(todo.flatMap((c) => c.notionIds));
+  await db.pfCardNotions.bulkPut(
+    cards.flatMap((c) => SEED_LINKS[c.code].filter((n) => wanted.has(n)).map((notionId) => ({ id: `${notionId}|${c.id}`, notionId, cardId: c.id, ownerId }))),
+  );
+  await Promise.all(todo.map((c) => db.pfChapters.update(c.id, { linksSeeded: true })));
 }
 
 // Démo locale : le plan existe dès la première visite. En ligne : lecture de ce qui est publié.

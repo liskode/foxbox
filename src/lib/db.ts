@@ -234,6 +234,7 @@ export interface PfChapter {
   notionIds: string[];
   sections: PfSection[];
   updatedAt: number;
+  linksSeeded?: boolean; // flashcards existantes déjà rattachées une fois
   ownerId?: string;
 }
 export interface PfCardNotion {

@@ -1,6 +1,8 @@
 // Contenu de départ de Physifox : notions du programme de 4e, plan des chapitres, premiers textes et flashcards à valider.
 // Ajouté une seule fois (voir ensureSeed) : ensuite, tout se modifie depuis l'onglet Physifox.
 import type { CardDraft, PfChapter, PfNotion } from './db';
+import { GAP_DRAFTS } from './physifoxSeedCards';
+import { SEED_COURSES } from './physifoxSeedCourses';
 
 const P = 'Programme cycle 4';
 const n = (id: string, theme: string, title: string, programme: string, keywords: string[], sequences: string[] = [], levels = ['4e']): PfNotion => ({
@@ -31,7 +33,7 @@ export const SEED_NOTIONS: PfNotion[] = [
   n('tableau-periodique', 'Matière', 'Symboles et classification périodique', 'p. 99', ['periodique', 'symbole', 'element'], [ATOMES]),
   n('air', 'Matière', 'Composition de l’air', 'p. 99', ['air', 'diazote', 'dioxygene'], [AIR]),
   n('solubilite', 'Matière', 'Solubilité et miscibilité', 'p. 99', ['solubilite', 'soluble', 'miscible', 'dissolution'], [AIR]),
-  n('co2', 'Matière', 'Test du dioxyde de carbone', 'p. 99', ['eau de chaux', 'dioxyde de carbone'], [AIR]),
+  n('co2', 'Matière', 'Tests de l’eau et du dioxyde de carbone', 'p. 99', ['eau de chaux', 'dioxyde de carbone'], [AIR]),
   n('effet-serre', 'Matière', 'Gaz à effet de serre', 'p. 100', ['effet de serre', 'climat', 'rechauffement'], [AIR]),
   n('masse-volume', 'Matière', 'Masse et volume : mesures et unités', 'p. 98', ['masse', 'volume', 'balance', 'eprouvette', 'capacite'], [], ['5e', '4e']),
   n('conversions-mv', 'Matière', 'Convertir masses, volumes et capacités', 'p. 98', ['convertir', 'conversion', 'litre', 'dm3'], [], ['5e', '4e']),
@@ -57,6 +59,7 @@ export const SEED_NOTIONS: PfNotion[] = [
   n('unites-energie', 'Énergie', 'Unités d’énergie et puissance', 'p. 103', ['joule', 'calorie', 'puissance', 'watt'], ['Rallye révisions – L’énergie'], ['4e', '3e']),
   n('tension', 'Énergie', 'La tension électrique', 'p. 103-104', ['tension', 'volt', 'voltmetre'], [TENSION], ['5e', '4e']),
   n('intensite', 'Énergie', 'L’intensité du courant', 'p. 103-104', ['intensite', 'ampere', 'amperemetre'], [TENSION], ['5e', '4e']),
+  n('schemas', 'Énergie', 'Schémas normalisés des circuits', 'p. 103', ['schema', 'normalise'], [TENSION], ['5e', '4e']),
   n('dipole', 'Énergie', 'Adapter un dipôle à son générateur', 'p. 103', ['dipole', 'generateur', 'adaptation'], [TENSION]),
   n('lois-serie', 'Énergie', 'Lois des circuits en série', 'p. 103', ['serie', 'additivite', 'unicite'], [LOIS]),
   n('lois-derivation', 'Énergie', 'Lois des circuits en dérivation', 'p. 103', ['derivation', 'maille', 'additivite'], [LOIS]),
@@ -73,6 +76,7 @@ export const SEED_NOTIONS: PfNotion[] = [
   n('m-rediger', 'Méthodes', 'Bien rédiger', 'compétences, p. 97', ['rediger', 'grandeur', 'symbole'], [], ['5e', '4e', '3e']),
   n('m-conversions', 'Méthodes', 'Conversions', 'compétences, p. 97', ['convertir'], [], ['5e', '4e', '3e']),
   n('m-cs', 'Méthodes', 'Précision et chiffres significatifs', 'compétences, p. 97', ['chiffres significatifs'], [], ['5e', '4e', '3e']),
+  n('maths', 'Méthodes', 'Outils mathématiques', 'p. 99, 102', ['volume', 'produit en croix'], [], ['5e', '4e', '3e']),
   n('m-pheroc', 'Méthodes', 'Démarche scientifique', 'compétences, p. 96-97', ['hypothese', 'protocole', 'pheroc'], [], ['5e', '4e', '3e']),
 ];
 
@@ -85,10 +89,9 @@ const chapter = (id: string, theme: string, order: number, title: string, summar
   title,
   summary,
   published: false,
-  status: 'a-faire',
   notionIds: notions.map((x) => `n-${x}`),
-  sections: [],
   updatedAt: 0,
+  ...(SEED_COURSES[`c4-${id}`] ?? { status: 'a-faire', sections: [] }),
 });
 
 const MASSE_VOLUMIQUE: Pick<PfChapter, 'status' | 'sections'> = {
@@ -181,11 +184,11 @@ export const SEED_CHAPTERS: PfChapter[] = [
   chapter('mouvement', 'Mouvement', 6, 'Mouvement et vitesse', 'Décrire une trajectoire, caractériser un mouvement et calculer une vitesse.', ['trajectoire', 'vitesse', 'relativite']),
   chapter('forces', 'Mouvement', 7, 'Les forces', 'Reconnaître les actions et les modéliser par des forces.', ['actions', 'force']),
   chapter('energie', 'Énergie', 8, 'Formes et conversions d’énergie', 'Les formes d’énergie, comment elles se transforment, et pourquoi l’énergie se conserve.', ['formes-energie', 'conversions-energie', 'unites-energie']),
-  chapter('tension-intensite', 'Énergie', 9, 'Tension et intensité', 'Mesurer et comprendre les deux grandeurs clés de l’électricité.', ['tension', 'intensite', 'dipole']),
+  chapter('tension-intensite', 'Énergie', 9, 'Tension et intensité', 'Mesurer et comprendre les deux grandeurs clés de l’électricité.', ['tension', 'intensite', 'schemas', 'dipole']),
   chapter('circuits', 'Énergie', 10, 'Lois des circuits', 'Circuits en série et en dérivation, loi d’Ohm et puissance électrique.', ['lois-serie', 'lois-derivation', 'ohm', 'puissance-elec']),
   chapter('lumiere', 'Signaux', 11, 'La lumière', 'Comment la lumière se propage, à quelle vitesse, et ce qu’elle transporte.', ['sources-lumiere', 'rayon', 'vitesse-lumiere', 'rayonnement']),
   chapter('son', 'Signaux', 12, 'Le son', 'Comment le son se propage et ce qui distingue les sons audibles, les infrasons et les ultrasons.', ['son-propagation', 'son-frequence']),
-  chapter('methodes', 'Méthodes', 13, 'Fiches méthodes', 'Bien rédiger, convertir, respecter la précision, suivre la démarche scientifique.', ['m-rediger', 'm-conversions', 'm-cs', 'm-pheroc']),
+  chapter('methodes', 'Méthodes', 13, 'Fiches méthodes', 'Bien rédiger, convertir, respecter la précision, suivre la démarche scientifique.', ['m-rediger', 'm-conversions', 'm-cs', 'm-pheroc', 'maths']),
 ];
 
 const SOURCE = 'Cours Physifox « Masse volumique » et programme du cycle 4';
@@ -203,22 +206,12 @@ const draft = (id: string, notion: string, front: string, back: string): CardDra
 
 export const SEED_DRAFTS: CardDraft[] = [
   draft('01', 'masse-volumique', 'Qu’est-ce que la masse volumique d’un objet ?', 'La **masse de l’objet divisée par son volume**.'),
-  draft('02', 'masse-volumique', 'Quelle est la relation entre masse volumique, masse et volume ?', '$\\rho = \\frac{m}{V}$'),
   draft('03', 'masse-volumique', 'Quelle est l’unité de la masse volumique dans le Système international ?', 'Le **kilogramme par mètre cube** (kg/m³).'),
-  draft('04', 'masse-volumique', 'Comment calculer une masse à partir de la masse volumique et du volume ?', '$m = \\rho \\times V$'),
-  draft('05', 'masse-volumique', 'Comment calculer un volume à partir de la masse et de la masse volumique ?', '$V = \\frac{m}{\\rho}$'),
   draft('06', 'masse-volumique', 'Un objet a une masse de 300 g et un volume de 100 mL. Quelle est sa masse volumique ?', '$\\rho = \\frac{300}{100} = 3$ g/mL'),
   draft('07', 'masse-volumique', 'À quoi sert la masse volumique pour identifier un matériau ?', 'Chaque matériau a sa propre masse volumique : la mesurer permet de le **reconnaître**.'),
   draft('08', 'densite-flottaison', 'Quelle est la masse volumique de l’eau en g/mL ? En kg/m³ ?', '1 g/mL, soit 1 000 kg/m³.'),
-  draft('09', 'densite-flottaison', 'Comment prévoir si un objet flotte dans un liquide ?', 'On compare les masses volumiques : plus petite que celle du liquide, il **flotte** ; plus grande, il **coule**.'),
-  draft('10', 'densite-flottaison', 'Quelle est l’unité de la densité ?', 'Aucune : la densité est **sans unité**.'),
-  draft('11', 'densite-flottaison', 'Dans une ampoule à décanter, quel liquide est en bas ?', 'Le liquide **le plus dense**.'),
-  draft('12', 'conversions-mv', 'Combien vaut 1 L en dm³ ?', '1 L = **1 dm³**'),
   draft('13', 'conversions-mv', 'Combien de mm³ y a-t-il dans 1 cm³ ?', '1 cm³ = 10 × 10 × 10 = **1 000 mm³**'),
-  draft('14', 'conversions-mv', 'Convertir 1 200 g/L en kg/L.', '1 200 g = 1,2 kg, donc **1,2 kg/L**'),
   draft('15', 'masse-volume', 'Avec quel instrument mesure-t-on précisément le volume d’un liquide ? Lequel éviter ?', 'Éprouvette graduée, burette ou fiole jaugée. À éviter : le **bécher**, trop peu précis.'),
-  draft('16', 'corps-pur', 'Comment reconnaître un corps pur lors d’un changement d’état ?', 'Sa température reste **constante** : c’est un palier.'),
-  draft('17', 'temperature-mv', 'Que devient la masse volumique d’un corps chauffé, en général ? Pourquoi ?', 'Elle **diminue** : le corps se dilate, la même masse occupe un plus grand volume.'),
-  draft('18', 'temperature-mv', 'Pourquoi les glaçons flottent-ils ?', 'En gelant, le volume de l’eau augmente : la glace est **moins dense** que l’eau liquide.'),
   draft('19', 'temperature-mv', 'Convertir 15 °C en kelvins.', '15 + 273,15 = **288,15 K**'),
+  ...GAP_DRAFTS,
 ];
