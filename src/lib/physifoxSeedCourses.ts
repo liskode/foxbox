@@ -1,7 +1,9 @@
 // Textes de départ des chapitres repris des cours Canva de Physifox. Ils restent « À relire » et hors ligne jusqu'à validation.
 import type { PfChapter } from './db';
+import { SEED_COURSES_2 } from './physifoxSeedCourses2';
 
 export const SEED_COURSES: Record<string, Pick<PfChapter, 'status' | 'sections'>> = {
+  ...SEED_COURSES_2,
   'c4-energie': {
     status: 'brouillon',
     sections: [

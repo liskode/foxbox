@@ -19,6 +19,12 @@ export async function ensureSeed(ownerId: string) {
   await missing(db.pfNotions, SEED_NOTIONS);
   await missing(db.pfChapters, SEED_CHAPTERS);
   await missing(db.cardDrafts, SEED_DRAFTS);
+  // Chapitre encore vide : il reçoit le texte rédigé depuis (un chapitre déjà commencé n'est jamais touché)
+  for (const seed of SEED_CHAPTERS) {
+    const c = await db.pfChapters.get(seed.id);
+    if (c && !c.sections.length && c.status === 'a-faire' && seed.sections.length)
+      await db.pfChapters.update(c.id, { sections: seed.sections, status: seed.status });
+  }
   // Flashcards existantes : rattachées une seule fois par chapitre (un lien retiré ensuite ne revient pas)
   const todo = (await db.pfChapters.toArray()).filter((c) => !c.linksSeeded);
   if (!todo.length) return;

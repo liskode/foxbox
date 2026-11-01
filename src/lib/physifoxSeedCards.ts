@@ -133,6 +133,7 @@ export const GAP_DRAFTS: CardDraft[] = [
     ['Qu’est-ce qu’une année-lumière ?', 'Une unité de **distance** : celle que parcourt la lumière en un an.'],
     ['Combien vaut une année-lumière en kilomètres ?', 'Environ **9 500 milliards de km** ($9{,}5 \\times 10^{12}$ km).'],
     ['Quelle est la distance Terre-Soleil ?', 'Environ **150 millions de km**.'],
+    ['Qu’est-ce qu’une unité astronomique (UA) ?', 'La **distance Terre-Soleil**, environ 150 millions de km.'],
     ['Pourquoi voit-on le passé en regardant le ciel ?', 'La lumière met du temps à nous parvenir : on voit l’astre **tel qu’il était** quand elle en est partie.'],
   ]),
   ...group('Mouvement', 'force', [
@@ -141,6 +142,7 @@ export const GAP_DRAFTS: CardDraft[] = [
     ['Quelle est l’unité d’une force ?', 'Le **newton** (N).'],
     ['Avec quel appareil mesure-t-on une force ?', 'Un **dynamomètre**.'],
     ['Comment représente-t-on une force sur un schéma ?', 'Par une **flèche** partant du point d’application, dans la direction et le sens de la force, sa longueur indiquant la valeur.'],
+    ['À quelle condition un objet soumis à deux forces est-il à l’équilibre ?', 'Elles ont la **même direction, des sens opposés et la même valeur**.'],
     ['Quelle force fait tomber les objets vers le sol ?', 'La **force de pesanteur**, ou poids.'],
   ]),
   ...group('Énergie', 'lois-serie', [
@@ -164,6 +166,9 @@ export const GAP_DRAFTS: CardDraft[] = [
     ['$R = 100\\ \\Omega$ et $I = 0{,}05$ A. Combien vaut $U$ ?', '$U = 100 \\times 0{,}05 = 5$ V'],
     ['$U = 6$ V et $R = 200\\ \\Omega$. Combien vaut $I$ ?', '$I = \\frac{6}{200} = 0{,}03$ A'],
     ['Quelle courbe obtient-on en traçant $U$ en fonction de $I$ pour une résistance ?', 'Une **droite passant par l’origine** : $U$ et $I$ sont proportionnelles.'],
+    ['Qu’est-ce que l’effet Joule ?', 'La conversion d’énergie électrique en **énergie thermique** dans une résistance.'],
+    ['Quand l’effet Joule est-il utile ? Quand est-il gênant ?', 'Utile dans un radiateur ou un grille-pain. Gênant quand il provoque des **pertes** ou un échauffement dangereux.'],
+    ['Comment mesure-t-on la résistance d’un dipôle ?', 'Avec un **ohmmètre**, le dipôle étant retiré du circuit.'],
     ['Attention à l’intensité dans la loi d’Ohm : quelle unité utiliser ?', 'Les **ampères** : il faut convertir les milliampères.'],
   ]),
   ...group('Énergie', 'puissance-elec', [
