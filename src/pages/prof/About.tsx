@@ -293,6 +293,21 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     ],
   },
   {
+    title: 'Physifox',
+    text: 'Votre site public de cours : les visiteurs consultent les chapitres, ajoutent les flashcards à leur Deck et s’entraînent. Vous suivez tout depuis l’onglet Physifox.',
+    details: [
+      'chapitres consultables sans compte, modifiables et publiés un par un',
+      'flashcards rattachées à des notions du programme : changer de progression ne les touche pas',
+      'inscription avec e-mail et pseudo ; classe, établissement et pays facultatifs',
+      'comptes visiteurs séparés des élèves, sans aucun accès au reste de FoxBox',
+      'Deck et entraînement par boîtes de Leitner, adaptés au téléphone',
+      'bouton « Signaler » sur chaque flashcard et messagerie privée avec le professeur',
+      'passage en revue des nouvelles flashcards : valider, corriger ou écarter avant qu’elles soient visibles',
+      'statistiques : visiteurs, activité, flashcards les plus ratées',
+      'suppression du compte par le visiteur, page de confidentialité',
+    ],
+  },
+  {
     title: 'Sécurité et fonctionnement',
     text: 'FoxBox fonctionne même sans réseau et protège les données personnelles.',
     details: [

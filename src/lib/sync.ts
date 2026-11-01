@@ -53,7 +53,26 @@ const SPECS: Record<string, TableSpec> = {
   messageReads: { remote: 'message_reads', cols: (r) => ({ user_id: r.userId }) },
   visits: { remote: 'visits', cols: (v) => ({ user_id: v.userId, student_ids: v.studentIds }) },
   assessments: { remote: 'assessments', cols: (a) => ({ student_id: a.studentId, author_id: a.authorId }) },
+  pfNotions: { remote: 'pf_notions', cols: (n) => ({ owner_id: n.ownerId ?? me }) },
+  pfChapters: { remote: 'pf_chapters', cols: (c) => ({ owner_id: c.ownerId ?? me, published: c.published, notion_ids: c.notionIds }) },
+  pfCardNotions: { remote: 'pf_card_notions', cols: (l) => ({ owner_id: l.ownerId ?? me, notion_id: l.notionId, card_id: l.cardId }) },
+  cardDrafts: { remote: 'card_drafts', cols: (d) => ({ owner_id: d.ownerId ?? me }) },
+  visitors: { remote: 'visitors', cols: () => ({}), updateOnly: true },
+  pfDeck: { remote: 'pf_deck', cols: (d) => ({ visitor_id: d.visitorId }) },
+  pfReviews: { remote: 'pf_reviews', cols: (r) => ({ visitor_id: r.visitorId }) },
+  pfMessages: { remote: 'pf_messages', cols: (m) => ({ visitor_id: m.visitorId, author_id: m.authorId }) },
 };
+
+// Contenu public de Physifox : relu en entier (un chapitre retiré du site doit disparaître de la copie locale)
+const PF_PUBLIC = ['pfChapters', 'pfNotions', 'pfCardNotions'];
+const PF_PRIVATE = ['cardDrafts', 'visitors', 'pfDeck', 'pfReviews', 'pfMessages'];
+// Un visiteur ne reçoit que ses données et les flashcards publiées ; élèves et parents ne reçoivent rien de Physifox
+const VISITOR_TABLES = ['cards', 'visitors', 'pfDeck', 'pfReviews', 'pfMessages'];
+let syncRole: string | null = null;
+const tablesToPull = () =>
+  Object.entries(SPECS).filter(([name]) =>
+    syncRole === 'visiteur' ? VISITOR_TABLES.includes(name) : syncRole === 'prof' || (!PF_PUBLIC.includes(name) && !PF_PRIVATE.includes(name)),
+  );
 
 // ---------- Envoi ----------
 
@@ -111,7 +130,7 @@ function installHooks() {
 
 // soutien : « sout/groupe/fichier » ; photos d'élèves : « élève/fichier » ; documents de séance : « doc-… » ; le reste : images des cartes
 const bucketOf = (mediaId: string) =>
-  mediaId.startsWith('msg/') ? 'messages' : mediaId.startsWith('sout/') ? 'soutien' : mediaId.includes('/') ? 'photos' : mediaId.startsWith('doc-') ? 'docs' : 'cards';
+  mediaId.startsWith('pf-') ? 'physifox' : mediaId.startsWith('msg/') ? 'messages' : mediaId.startsWith('sout/') ? 'soutien' : mediaId.includes('/') ? 'photos' : mediaId.startsWith('doc-') ? 'docs' : 'cards';
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 function schedulePush() {
@@ -258,11 +277,26 @@ async function pullTable(name: string, spec: TableSpec) {
   }
 }
 
+// Chapitres publiés : lisibles sans compte
+export async function pullPublic() {
+  if (!ONLINE) return;
+  for (const name of PF_PUBLIC) {
+    const { data, error } = await supabase.from(SPECS[name].remote).select('data').eq('deleted', false);
+    if (error) throw error;
+    await db.transaction('rw', db.table(name), async () => {
+      (Dexie.currentTransaction as unknown as { __remote: boolean }).__remote = true;
+      await db.table(name).clear();
+      await db.table(name).bulkPut(data.map((r) => r.data));
+    });
+  }
+}
+
 export async function pull() {
   if (!ONLINE || !me) return;
   // Une table en erreur n'empêche pas de recevoir les autres
   let first: unknown;
-  for (const [name, spec] of Object.entries(SPECS))
+  if (syncRole === 'visiteur') await pullPublic().catch((e) => (first ??= e));
+  for (const [name, spec] of tablesToPull())
     try {
       await pullTable(name, spec);
     } catch (e) {
@@ -308,10 +342,13 @@ export async function fetchMedia(id: string): Promise<Blob | null> {
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
-export async function startSync(userId: string) {
+export async function startSync(userId: string, role?: string) {
   if (!ONLINE) return;
   setSyncUser(userId);
+  syncRole = role ?? null;
   installHooks();
+  // Visiteur : une flashcard ancienne peut devenir publique, on relit donc les flashcards à chaque ouverture
+  if (role === 'visiteur') await db.meta.delete('cursor:cards');
   // Au chargement, on retente les envois refusés lors d'une session précédente
   await db.outbox.toCollection().modify((o) => {
     delete o.err;
@@ -333,6 +370,7 @@ export async function stopSync() {
     /* hors ligne : les modifications non envoyées sont perdues à la déconnexion */
   }
   setSyncUser(null);
+  syncRole = null;
   // Un autre utilisateur peut se connecter sur cet appareil : on vide la copie locale.
   // Cet effacement est purement local : il ne doit surtout pas être envoyé en ligne comme une suppression.
   await db.transaction('rw', db.tables, async () => {

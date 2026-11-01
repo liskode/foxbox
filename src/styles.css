@@ -556,3 +556,37 @@ table.list tr.click:hover td { background: #faf7ef; }
 .heatmap.heatmap7 { display: grid; grid-template-columns: repeat(7, auto); justify-content: start; gap: 3px; overflow: visible; }
 .heatmap7 .day { font-size: 0.65rem; font-weight: 800; color: var(--ink-soft); text-align: center; line-height: 1; }
 .heatmap7 .cell.today { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+/* Physifox : site public */
+.pf-hero { display: flex; gap: 16px; align-items: center; }
+.pf-hero img { width: 96px; flex: none; }
+.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.pf-tile { display: flex; flex-direction: column; gap: 8px; color: inherit; text-decoration: none; }
+.pf-footer { text-align: center; padding: 24px 16px; }
+.pf-prose .cardface { font-size: 1rem; text-align: left; }
+.pf-prose p { margin: 8px 0; }
+.pf-prose ul { margin: 8px 0; padding-left: 24px; }
+.pf-prose table { border-collapse: collapse; margin: 8px 0; display: block; overflow-x: auto; }
+.pf-prose td { border: 1px solid var(--muted-line); padding: 4px 8px; text-align: center; min-width: 24px; word-break: normal; }
+.pf-figure { display: block; max-width: 100%; height: auto; margin: 8px auto; }
+.pf-video { width: 100%; aspect-ratio: 16 / 9; border: 0; }
+.pf-row { padding: 8px 0; border-bottom: 1px solid var(--soft-line); color: inherit; text-decoration: none; display: block; }
+.pf-row.spread { display: flex; }
+.pf-row:last-child { border-bottom: 0; }
+.pf-sel { background: var(--calm); }
+.pf-pick { align-items: center; }
+.pf-pick .cardface { font-size: .9rem; text-align: left; flex: 1; }
+.pf-pick .cardface img { max-height: 80px; margin: 0; }
+.pf-draft { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.pf-msg { align-self: flex-start; max-width: 85%; background: var(--calm); border: 1px solid var(--soft-line); border-radius: 8px; padding: 8px; }
+.pf-msg.mine { align-self: flex-end; background: var(--warn-bg); }
+.pf-msg-card .cardface { font-size: .9rem; text-align: left; }
+.pf-inbox { display: grid; grid-template-columns: minmax(200px, 280px) 1fr; gap: 16px; align-items: start; }
+.pf-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.pf-table th, .pf-table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--soft-line); white-space: nowrap; }
+.title-num { font-weight: 900; font-size: 2rem; }
+@media (max-width: 720px) {
+  .pf-inbox { grid-template-columns: 1fr; }
+  .pf-hero { align-items: flex-start; }
+  .pf-hero img { width: 64px; }
+}

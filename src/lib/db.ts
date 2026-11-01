@@ -198,6 +198,108 @@ export interface Review {
   boxAfter: number;
 }
 
+// ---------- Physifox : site public ----------
+// Notion : petite brique stable du programme, indépendante des chapitres et de la progression
+export interface PfNotion {
+  id: string;
+  theme: string; // Matière, Mouvement, Énergie, Signaux, Méthodes
+  title: string;
+  levels: string[]; // niveaux où elle est vue, ex. ["4e", "3e"]
+  programme?: string; // repère dans le programme officiel
+  book?: string; // pages du livre scolaire
+  sequences?: string[]; // séquences de la progression de classe
+  keywords?: string[]; // mots pour retrouver les flashcards à rattacher
+  ownerId?: string;
+}
+export interface PfSection {
+  id: string;
+  title: string;
+  kind: 'cours' | 'rappel' | 'methode' | 'exercice' | 'experience';
+  body: string; // texte : **gras**, $formule$, listes « - », tableaux « | a | b | »
+  imageId?: string; // image rangée dans `media` (identifiant « pf-… »)
+  imageSrc?: string; // ou image livrée avec le site
+  imageAlt?: string;
+  video?: string; // identifiant YouTube
+}
+export interface PfChapter {
+  id: string;
+  slug: string;
+  level: string;
+  theme: string;
+  order: number;
+  title: string;
+  summary: string;
+  published: boolean;
+  status: 'a-faire' | 'brouillon' | 'pret'; // avancement de la rédaction
+  notionIds: string[];
+  sections: PfSection[];
+  updatedAt: number;
+  ownerId?: string;
+}
+export interface PfCardNotion {
+  id: string; // notion|flashcard
+  notionId: string;
+  cardId: string;
+  ownerId?: string;
+}
+// Flashcard rédigée, en attente de validation : elle ne rejoint les flashcards qu'une fois validée
+export interface CardDraft {
+  id: string;
+  front: string;
+  back: string;
+  subject: string;
+  level: string;
+  theme: string;
+  notionIds: string[];
+  source?: string; // d'où vient le contenu (cours Canva, programme, livre…)
+  status: 'attente' | 'validee' | 'ecartee';
+  cardId?: string; // flashcard créée à la validation
+  decidedAt?: number;
+  ownerId?: string;
+}
+export interface Visitor {
+  id: string;
+  email: string;
+  pseudo: string;
+  classe?: string;
+  school?: string;
+  country?: string;
+  createdAt: number;
+  password?: string; // démo locale uniquement (en ligne, c'est le serveur d'authentification qui s'en charge)
+}
+export interface PfDeckCard {
+  id: string; // visiteur|flashcard
+  visitorId: string;
+  cardId: string;
+  chapterId?: string;
+  box: number; // 0 = nouvelle, 1 à 7 = boîtes de Leitner
+  due: string;
+  reps: number;
+  lapses: number;
+  lastReview?: string;
+  addedAt: number;
+}
+export interface PfReview {
+  id: string;
+  visitorId: string;
+  cardId: string;
+  date: string;
+  ts: number;
+  rating: Rating;
+  boxBefore: number;
+  boxAfter: number;
+}
+export interface PfMessage {
+  id: string;
+  visitorId: string;
+  authorId: string;
+  text: string;
+  cardId?: string; // flashcard signalée
+  createdAt: number;
+  readByProf?: number;
+  readByVisitor?: number;
+}
+
 export interface Meta {
   key: string;
   value: unknown;
@@ -520,6 +622,14 @@ class FoxBoxDB extends Dexie {
   messageReads!: Table<MessageRead, string>;
   visits!: Table<Visit, string>;
   assessments!: Table<Assessment, string>;
+  pfNotions!: Table<PfNotion, string>;
+  pfChapters!: Table<PfChapter, string>;
+  pfCardNotions!: Table<PfCardNotion, string>;
+  cardDrafts!: Table<CardDraft, string>;
+  visitors!: Table<Visitor, string>;
+  pfDeck!: Table<PfDeckCard, string>;
+  pfReviews!: Table<PfReview, string>;
+  pfMessages!: Table<PfMessage, string>;
 
   constructor() {
     super(ONLINE ? 'foxbox-online' : 'foxbox-v2');
@@ -566,6 +676,16 @@ class FoxBoxDB extends Dexie {
     });
     this.version(11).stores({ visits: 'id, userId, *studentIds' });
     this.version(12).stores({ assessments: 'id, studentId, date' });
+    this.version(13).stores({
+      pfNotions: 'id',
+      pfChapters: 'id, slug, level',
+      pfCardNotions: 'id, notionId, cardId',
+      cardDrafts: 'id, status',
+      visitors: 'id, email',
+      pfDeck: 'id, visitorId, cardId',
+      pfReviews: 'id, visitorId, cardId, date',
+      pfMessages: 'id, visitorId',
+    });
   }
 }
 

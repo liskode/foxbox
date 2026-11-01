@@ -15,6 +15,7 @@ import { DialogHost } from './components/Dialog';
 import { ToastHost } from './components/Toast';
 import { Icon } from './components/Icon';
 import { isDemo } from './lib/demoMode';
+import { usePfAdmin } from './lib/physifoxAdmin';
 
 // Pages chargées à la demande : un élève ne télécharge pas la partie professeur (ni les outils d'import)
 const Timetable = lazy(() => import('./pages/prof/Timetable').then((m) => ({ default: m.Timetable })));
@@ -49,6 +50,19 @@ const StudentSoutien = lazy(() => import('./pages/eleve/Soutien').then((m) => ({
 const Soutien = lazy(() => import('./pages/prof/Soutien').then((m) => ({ default: m.Soutien })));
 const SoutienGroup = lazy(() => import('./pages/prof/SoutienGroup').then((m) => ({ default: m.SoutienGroup })));
 const SoutienSession = lazy(() => import('./pages/prof/SoutienSession').then((m) => ({ default: m.SoutienSession })));
+const PhysifoxTab = lazy(() => import('./pages/prof/Physifox').then((m) => ({ default: m.Physifox })));
+const PfPublic = (name: keyof typeof import('./pages/physifox/Public')) =>
+  lazy(() => import('./pages/physifox/Public').then((m) => ({ default: m[name] as () => JSX.Element })));
+const PfHome = PfPublic('PfHome');
+const PfChapterPage = PfPublic('PfChapterPage');
+const PfSignup = PfPublic('PfSignup');
+const PfLogin = PfPublic('PfLogin');
+const PfPrivacy = PfPublic('PfPrivacy');
+const PfDeck = PfPublic('PfDeck');
+const PfReview = PfPublic('PfReview');
+const PfMessages = PfPublic('PfMessages');
+const PfAccount = PfPublic('PfAccount');
+const PfShell = lazy(() => import('./pages/physifox/Public').then((m) => ({ default: m.PfShell })));
 
 function OcrBadge() {
   const [s, setS] = useState<OcrState | null>(null);
@@ -223,6 +237,7 @@ function DemoBanner() {
 function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children: ReactNode }) {
   const { session, ready, logout } = useAuth();
   const { pathname } = useLocation();
+  const pfAdmin = usePfAdmin(role === 'prof' ? session?.id : undefined) && role === 'prof';
   // Module Soutien : activé dans les Réglages (professeur) ; onglet affiché à l'élève suivi en soutien
   const soutien = useLiveQuery(
     async () => {
@@ -235,11 +250,11 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
     false,
   );
   // Messages non lus : pastille sur « Soutien » (professeur, élève) ou « Messages » (parents)
-  const unread = useLiveQuery(async () => (session ? unreadTotal(session.id, session.role) : 0), [session?.id, session?.role], 0);
+  const unread = useLiveQuery(async () => (session && session.role !== 'visiteur' ? unreadTotal(session.id, session.role) : 0), [session?.id, session?.role], 0);
   const badgeOn = role === 'parent' ? '/parent/messages' : role === 'prof' ? '/prof/soutien' : '/eleve/soutien';
   // Journal des connexions (élèves et parents)
   useEffect(() => {
-    if (session && session.role !== 'prof') trackVisits(session);
+    if (session && session.role !== 'prof' && session.role !== 'visiteur') trackVisits(session);
   }, [session]);
   useEffect(() => {
     // Reprend la lecture des images interrompue (fermeture de l'onglet…)
@@ -257,6 +272,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
           ['/prof/flashcards', 'Flashcards'],
           ['/prof/eleves', 'Élèves'],
           ...(soutien ? [['/prof/soutien', 'Soutien']] : []),
+          ...(pfAdmin ? [['/prof/physifox', 'Physifox']] : []),
         ]
       : role === 'parent'
         ? [
@@ -383,6 +399,16 @@ export function App() {
           <Route path="/prof/soutien/attestation/:studentId" element={<Shell role="prof"><AttestationPage /></Shell>} />
           <Route path="/prof/soutien/:id" element={<Shell role="prof"><SoutienGroup /></Shell>} />
           <Route path="/prof/soutien/:id/seance/:sid" element={<Shell role="prof"><SoutienSession /></Shell>} />
+          <Route path="/prof/physifox" element={<Shell role="prof"><PhysifoxTab /></Shell>} />
+          <Route path="/physifox" element={<PfShell><PfHome /></PfShell>} />
+          <Route path="/physifox/inscription" element={<PfShell><PfSignup /></PfShell>} />
+          <Route path="/physifox/connexion" element={<PfShell><PfLogin /></PfShell>} />
+          <Route path="/physifox/confidentialite" element={<PfShell><PfPrivacy /></PfShell>} />
+          <Route path="/physifox/deck" element={<PfShell needAccount><PfDeck /></PfShell>} />
+          <Route path="/physifox/revision" element={<PfShell needAccount><PfReview /></PfShell>} />
+          <Route path="/physifox/messages" element={<PfShell needAccount><PfMessages /></PfShell>} />
+          <Route path="/physifox/compte" element={<PfShell needAccount><PfAccount /></PfShell>} />
+          <Route path="/physifox/:slug" element={<PfShell><PfChapterPage /></PfShell>} />
           <Route path="/eleve" element={<Shell role="eleve"><StudentHome /></Shell>} />
           <Route path="/eleve/revision/:subject" element={<Shell role="eleve"><ReviewSession /></Shell>} />
           <Route path="/eleve/notes" element={<Shell role="eleve"><MyStats /></Shell>} />

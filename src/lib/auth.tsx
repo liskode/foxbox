@@ -6,7 +6,7 @@ import { stopVisits } from './visits';
 import { clearLocalData, isDemo, setDemoProfile, type DemoProfile } from './demoMode';
 
 export interface Session {
-  role: 'prof' | 'eleve' | 'parent';
+  role: 'prof' | 'eleve' | 'parent' | 'visiteur';
   id: string;
 }
 
@@ -34,6 +34,7 @@ const Ctx = createContext<{
   ready: boolean;
   login: (login: string, password: string) => Promise<Session | { error: string }>;
   demoLogin: (profile: DemoProfile) => Promise<Session | { error: string }>;
+  localVisitorLogin: (id: string) => void;
   logout: () => Promise<void>;
 }>(null!);
 
@@ -45,6 +46,8 @@ async function roleOf(uid: string): Promise<Session | null> {
   if (s.data) return { role: 'eleve', id: uid };
   const p = await supabase.from('parents').select('id').eq('id', uid).maybeSingle();
   if (p.data) return { role: 'parent', id: uid };
+  const v = await supabase.from('visitors').select('id').eq('id', uid).maybeSingle();
+  if (v.data) return { role: 'visiteur', id: uid };
   return null;
 }
 
@@ -60,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const uid = data.session?.user.id;
       const s = uid ? (load()?.id === uid ? load() : await roleOf(uid)) : null;
       if (s) {
-        await startSync(s.id);
+        await startSync(s.id, s.role);
         setSession(s);
       }
       setReady(true);
@@ -90,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         return { error: "Ce compte n'est pas encore autorisé dans FoxBox." };
       }
-      await startSync(s.id);
+      await startSync(s.id, s.role);
       save(s);
       setSession(s);
       return s;
@@ -105,6 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       else {
         const pa = await db.parents.where('login').equals(l).first();
         if (pa && pa.password === password.trim()) s = { role: 'parent', id: pa.id };
+        else {
+          const v = await db.visitors.where('email').equals(l).first();
+          if (v && v.password === password.trim()) s = { role: 'visiteur', id: v.id };
+        }
       }
     }
     if (!s) return { error: 'Identifiant ou mot de passe incorrect.' };
@@ -141,10 +148,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       return { error: 'Connexion impossible.' };
     }
-    await startSync(s.id);
+    await startSync(s.id, s.role);
     save(s);
     setSession(s);
     return s;
+  }
+
+  // Démo locale : connexion immédiate après une inscription Physifox
+  function localVisitorLogin(id: string) {
+    const s: Session = { role: 'visiteur', id };
+    save(s);
+    setSession(s);
   }
 
   async function logout() {
@@ -162,10 +176,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  return <Ctx.Provider value={{ session, ready, login, demoLogin, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ session, ready, login, demoLogin, localVisitorLogin, logout }}>{children}</Ctx.Provider>;
 }
 
 export const useAuth = () => useContext(Ctx);
 
 // Page d'accueil de chaque rôle
-export const homeOf = (role: Session['role']) => (role === 'prof' ? '/prof' : role === 'parent' ? '/parent' : '/eleve');
+export const homeOf = (role: Session['role']) => (role === 'prof' ? '/prof' : role === 'parent' ? '/parent' : role === 'visiteur' ? '/physifox/deck' : '/eleve');
