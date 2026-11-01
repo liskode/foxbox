@@ -27,7 +27,7 @@ async function storeImage(name: string, blob: Blob) {
 }
 
 // onImage : une image insérée est enregistrée tout de suite (sans attendre « Enregistrer »)
-function FaceEditor({
+export function FaceEditor({
   label,
   html,
   onChange,

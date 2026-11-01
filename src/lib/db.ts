@@ -224,6 +224,7 @@ export interface PfSection {
   imageSrc?: string; // ou image livrée avec le site
   imageAlt?: string;
   figures?: PfFigure[]; // schémas de la partie
+  cardIds?: string[]; // flashcards affichées sous cette partie (flashcard ou flashcard à valider)
   video?: string; // identifiant YouTube
 }
 export interface PfChapter {
@@ -241,6 +242,7 @@ export interface PfChapter {
   updatedAt: number;
   linksSeeded?: boolean; // flashcards existantes déjà rattachées une fois
   figuresSeeded?: boolean; // schémas de départ déjà ajoutés une fois
+  cardsPlaced?: boolean; // flashcards déjà réparties une fois entre les parties
   ownerId?: string;
 }
 export interface PfCardNotion {

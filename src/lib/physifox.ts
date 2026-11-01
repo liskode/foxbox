@@ -35,14 +35,53 @@ export async function ensureSeed(ownerId: string) {
   }
   // Flashcards existantes : rattachées une seule fois par chapitre (un lien retiré ensuite ne revient pas)
   const todo = (await db.pfChapters.toArray()).filter((c) => !c.linksSeeded);
-  if (!todo.length) return;
-  const cards = await db.cards.where('code').anyOf(Object.keys(SEED_LINKS)).toArray();
-  if (ONLINE && !cards.length) return; // flashcards pas encore reçues : ce sera pour la prochaine ouverture
-  const wanted = new Set(todo.flatMap((c) => c.notionIds));
-  await db.pfCardNotions.bulkPut(
-    cards.flatMap((c) => SEED_LINKS[c.code].filter((n) => wanted.has(n)).map((notionId) => ({ id: `${notionId}|${c.id}`, notionId, cardId: c.id, ownerId }))),
+  if (todo.length) {
+    const cards = await db.cards.where('code').anyOf(Object.keys(SEED_LINKS)).toArray();
+    if (ONLINE && !cards.length) return; // flashcards pas encore reçues : ce sera pour la prochaine ouverture
+    const wanted = new Set(todo.flatMap((c) => c.notionIds));
+    await db.pfCardNotions.bulkPut(
+      cards.flatMap((c) => SEED_LINKS[c.code].filter((n) => wanted.has(n)).map((notionId) => ({ id: `${notionId}|${c.id}`, notionId, cardId: c.id, ownerId }))),
+    );
+    await Promise.all(todo.map((c) => db.pfChapters.update(c.id, { linksSeeded: true })));
+  }
+  await placeCards();
+}
+
+// Mots utiles d'un texte, sans accents, balises ni pluriels
+const STOP = new Set('dans pour avec cette quelle quel quels quelles comment est-ce sont elle elles leur leurs mais donc plus moins entre tout tous toute toutes chaque deux fait faire peut etre avoir aussi ainsi alors comme que qui quoi une des les aux par sur sous ses ces'.split(' '));
+const wordsOf = (s: string) =>
+  new Set(
+    s.replace(/<[^>]+>/g, ' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().match(/[a-z0-9]+/g)?.map((w) => w.replace(/[sx]$/, '')).filter((w) => (w.length >= 4 || /\d/.test(w)) && !STOP.has(w)) ?? [],
   );
-  await Promise.all(todo.map((c) => db.pfChapters.update(c.id, { linksSeeded: true })));
+
+// Première répartition des flashcards d'un chapitre : chacune va sous la partie dont le texte lui ressemble le plus.
+// Faite une seule fois ; celles sans partie évidente restent « à placer » pour le professeur.
+async function placeCards() {
+  const chapters = (await db.pfChapters.toArray()).filter((c) => c.linksSeeded && !c.cardsPlaced && c.sections.length);
+  if (!chapters.length) return;
+  const drafts = await db.cardDrafts.where('status').equals('attente').toArray();
+  for (const c of chapters) {
+    const sections = c.sections.filter((s) => s.kind !== 'exercice').map((s) => ({ id: s.id, title: wordsOf(s.title), body: wordsOf(s.body) }));
+    const spread = (w: string) => sections.filter((s) => s.title.has(w) || s.body.has(w)).length;
+    const links = await db.pfCardNotions.where('notionId').anyOf(c.notionIds).toArray();
+    const cards = await db.cards.bulkGet([...new Set(links.map((l) => l.cardId))]);
+    const items = [
+      ...cards.flatMap((k) => (k && !k.deleted ? [{ id: k.id, text: `${k.front} ${k.back} ${k.ocrFront ?? ''} ${k.ocrBack ?? ''}` }] : [])),
+      ...drafts.filter((d) => d.notionIds.some((n) => c.notionIds.includes(n))).map((d) => ({ id: d.id, text: `${d.front} ${d.back}` })),
+    ];
+    const placed = new Map<string, string[]>();
+    for (const it of items) {
+      const words = [...wordsOf(it.text)];
+      let best = '';
+      let top = 0.6; // en dessous, le rapprochement ne veut rien dire
+      for (const s of sections) {
+        const score = words.reduce((n, w) => n + ((s.title.has(w) ? 2 : s.body.has(w) ? 1 : 0) / (spread(w) || 1)), 0);
+        if (score > top) [best, top] = [s.id, score];
+      }
+      if (best) placed.set(best, [...(placed.get(best) ?? []), it.id]);
+    }
+    await db.pfChapters.update(c.id, { sections: c.sections.map((s) => (placed.has(s.id) ? { ...s, cardIds: placed.get(s.id) } : s)), cardsPlaced: true });
+  }
 }
 
 // Démo locale : le plan existe dès la première visite. En ligne : lecture de ce qui est publié.
@@ -54,7 +93,9 @@ export async function loadPublic() {
 // Flashcards d'un chapitre
 export async function chapterCardIds(ch: Pick<PfChapter, 'notionIds'>) {
   const links = await db.pfCardNotions.where('notionId').anyOf(ch.notionIds).toArray();
-  return [...new Set(links.map((l) => l.cardId))];
+  const ids = [...new Set(links.map((l) => l.cardId))];
+  const cards = await db.cards.bulkGet(ids);
+  return ids.filter((_, i) => !cards[i]?.deleted);
 }
 
 export async function addChapterToDeck(visitorId: string, ch: PfChapter) {

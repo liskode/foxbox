@@ -3,11 +3,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, uid, fileBlob, type CardDraft, type PfChapter, type PfNotion, type PfSection } from '../../lib/db';
+import { db, uid, fileBlob, SUBJECTS, type Card, type CardDraft, type PfChapter, type PfNotion, type PfSection } from '../../lib/db';
+import { cardCode } from '../../lib/cardCodes';
 import { ensureSeed, setDraftStatus, validateDraft, visitorStats } from '../../lib/physifox';
 import { usePfAdmin } from '../../lib/physifoxAdmin';
 import { TabBar } from '../../components/TabBar';
 import { CardFace } from '../../components/CardFace';
+import { CardDetail, FaceEditor } from '../../components/CardDetail';
 import { Icon } from '../../components/Icon';
 import { toast } from '../../components/Toast';
 import { PfSectionView, PfThread } from '../physifox/Public';
@@ -65,7 +67,8 @@ function ChaptersTab() {
   const [openId, setOpenId] = useState<string | null>(null);
   const data = useLiveQuery(async () => {
     const chapters = (await db.pfChapters.toArray()).sort((a, b) => a.order - b.order);
-    const links = await db.pfCardNotions.toArray();
+    const gone = new Set(await db.cards.filter((k) => !!k.deleted).primaryKeys());
+    const links = (await db.pfCardNotions.toArray()).filter((l) => !gone.has(l.cardId));
     const notions = await db.pfNotions.toArray();
     return { chapters, links, notions };
   }, []);
@@ -96,6 +99,18 @@ function ChaptersTab() {
   );
 }
 
+// Flashcards d'un chapitre : celles déjà visibles et celles encore à valider
+type Item = { key: string; card?: Card; draft?: CardDraft };
+async function chapterItems(ch: PfChapter): Promise<Item[]> {
+  const links = await db.pfCardNotions.where('notionId').anyOf(ch.notionIds).toArray();
+  const cards = await db.cards.bulkGet([...new Set(links.map((l) => l.cardId))]);
+  const drafts = await db.cardDrafts.where('status').equals('attente').toArray();
+  return [
+    ...cards.flatMap((c) => (c && !c.deleted ? [{ key: c.id, card: c }] : [])),
+    ...drafts.filter((d) => d.notionIds.some((n) => ch.notionIds.includes(n))).map((d) => ({ key: d.id, draft: d })),
+  ];
+}
+
 function ChapterEditor({ ch, notions, onClose }: { ch: PfChapter; notions: PfNotion[]; onClose: () => void }) {
   const save = (patch: Partial<PfChapter>) => db.pfChapters.update(ch.id, { ...patch, updatedAt: Date.now() });
   const setSection = (i: number, patch: Partial<PfSection>) => save({ sections: ch.sections.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
@@ -123,6 +138,56 @@ function ChapterEditor({ ch, notions, onClose }: { ch: PfChapter; notions: PfNot
     toast('Partie retirée', { undo: () => save({ sections: before }) });
   }
   const own = notions.filter((n) => ch.notionIds.includes(n.id));
+  const items = useLiveQuery(() => chapterItems(ch), [ch.id, ch.notionIds.join()], [] as Item[]);
+  // Une flashcard validée garde sa place : elle remplace la version à valider
+  const keyOf = (id: string) => items.find((x) => x.card?.sourceRef === id)?.key ?? id;
+  const sectionItems = (s: PfSection) => [...new Set((s.cardIds ?? []).map(keyOf))].flatMap((k) => items.filter((x) => x.key === k));
+  const placed = new Set(ch.sections.flatMap((s) => (s.cardIds ?? []).map(keyOf)));
+  const unplaced = items.filter((x) => !placed.has(x.key));
+  const [openCard, setOpenCard] = useState<{ id: string; edit: boolean } | null>(null);
+  const [openDraft, setOpenDraft] = useState<string | null>(null);
+  const draft = items.find((x) => x.draft?.id === openDraft)?.draft;
+  function place(key: string, target: string) {
+    const without = (s: PfSection) => (s.cardIds ?? []).filter((k) => keyOf(k) !== key);
+    save({ sections: ch.sections.map((s) => (s.cardIds?.length || s.id === target ? { ...s, cardIds: s.id === target ? [...without(s), key] : without(s) } : s)) });
+  }
+  // Nouvelle flashcard : rangée dans la notion la plus présente sous cette partie, visible dès qu'elle est enregistrée
+  async function addCard(s: PfSection) {
+    const links = await db.pfCardNotions.where('notionId').anyOf(ch.notionIds).toArray();
+    const here = new Set(sectionItems(s).map((x) => x.key));
+    const tally = ch.notionIds.map((n) => [n, links.filter((l) => l.notionId === n && here.has(l.cardId)).length] as const);
+    const notionId = tally.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+    const now = Date.now();
+    const base = { level: ch.level, theme: ch.theme, origin: 'ER' };
+    const card: Card = { id: uid(), code: await cardCode(base), ...base, subject: SUBJECTS[0], tags: [], front: '', back: '', createdAt: now, updatedAt: now };
+    await db.cards.put(card);
+    await db.pfCardNotions.put({ id: `${notionId}|${card.id}`, notionId, cardId: card.id });
+    await save({ sections: ch.sections.map((x) => (x.id === s.id ? { ...x, cardIds: [...(x.cardIds ?? []), card.id] } : x)) });
+    setOpenCard({ id: card.id, edit: true });
+  }
+  // Fermée sans rien écrire : on ne laisse pas de flashcard vide
+  async function closeCard() {
+    const c = openCard && (await db.cards.get(openCard.id));
+    if (c && !c.deleted && !c.front.trim() && !c.back.trim()) await db.cards.update(c.id, { deleted: true, updatedAt: Date.now() });
+    setOpenCard(null);
+  }
+  const list = (rows: Item[], current: string) =>
+    rows.map((x) => (
+      <div key={x.key} className="pf-sc-row">
+        <CardFace html={(x.card ?? x.draft!).front} />
+        <CardFace html={(x.card ?? x.draft!).back} />
+        <div className="row pf-sc-tools">
+          {x.draft && <span className="tag warn">À valider</span>}
+          <button className="btn small" onClick={() => (x.card ? setOpenCard({ id: x.card.id, edit: true }) : setOpenDraft(x.draft!.id))}>
+            <Icon name="edit" size={14} /> {x.draft ? 'Relire' : 'Modifier'}
+          </button>
+          <select className="pf-sc-move" value={current} aria-label="Partie du cours" onChange={(e) => place(x.key, e.target.value)}>
+            <option value="">À placer</option>
+            {ch.sections.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+          </select>
+        </div>
+      </div>
+    ));
   return (
     <div className="stack">
       <div className="spread">
@@ -185,6 +250,13 @@ function ChapterEditor({ ch, notions, onClose }: { ch: PfChapter; notions: PfNot
               <button className="btn small ghost" disabled={i === 0} onClick={() => move(i, -1)} title="Monter">↑</button>
               <button className="btn small ghost" disabled={i === ch.sections.length - 1} onClick={() => move(i, 1)} title="Descendre">↓</button>
             </div>
+            <div className="panel calm stack pf-sc" style={{ gap: 8 }}>
+              <div className="spread">
+                <b className="small">{sectionItems(s).length ? `Flashcards de cette partie (${sectionItems(s).length})` : 'Aucune flashcard sur cette partie'}</b>
+                <button className="btn small" onClick={() => addCard(s)}><Icon name="plus" size={14} /> Ajouter une flashcard</button>
+              </div>
+              {list(sectionItems(s), s.id)}
+            </div>
           </div>
         ),
       )}
@@ -199,6 +271,25 @@ function ChapterEditor({ ch, notions, onClose }: { ch: PfChapter; notions: PfNot
           <Icon name="plus" size={16} /> Ajouter une partie
         </button>
       </div>
+      {unplaced.length > 0 && (
+        <div className="panel calm stack pf-sc" style={{ gap: 8 }}>
+          <b className="small">Flashcards du chapitre à placer ({unplaced.length})</b>
+          {list(unplaced, '')}
+        </div>
+      )}
+      {openCard && <CardDetail cardId={openCard.id} startEditing={openCard.edit} onClose={closeCard} />}
+      {openDraft && (
+        <>
+          <div className="drawer-bg light" onClick={() => setOpenDraft(null)} />
+          <aside className="drawer left stack">
+            <div className="spread">
+              <h2 style={{ margin: 0 }}>Flashcard à valider</h2>
+              <button className="btn ghost" onClick={() => setOpenDraft(null)}>Fermer</button>
+            </div>
+            {draft && <DraftReview key={draft.id} d={draft} notions={notions} onDone={() => setOpenDraft(null)} />}
+          </aside>
+        </>
+      )}
       <div className="panel stack">
         <div className="panel-title">Notions et flashcards rattachées</div>
         {own.map((n) => <NotionCards key={n.id} notion={n} />)}
@@ -274,33 +365,30 @@ function ValidationTab() {
   return <DraftReview key={d.id} d={d} left={drafts.length} notions={notions} />;
 }
 
-function DraftReview({ d, left, notions }: { d: CardDraft; left: number; notions: PfNotion[] }) {
+function DraftReview({ d, left, notions, onDone }: { d: CardDraft; left?: number; notions: PfNotion[]; onDone?: () => void }) {
   const [front, setFront] = useState(d.front);
   const [back, setBack] = useState(d.back);
   async function validate() {
     await validateDraft(d, front, back);
     toast('Flashcard validée');
+    onDone?.();
   }
   function discard() {
     setDraftStatus(d, 'ecartee');
     toast('Flashcard écartée', { undo: () => setDraftStatus(d, 'attente') });
+    onDone?.();
   }
   return (
     <div className="stack">
       <div className="small muted">
-        Encore {left} · {d.notionIds.map((id) => notions.find((n) => n.id === id)?.title).join(', ')} · {d.level} · {d.theme}
+        {left ? `Encore ${left} · ` : ''}{d.notionIds.map((id) => notions.find((n) => n.id === id)?.title).join(', ')} · {d.level} · {d.theme}
       </div>
-      <div className="pf-draft">
-        <div className="panel stack">
-          <div className="panel-title">Question</div>
-          <textarea rows={4} value={front} onChange={(e) => setFront(e.target.value)} aria-label="Question" />
-          <div className="panel calm"><CardFace html={front} /></div>
-        </div>
-        <div className="panel stack">
-          <div className="panel-title">Réponse</div>
-          <textarea rows={4} value={back} onChange={(e) => setBack(e.target.value)} aria-label="Réponse" />
-          <div className="panel calm"><CardFace html={back} /></div>
-        </div>
+      {/* Mêmes outils que pour une flashcard : formules, gras, images collées ; une image est gardée aussitôt */}
+      <div className="panel stack">
+        <FaceEditor label="Question" html={front} onChange={setFront} onImage={(h) => (setFront(h), db.cardDrafts.update(d.id, { front: h }))} />
+      </div>
+      <div className="panel stack">
+        <FaceEditor label="Réponse" html={back} onChange={setBack} onImage={(h) => (setBack(h), db.cardDrafts.update(d.id, { back: h }))} />
       </div>
       {d.source && <div className="small muted">Source : {d.source}</div>}
       <div className="row">

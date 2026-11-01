@@ -577,7 +577,12 @@ table.list tr.click:hover td { background: #faf7ef; }
 .pf-pick { align-items: center; }
 .pf-pick .cardface { font-size: .9rem; text-align: left; flex: 1; }
 .pf-pick .cardface img { max-height: 80px; margin: 0; }
-.pf-draft { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.pf-sc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 312px; gap: 16px; align-items: center; padding-top: 8px; border-top: 1px solid var(--soft-line); }
+.pf-sc-row .cardface { font-size: .9rem; text-align: left; min-height: 0; }
+.pf-sc-row .cardface img { max-height: 120px; }
+.pf-sc-tools { justify-content: flex-end; gap: 8px; }
+.pf-sc-move { max-width: 160px; font-size: .85rem; }
+@media (max-width: 900px) { .pf-sc-row { grid-template-columns: minmax(0, 1fr); gap: 8px; } .pf-sc-tools { justify-content: flex-start; flex-wrap: wrap; } .pf-sc-move { flex: 1 1 160px; min-width: 0; max-width: 100%; box-sizing: border-box; } }
 .pf-msg { align-self: flex-start; max-width: 85%; background: var(--calm); border: 1px solid var(--soft-line); border-radius: 8px; padding: 8px; }
 .pf-msg.mine { align-self: flex-end; background: var(--warn-bg); }
 .pf-msg-card .cardface { font-size: .9rem; text-align: left; }
