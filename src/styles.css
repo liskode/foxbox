@@ -567,8 +567,8 @@ table.list tr.click:hover td { background: #faf7ef; }
 .pf-prose p { margin: 8px 0; }
 .pf-prose ul { margin: 8px 0; padding-left: 24px; }
 .pf-prose table { border-collapse: collapse; margin: 8px 0; display: block; overflow-x: auto; }
-.pf-prose td { border: 1px solid var(--muted-line); padding: 4px 8px; text-align: center; min-width: 24px; word-break: normal; }
-.pf-figure { display: block; max-width: 100%; height: auto; margin: 8px auto; }
+.pf-prose td { border: 1px solid var(--muted-line); padding: 4px 8px; text-align: center; min-width: 24px; word-break: normal; overflow-wrap: normal; }
+.pf-figure { display: block; max-width: min(100%, 720px); max-height: 480px; height: auto; margin: 8px auto; }
 .pf-video { width: 100%; aspect-ratio: 16 / 9; border: 0; }
 .pf-row { padding: 8px 0; border-bottom: 1px solid var(--soft-line); color: inherit; text-decoration: none; display: block; }
 .pf-row.spread { display: flex; }
@@ -589,4 +589,5 @@ table.list tr.click:hover td { background: #faf7ef; }
   .pf-inbox { grid-template-columns: 1fr; }
   .pf-hero { align-items: flex-start; }
   .pf-hero img { width: 64px; }
+  .pf-prose td { font-size: .9rem; padding: 4px; }
 }

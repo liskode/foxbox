@@ -130,6 +130,12 @@ export function PfSectionView({ s }: { s: PfSection }) {
       </div>
       <PfProse text={s.body} />
       <SectionImage s={s} />
+      {/* Sur téléphone, un schéma détaillé s'ouvre en grand d'un appui */}
+      {s.figures?.map((f) => (
+        <a key={f.src} href={f.src} target="_blank" rel="noreferrer">
+          <img src={f.src} alt={f.alt} title={f.alt} className="pf-figure" loading="lazy" />
+        </a>
+      ))}
       {s.video && (
         <iframe
           className="pf-video"

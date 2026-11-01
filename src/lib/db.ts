@@ -211,6 +211,10 @@ export interface PfNotion {
   keywords?: string[]; // mots pour retrouver les flashcards à rattacher
   ownerId?: string;
 }
+export interface PfFigure {
+  src: string; // image livrée avec le site
+  alt: string;
+}
 export interface PfSection {
   id: string;
   title: string;
@@ -219,6 +223,7 @@ export interface PfSection {
   imageId?: string; // image rangée dans `media` (identifiant « pf-… »)
   imageSrc?: string; // ou image livrée avec le site
   imageAlt?: string;
+  figures?: PfFigure[]; // schémas de la partie
   video?: string; // identifiant YouTube
 }
 export interface PfChapter {
@@ -235,6 +240,7 @@ export interface PfChapter {
   sections: PfSection[];
   updatedAt: number;
   linksSeeded?: boolean; // flashcards existantes déjà rattachées une fois
+  figuresSeeded?: boolean; // schémas de départ déjà ajoutés une fois
   ownerId?: string;
 }
 export interface PfCardNotion {

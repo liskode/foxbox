@@ -296,7 +296,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Physifox',
     text: 'Votre site public de cours : les visiteurs consultent les chapitres, ajoutent les flashcards à leur Deck et s’entraînent. Vous suivez tout depuis l’onglet Physifox.',
     details: [
-      'chapitres consultables sans compte, modifiables et publiés un par un',
+      'chapitres consultables sans compte, modifiables et publiés un par un, avec leurs schémas',
       'flashcards rattachées à des notions du programme : changer de progression ne les touche pas',
       'inscription avec e-mail et pseudo ; classe, établissement et pays facultatifs',
       'comptes visiteurs séparés des élèves, sans aucun accès au reste de FoxBox',

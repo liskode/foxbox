@@ -163,6 +163,14 @@ function ChapterEditor({ ch, notions, onClose }: { ch: PfChapter; notions: PfNot
               <textarea defaultValue={s.body} rows={12} onBlur={(e) => setSection(i, { body: e.target.value })} />
             </label>
             <label className="field">Image<input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && upload(i, e.target.files[0])} /></label>
+            {s.figures?.map((f) => (
+              <div key={f.src} className="spread pf-row">
+                <img src={f.src} alt={f.alt} style={{ maxHeight: 80, maxWidth: '60%' }} />
+                <button className="btn small ghost" onClick={() => setSection(i, { figures: s.figures!.filter((x) => x.src !== f.src) })}>
+                  <Icon name="trash" size={14} /> Retirer ce schéma
+                </button>
+              </div>
+            ))}
             <label className="field">Vidéo YouTube (identifiant)<input defaultValue={s.video} onBlur={(e) => setSection(i, { video: e.target.value.trim() || undefined })} /></label>
             <div className="spread">
               <button className="btn primary" onClick={() => setEdit(null)}>Terminé</button>

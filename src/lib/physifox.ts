@@ -8,6 +8,7 @@ import { ONLINE } from './supabase';
 import { pullPublic } from './sync';
 import { SEED_CHAPTERS, SEED_DRAFTS, SEED_NOTIONS } from './physifoxSeed';
 import { SEED_LINKS } from './physifoxSeedCards';
+import { SEED_FIGURES } from './physifoxSeedFigures';
 
 // Plan, notions et flashcards rédigées : ajoutés une seule fois, sans jamais écraser ce que le professeur a modifié
 export async function ensureSeed(ownerId: string) {
@@ -24,6 +25,13 @@ export async function ensureSeed(ownerId: string) {
     const c = await db.pfChapters.get(seed.id);
     if (c && !c.sections.length && c.status === 'a-faire' && seed.sections.length)
       await db.pfChapters.update(c.id, { sections: seed.sections, status: seed.status });
+  }
+  // Schémas : ajoutés une seule fois, sans toucher au texte (une figure retirée ensuite ne revient pas)
+  for (const [id, bySection] of Object.entries(SEED_FIGURES)) {
+    const c = await db.pfChapters.get(id);
+    if (!c || c.figuresSeeded) continue;
+    const sections = c.sections.map((s) => (bySection[s.id] && !s.figures?.length ? { ...s, figures: bySection[s.id] } : s));
+    await db.pfChapters.update(id, { sections, figuresSeeded: true });
   }
   // Flashcards existantes : rattachées une seule fois par chapitre (un lien retiré ensuite ne revient pas)
   const todo = (await db.pfChapters.toArray()).filter((c) => !c.linksSeeded);
