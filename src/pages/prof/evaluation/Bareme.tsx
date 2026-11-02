@@ -19,6 +19,7 @@ import { CardBrowser } from '../../../components/CardBrowser';
 import { CompetencePicker } from '../../../components/CompetencePicker';
 import { DocumentsEditor } from '../../../components/UnitDetails';
 import { Icon } from '../../../components/Icon';
+import { LazyInput } from '../../../components/LazyInput';
 
 // ---------------------------------------------------------------- Barème
 function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => void }) {
@@ -107,7 +108,7 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
         <div className="row">
           <label className="field" style={{ flex: 1, minWidth: 220 }}>
             Nom de l'évaluation
-            <input value={ev.name} onChange={(e) => update({ name: e.target.value })} />
+            <LazyInput value={ev.name} onSave={(name) => update({ name })} />
           </label>
           {ev.template && (
             <label className="field">
@@ -260,12 +261,7 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
               <tr key={c.id}>
                 <td className="muted">{i + 1}</td>
                 <td style={{ width: '70%' }}>
-                  <input
-                    style={{ width: '100%' }}
-                    value={c.label}
-                    placeholder="Ex. Équilibrage 5 3 4"
-                    onChange={(e) => setCrit(i, { label: e.target.value })}
-                  />
+                  <LazyInput style={{ width: '100%' }} value={c.label} placeholder="Ex. Équilibrage 5 3 4" onSave={(label) => setCrit(i, { label })} />
                   <CompetencePicker value={c.competenceIds ?? []} onChange={(ids) => setCrit(i, { competenceIds: ids })} />
                 </td>
                 <td>
