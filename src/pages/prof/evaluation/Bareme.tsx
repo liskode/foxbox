@@ -299,6 +299,12 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
             ))}
           </tbody>
         </table>
+        {/* Même bouton en bas de la liste : pas besoin de remonter quand il y a beaucoup de critères */}
+        {ev.criteria.length >= 3 && (
+          <button className="btn small" style={{ alignSelf: 'flex-start' }} onClick={() => update({ criteria: [...ev.criteria, { id: uid(), label: '', points: 1 }] })}>
+            + Critère
+          </button>
+        )}
         <details>
           <summary className="small" style={{ fontWeight: 700, cursor: 'pointer' }}>
             Coller une liste de critères (depuis Excel ou un texte)
