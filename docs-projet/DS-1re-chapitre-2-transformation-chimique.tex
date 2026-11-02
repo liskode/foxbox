@@ -1,0 +1,412 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[a4paper,margin=2cm]{geometry}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{array,booktabs}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{needspace}
+
+\definecolor{bleu}{RGB}{29,95,168}
+\definecolor{orange}{RGB}{190,95,10}
+\definecolor{vert}{RGB}{35,120,75}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist{nosep,leftmargin=*}
+\titleformat{\section}{\Large\bfseries\color{bleu}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.5em}{}
+\pagestyle{fancy}\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\small Suivre et modéliser une transformation chimique}
+\fancyfoot[R]{\small\thepage}
+
+\newtcolorbox{definition}[1]{enhanced,breakable,colback=bleu!6,colframe=bleu,boxrule=0.6pt,arc=2pt,fonttitle=\bfseries,title={#1}}
+\newtcolorbox{methode}[1]{enhanced,breakable,colback=vert!6,colframe=vert,boxrule=0.6pt,arc=2pt,fonttitle=\bfseries,title={#1}}
+\newtcolorbox{piege}{enhanced,breakable,colback=orange!7,colframe=orange,boxrule=0.6pt,arc=2pt,fonttitle=\bfseries,title={Pièges à éviter}}
+
+\newcounter{exo}
+\newcommand{\exo}[1]{\par\needspace{6\baselineskip}\medskip\stepcounter{exo}{\bfseries\color{bleu}Exercice \theexo\ --- #1}\par\nopagebreak}
+\newcounter{cor}
+\newcommand{\cor}[1]{\par\needspace{6\baselineskip}\medskip\stepcounter{cor}{\bfseries\color{vert}Exercice \thecor\ --- #1}\par\nopagebreak}
+\newcommand{\molL}{\text{mol}\cdot\text{L}^{-1}}
+\newcommand{\gmol}{\text{g}\cdot\text{mol}^{-1}}
+\renewcommand{\arraystretch}{1.25}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries\color{bleu} Préparer le DS}\\[4pt]
+  {\Large Chapitre 2 : suivre et modéliser une transformation chimique}\\[2pt]
+  {\small Première, spécialité physique-chimie}
+\end{center}
+
+\section{L'essentiel du cours}
+
+\subsection*{A. Oxydoréduction}
+
+\begin{definition}{Définitions à connaître par cœur}
+\begin{itemize}
+  \item \textbf{Oxydant} : espèce capable de \textbf{capter} un ou plusieurs électrons.
+  \item \textbf{Réducteur} : espèce capable de \textbf{céder} un ou plusieurs électrons.
+  \item \textbf{Couple oxydant-réducteur} (noté Ox/Red) : deux espèces qui se transforment l'une en l'autre par échange d'électrons.
+  \item \textbf{Demi-équation} : $\text{Ox} + n\,\ce{e-} = \text{Red}$. Exemple : \ce{Cu^2+ + 2 e- = Cu}.
+  \item \textbf{Réaction d'oxydoréduction} : \textbf{transfert d'électrons} du réducteur d'un couple vers l'oxydant d'un autre couple.
+\end{itemize}
+\end{definition}
+
+\textbf{Justifier} que X est l'oxydant : on écrit la demi-équation et on rédige : «~dans la demi-équation \ce{Cu^2+ + 2 e- = Cu}, \ce{Cu^2+} capte des électrons : c'est l'oxydant du couple ; \ce{Cu} peut en céder : c'est le réducteur.~»
+
+\begin{methode}{Écrire une demi-équation en milieu acide (ordre à respecter)}
+\begin{enumerate}
+  \item Équilibrer les éléments autres que O et H.
+  \item Équilibrer O en ajoutant des molécules \ce{H2O}.
+  \item Équilibrer H en ajoutant des ions \ce{H+}.
+  \item Équilibrer les charges en ajoutant des électrons \ce{e-} (du côté où la charge totale est la plus grande).
+\end{enumerate}
+Exemple, couple \ce{MnO4-}/\ce{Mn^2+} :\quad \ce{MnO4- + 8 H+ + 5 e- = Mn^2+ + 4 H2O}
+\end{methode}
+
+\begin{methode}{Écrire l'équation d'une réaction d'oxydoréduction}
+\begin{enumerate}
+  \item Écrire les deux demi-équations, chacune dans le sens où elle se produit : l'oxydant réactif à gauche dans la première, le réducteur réactif à gauche dans la seconde.
+  \item Les multiplier pour avoir \textbf{le même nombre d'électrons} captés et cédés.
+  \item Les additionner : les électrons doivent disparaître. Dans l'équation finale, on écrit une flèche~$\to$.
+  \item Vérifier : éléments et charges sont conservés.
+\end{enumerate}
+\end{methode}
+
+\subsection*{B. Bilan de matière et avancement}
+
+\begin{definition}{Définitions à connaître par cœur}
+\begin{itemize}
+  \item \textbf{Avancement} $x$ (en mol) : grandeur qui décrit l'évolution du système ; $x = 0$ à l'état initial.
+  \item \textbf{Réactif limitant} : réactif entièrement consommé en premier ; il arrête la transformation.
+  \item \textbf{Avancement maximal} $x_{\max}$ : valeur de $x$ quand le réactif limitant est entièrement consommé.
+  \item \textbf{Avancement final} $x_f$ : valeur de $x$ à l'état final \textbf{réellement atteint}.
+  \item \textbf{Transformation totale} : $x_f = x_{\max}$. \textbf{Transformation non totale} : $x_f < x_{\max}$.
+  \item \textbf{Proportions stœchiométriques} : pour $a\,\ce{A} + b\,\ce{B} \to \dots$, on a $\dfrac{n_A}{a} = \dfrac{n_B}{b}$. Les réactifs sont alors tous limitants.
+\end{itemize}
+\end{definition}
+
+\begin{methode}{Tableau d'avancement et état final}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Équation & $a\,\ce{A}$ \;+ & $b\,\ce{B}$ \;$\to$ & $c\,\ce{C}$ \\
+\midrule
+État initial ($x=0$) & $n_A$ & $n_B$ & $0$ \\
+En cours ($x$) & $n_A - a\,x$ & $n_B - b\,x$ & $c\,x$ \\
+État final ($x_f$) & $n_A - a\,x_f$ & $n_B - b\,x_f$ & $c\,x_f$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{enumerate}
+  \item Calculer les quantités initiales, \textbf{en mol}, et remplir le tableau.
+  \item Résoudre $n_A - a\,x_{\max} = 0$ et $n_B - b\,x_{\max} = 0$.
+  \item $x_{\max}$ est la \textbf{plus petite} des deux valeurs ; elle désigne le réactif limitant.
+  \item Si la transformation est totale, remplacer $x_f$ par $x_{\max}$ pour obtenir la composition finale.
+\end{enumerate}
+\end{methode}
+
+\subsection*{C. Passer de la mesure à la quantité de matière}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+On connaît ou on mesure & Relation & Unités \\
+\midrule
+une masse & $n = \dfrac{m}{M}$ & $m$ en g, $M$ en $\gmol$ \\[6pt]
+une concentration & $n = C \times V$ & $C$ en $\molL$, $V$ en \textbf{L} \\[6pt]
+un volume de gaz & $n = \dfrac{V}{V_m}$ & $V$ en L, $V_m$ en $\text{L}\cdot\text{mol}^{-1}$ \\[6pt]
+une absorbance & $A = k \times C$ puis $n = C \times V$ & $k$ en $\text{L}\cdot\text{mol}^{-1}$ ici \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{methode}{Déterminer $x_f$ par une expérience}
+\begin{enumerate}
+  \item Mesurer une grandeur liée à une espèce à l'état final (volume de gaz, absorbance, masse\dots).
+  \item En déduire la quantité finale de cette espèce.
+  \item L'égaler à son expression dans le tableau pour trouver $x_f$.
+  \item Comparer $x_f$ à $x_{\max}$ pour conclure : totale ou non totale.
+\end{enumerate}
+\end{methode}
+
+\begin{piege}
+\begin{itemize}
+  \item Trouver le limitant en comparant $n_A$ et $n_B$ : \textbf{faux} si les nombres stœchiométriques sont différents. Il faut comparer $\dfrac{n_A}{a}$ et $\dfrac{n_B}{b}$.
+  \item Oublier de convertir les mL en L.
+  \item Oublier les coefficients dans le tableau : c'est $n_B - 2x$, et non $n_B - x$, si le coefficient de B est 2.
+  \item Laisser des électrons dans l'équation finale.
+  \item Répondre «~le limitant est A~» sans calcul : le correcteur attend les deux valeurs de $x_{\max}$.
+\end{itemize}
+\end{piege}
+
+\newpage
+\section{Exercices}
+
+\exo{Reconnaître l'oxydant et le réducteur}
+Pour chaque demi-équation, indiquer l'oxydant et le réducteur, en justifiant, puis écrire le couple.
+\begin{enumerate}[label=\alph*)]
+  \item \ce{Ag+ + e- = Ag}
+  \item \ce{2 I- = I2 + 2 e-}
+  \item \ce{Al = Al^3+ + 3 e-}
+  \item \ce{Fe^3+ + e- = Fe^2+}
+\end{enumerate}
+
+\exo{Écrire des demi-équations simples}
+Écrire la demi-équation de chaque couple :\\
+a) \ce{Zn^2+}/\ce{Zn} \qquad b) \ce{H+}/\ce{H2} \qquad c) \ce{I2}/\ce{I-} \qquad d) \ce{S4O6^2-}/\ce{S2O3^2-}
+
+\exo{Écrire des demi-équations en milieu acide}
+Écrire la demi-équation de chaque couple, en milieu acide :\\
+a) \ce{H2O2}/\ce{H2O} \qquad b) \ce{Cr2O7^2-}/\ce{Cr^3+} \qquad c) \ce{SO4^2-}/\ce{SO2}
+
+\exo{Écrire l'équation d'une réaction}
+À l'aide des demi-équations, écrire l'équation de la réaction entre :
+\begin{enumerate}[label=\alph*)]
+  \item le métal zinc \ce{Zn} et les ions cuivre \ce{Cu^2+} (couples \ce{Cu^2+}/\ce{Cu} et \ce{Zn^2+}/\ce{Zn}) ;
+  \item le métal cuivre \ce{Cu} et les ions argent \ce{Ag+} (couples \ce{Ag+}/\ce{Ag} et \ce{Cu^2+}/\ce{Cu}) ;
+  \item le métal aluminium \ce{Al} et les ions \ce{H+} (couples \ce{Al^3+}/\ce{Al} et \ce{H+}/\ce{H2}) ;
+  \item les ions permanganate \ce{MnO4-} et les ions fer(II) \ce{Fe^2+} en milieu acide (couples \ce{MnO4-}/\ce{Mn^2+} et \ce{Fe^3+}/\ce{Fe^2+}).
+\end{enumerate}
+
+\exo{Tableau d'avancement : zinc et acide}
+On plonge $m = 1{,}31$~g de zinc dans $V = 50{,}0$~mL d'une solution d'acide de concentration en ions \ce{H+} égale à $C = 0{,}50~\molL$. La transformation est considérée comme totale :
+\begin{center}\ce{Zn(s) + 2 H+(aq) -> Zn^2+(aq) + H2(g)}\end{center}
+\textit{Données : $M(\ce{Zn}) = 65{,}4~\gmol$ ; $V_m = 24~\text{L}\cdot\text{mol}^{-1}$.}
+\begin{enumerate}
+  \item Calculer les quantités initiales de réactifs.
+  \item Établir le tableau d'avancement.
+  \item Déterminer $x_{\max}$ et le réactif limitant.
+  \item Donner la composition du système à l'état final.
+  \item Calculer la masse de zinc restante, le volume de dihydrogène formé et la concentration finale en ions \ce{Zn^2+} (le volume de solution reste égal à $V$).
+\end{enumerate}
+
+\exo{Proportions stœchiométriques : diiode et thiosulfate}
+On étudie la réaction totale \ce{I2(aq) + 2 S2O3^2-(aq) -> 2 I-(aq) + S4O6^2-(aq)}. Seul le diiode \ce{I2} est coloré (jaune-brun). On dispose d'une solution contenant $n_1 = 1{,}0\times 10^{-3}$~mol de \ce{I2}, à laquelle on ajoute une solution de thiosulfate de concentration $C = 0{,}10~\molL$.
+\begin{enumerate}
+  \item Quel volume $V_E$ de solution de thiosulfate faut-il verser pour être dans les proportions stœchiométriques ?
+  \item On verse en fait $V = 15$~mL. Établir le tableau d'avancement et déterminer le réactif limitant.
+  \item Donner la composition de l'état final. Quelle est la couleur de la solution ?
+\end{enumerate}
+
+\exo{Une réaction avec trois réactifs}
+On mélange $V_1 = 10{,}0$~mL d'une solution de permanganate de potassium ($[\ce{MnO4-}] = 2{,}0\times 10^{-2}~\molL$, couleur violette) et $V_2 = 20{,}0$~mL d'une solution d'ions \ce{Fe^2+} ($[\ce{Fe^2+}] = 0{,}10~\molL$). Les ions \ce{H+} sont en excès. La transformation est totale :
+\begin{center}\ce{MnO4- + 8 H+ + 5 Fe^2+ -> Mn^2+ + 5 Fe^3+ + 4 H2O}\end{center}
+\begin{enumerate}
+  \item Calculer les quantités initiales de \ce{MnO4-} et de \ce{Fe^2+}.
+  \item Déterminer $x_{\max}$ et le réactif limitant.
+  \item Donner la composition finale (hors \ce{H+} et \ce{H2O}). La couleur violette persiste-t-elle ?
+  \item Calculer la concentration finale en ions \ce{Fe^2+}.
+\end{enumerate}
+
+\exo{Avancement final : totale ou non totale ?}
+On mélange $0{,}10$~mol d'acide éthanoïque et $0{,}10$~mol d'éthanol. Il se forme un ester et de l'eau :
+\begin{center}\ce{CH3COOH + C2H5OH -> CH3COOC2H5 + H2O}\end{center}
+Quand la composition n'évolue plus, l'analyse montre qu'il s'est formé $0{,}067$~mol d'ester.
+\begin{enumerate}
+  \item Déterminer $x_{\max}$. Le mélange est-il stœchiométrique ?
+  \item Déterminer $x_f$. La transformation est-elle totale ?
+  \item Donner la composition finale du système, sachant qu'il n'y avait pas d'eau au départ.
+\end{enumerate}
+
+\exo{Expérience : mesure d'un volume de gaz}
+On fait réagir $m = 0{,}12$~g de magnésium avec $50$~mL d'acide chlorhydrique à $1{,}0~\molL$ (ions \ce{H+} à $1{,}0~\molL$) :
+\begin{center}\ce{Mg(s) + 2 H+(aq) -> Mg^2+(aq) + H2(g)}\end{center}
+On recueille à la fin $V_{\ce{H2}} = 115$~mL de gaz. \textit{Données : $M(\ce{Mg}) = 24{,}3~\gmol$ ; $V_m = 24~\text{L}\cdot\text{mol}^{-1}$.}
+\begin{enumerate}
+  \item Déterminer $x_{\max}$ et le réactif limitant.
+  \item Déterminer $x_f$ à partir de la mesure.
+  \item Comparer et conclure.
+\end{enumerate}
+
+\exo{Expérience : suivi par absorbance}
+On mélange des ions iodure \ce{I-} ($4{,}0\times 10^{-3}$~mol) et des ions peroxodisulfate \ce{S2O8^2-} ($1{,}0\times 10^{-3}$~mol) ; le volume total est $V = 100$~mL. Seul le diiode formé est coloré :
+\begin{center}\ce{2 I- + S2O8^2- -> I2 + 2 SO4^2-}\end{center}
+On mesure l'absorbance, qui vérifie $A = k\,[\ce{I2}]$ avec $k = 100~\text{L}\cdot\text{mol}^{-1}$. On trouve $A = 0{,}60$ au bout de 10 minutes, puis $A = 1{,}00$ à partir de 60 minutes, sans évolution ensuite.
+\begin{enumerate}
+  \item Retrouver l'équation à partir des couples \ce{I2}/\ce{I-} et \ce{S2O8^2-}/\ce{SO4^2-}.
+  \item Déterminer $x_{\max}$ et le réactif limitant.
+  \item Calculer l'avancement au bout de 10 minutes. Le système est-il dans son état final ?
+  \item Déterminer $x_f$. La transformation est-elle totale ?
+\end{enumerate}
+
+\newpage
+\section{Corrections détaillées}
+
+\cor{Reconnaître l'oxydant et le réducteur}
+\begin{enumerate}[label=\alph*)]
+  \item \ce{Ag+} capte un électron : c'est l'oxydant. \ce{Ag} peut le céder : c'est le réducteur. Couple \ce{Ag+}/\ce{Ag}.
+  \item \ce{I-} cède des électrons : c'est le réducteur. \ce{I2} peut les capter : c'est l'oxydant. Couple \ce{I2}/\ce{I-}.
+  \item \ce{Al} cède des électrons : c'est le réducteur. \ce{Al^3+} est l'oxydant. Couple \ce{Al^3+}/\ce{Al}.
+  \item \ce{Fe^3+} capte un électron : c'est l'oxydant. \ce{Fe^2+} est le réducteur. Couple \ce{Fe^3+}/\ce{Fe^2+}.
+\end{enumerate}
+\textit{À retenir : le côté où se trouvent les électrons est celui de l'oxydant.}
+
+\cor{Écrire des demi-équations simples}
+\begin{enumerate}[label=\alph*)]
+  \item \ce{Zn^2+ + 2 e- = Zn}
+  \item \ce{2 H+ + 2 e- = H2} : deux H à droite, donc 2 \ce{H+} à gauche, puis 2 électrons pour les charges.
+  \item \ce{I2 + 2 e- = 2 I-}
+  \item \ce{S4O6^2- + 2 e- = 2 S2O3^2-} : 4 S à gauche, donc 2 \ce{S2O3^2-} à droite. Charges : $-2$ à gauche et $-4$ à droite, donc 2 électrons à gauche.
+\end{enumerate}
+
+\cor{Écrire des demi-équations en milieu acide}
+
+a) \ce{H2O2}/\ce{H2O}
+\begin{itemize}
+  \item O : 2 à gauche, donc \ce{H2O2 = 2 H2O}.
+  \item H : 2 à gauche, 4 à droite, donc \ce{H2O2 + 2 H+ = 2 H2O}.
+  \item Charges : $+2$ à gauche, $0$ à droite, donc \ce{H2O2 + 2 H+ + 2 e- = 2 H2O}.
+\end{itemize}
+
+b) \ce{Cr2O7^2-}/\ce{Cr^3+}
+\begin{itemize}
+  \item Cr : \ce{Cr2O7^2- = 2 Cr^3+}.
+  \item O : \ce{Cr2O7^2- = 2 Cr^3+ + 7 H2O}.
+  \item H : \ce{Cr2O7^2- + 14 H+ = 2 Cr^3+ + 7 H2O}.
+  \item Charges : $-2 + 14 = +12$ à gauche, $+6$ à droite, donc 6 électrons à gauche :\\
+  \ce{Cr2O7^2- + 14 H+ + 6 e- = 2 Cr^3+ + 7 H2O}.
+\end{itemize}
+
+c) \ce{SO4^2-}/\ce{SO2}
+\begin{itemize}
+  \item O : \ce{SO4^2- = SO2 + 2 H2O}.
+  \item H : \ce{SO4^2- + 4 H+ = SO2 + 2 H2O}.
+  \item Charges : $+2$ à gauche, $0$ à droite : \ce{SO4^2- + 4 H+ + 2 e- = SO2 + 2 H2O}.
+\end{itemize}
+
+\cor{Écrire l'équation d'une réaction}
+
+a) \ce{Cu^2+ + 2 e- = Cu} \quad et \quad \ce{Zn = Zn^2+ + 2 e-}. Même nombre d'électrons, on additionne :
+\begin{center}\ce{Cu^2+ + Zn -> Cu + Zn^2+}\end{center}
+
+b) \ce{Ag+ + e- = Ag} \quad ($\times 2$) \quad et \quad \ce{Cu = Cu^2+ + 2 e-} :
+\begin{center}\ce{2 Ag+ + Cu -> 2 Ag + Cu^2+}\end{center}
+
+c) \ce{Al = Al^3+ + 3 e-} \quad ($\times 2$) \quad et \quad \ce{2 H+ + 2 e- = H2} \quad ($\times 3$), soit 6 électrons échangés :
+\begin{center}\ce{2 Al + 6 H+ -> 2 Al^3+ + 3 H2}\end{center}
+
+d) \ce{MnO4- + 8 H+ + 5 e- = Mn^2+ + 4 H2O} \quad et \quad \ce{Fe^2+ = Fe^3+ + e-} \quad ($\times 5$) :
+\begin{center}\ce{MnO4- + 8 H+ + 5 Fe^2+ -> Mn^2+ + 5 Fe^3+ + 4 H2O}\end{center}
+Vérification des charges : à gauche $-1 + 8 + 10 = +17$ ; à droite $+2 + 15 = +17$.
+
+\cor{Tableau d'avancement : zinc et acide}
+\begin{enumerate}
+  \item $n(\ce{Zn}) = \dfrac{m}{M} = \dfrac{1{,}31}{65{,}4} = 0{,}0200$~mol \qquad $n(\ce{H+}) = C \times V = 0{,}50 \times 0{,}0500 = 0{,}025$~mol
+  \item Tableau (en mol) :
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+ & \ce{Zn} & \ce{2 H+} & \ce{Zn^2+} & \ce{H2} \\
+\midrule
+État initial & $0{,}0200$ & $0{,}025$ & $0$ & $0$ \\
+En cours & $0{,}0200 - x$ & $0{,}025 - 2x$ & $x$ & $x$ \\
+État final & $0{,}0200 - x_{\max}$ & $0{,}025 - 2x_{\max}$ & $x_{\max}$ & $x_{\max}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+  \item Si \ce{Zn} est limitant : $0{,}0200 - x_{\max} = 0$, soit $x_{\max} = 0{,}0200$~mol.\\
+  Si \ce{H+} est limitant : $0{,}025 - 2x_{\max} = 0$, soit $x_{\max} = 0{,}0125$~mol.\\
+  On garde la plus petite valeur : $\boldsymbol{x_{\max} = 0{,}0125}$~\textbf{mol}, et \ce{H+} est le réactif limitant.
+  \item État final : $n(\ce{Zn}) = 0{,}0200 - 0{,}0125 = 0{,}0075$~mol ; $n(\ce{H+}) = 0$ ; $n(\ce{Zn^2+}) = 0{,}0125$~mol ; $n(\ce{H2}) = 0{,}0125$~mol.
+  \item Masse de zinc restante : $m = n \times M = 0{,}0075 \times 65{,}4 = 0{,}49$~g.\\
+  Volume de dihydrogène : $V = n \times V_m = 0{,}0125 \times 24 = 0{,}30$~L.\\
+  Concentration : $[\ce{Zn^2+}] = \dfrac{0{,}0125}{0{,}0500} = 0{,}25~\molL$.
+\end{enumerate}
+
+\cor{Proportions stœchiométriques : diiode et thiosulfate}
+\begin{enumerate}
+  \item Proportions stœchiométriques : $\dfrac{n(\ce{I2})}{1} = \dfrac{n(\ce{S2O3^2-})}{2}$, soit $n(\ce{S2O3^2-}) = 2 \times 1{,}0\times 10^{-3} = 2{,}0\times 10^{-3}$~mol.\\
+  D'où $V_E = \dfrac{n}{C} = \dfrac{2{,}0\times 10^{-3}}{0{,}10} = 0{,}020$~L, soit $\boldsymbol{V_E = 20}$~\textbf{mL}.
+  \item $n(\ce{S2O3^2-}) = 0{,}10 \times 0{,}015 = 1{,}5\times 10^{-3}$~mol. Tableau (en $10^{-3}$ mol) :
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+ & \ce{I2} & \ce{2 S2O3^2-} & \ce{2 I-} & \ce{S4O6^2-} \\
+\midrule
+État initial & $1{,}0$ & $1{,}5$ & $0$ & $0$ \\
+En cours & $1{,}0 - x$ & $1{,}5 - 2x$ & $2x$ & $x$ \\
+État final & $0{,}25$ & $0$ & $1{,}5$ & $0{,}75$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+  Si \ce{I2} est limitant : $x_{\max} = 1{,}0\times 10^{-3}$~mol. Si \ce{S2O3^2-} est limitant : $x_{\max} = \dfrac{1{,}5\times 10^{-3}}{2} = 7{,}5\times 10^{-4}$~mol.\\
+  On garde la plus petite : $x_{\max} = 7{,}5\times 10^{-4}$~mol, et \ce{S2O3^2-} est limitant.
+  \item État final : $n(\ce{I2}) = 2{,}5\times 10^{-4}$~mol ; $n(\ce{S2O3^2-}) = 0$ ; $n(\ce{I-}) = 1{,}5\times 10^{-3}$~mol ; $n(\ce{S4O6^2-}) = 7{,}5\times 10^{-4}$~mol.\\
+  Il reste du diiode : la solution reste \textbf{jaune-brun}, plus claire qu'au départ.
+\end{enumerate}
+
+\cor{Une réaction avec trois réactifs}
+\begin{enumerate}
+  \item $n(\ce{MnO4-}) = 2{,}0\times 10^{-2} \times 0{,}0100 = 2{,}0\times 10^{-4}$~mol.\\
+  $n(\ce{Fe^2+}) = 0{,}10 \times 0{,}0200 = 2{,}0\times 10^{-3}$~mol.
+  \item \ce{H+} étant en excès, il ne peut pas être limitant.\\
+  Si \ce{MnO4-} est limitant : $x_{\max} = 2{,}0\times 10^{-4}$~mol.\\
+  Si \ce{Fe^2+} est limitant : $2{,}0\times 10^{-3} - 5x_{\max} = 0$, soit $x_{\max} = 4{,}0\times 10^{-4}$~mol.\\
+  Donc $x_{\max} = 2{,}0\times 10^{-4}$~mol, et \ce{MnO4-} est limitant.
+  \item $n(\ce{MnO4-}) = 0$ ; $n(\ce{Fe^2+}) = 2{,}0\times 10^{-3} - 5 \times 2{,}0\times 10^{-4} = 1{,}0\times 10^{-3}$~mol ;\\
+  $n(\ce{Mn^2+}) = 2{,}0\times 10^{-4}$~mol ; $n(\ce{Fe^3+}) = 1{,}0\times 10^{-3}$~mol.\\
+  \ce{MnO4-} a été entièrement consommé : la couleur violette \textbf{disparaît}.
+  \item Le volume total est $V_1 + V_2 = 30{,}0$~mL, d'où $[\ce{Fe^2+}] = \dfrac{1{,}0\times 10^{-3}}{0{,}0300} = 3{,}3\times 10^{-2}~\molL$.\\
+  \textit{Piège : il faut diviser par le volume total, pas par $V_2$.}
+\end{enumerate}
+
+\cor{Avancement final : totale ou non totale ?}
+\begin{enumerate}
+  \item Les coefficients valent 1 : $0{,}10 - x_{\max} = 0$ pour les deux réactifs, donc $x_{\max} = 0{,}10$~mol.\\
+  Comme $\dfrac{0{,}10}{1} = \dfrac{0{,}10}{1}$, le mélange est \textbf{stœchiométrique}.
+  \item D'après le tableau, $n_{\text{ester}} = x_f$, donc $x_f = 0{,}067$~mol.\\
+  $x_f < x_{\max}$ : la transformation est \textbf{non totale}.
+  \item Acide : $0{,}10 - 0{,}067 = 0{,}033$~mol ; éthanol : $0{,}033$~mol ; ester : $0{,}067$~mol ; eau : $0{,}067$~mol.\\
+  \textit{Il reste des réactifs, alors que le mélange était stœchiométrique : c'est le signe que la transformation n'est pas totale.}
+\end{enumerate}
+
+\cor{Expérience : mesure d'un volume de gaz}
+\begin{enumerate}
+  \item $n(\ce{Mg}) = \dfrac{0{,}12}{24{,}3} = 4{,}9\times 10^{-3}$~mol ; $n(\ce{H+}) = 1{,}0 \times 0{,}050 = 5{,}0\times 10^{-2}$~mol.\\
+  Si \ce{Mg} est limitant : $x_{\max} = 4{,}9\times 10^{-3}$~mol. Si \ce{H+} est limitant : $x_{\max} = \dfrac{5{,}0\times 10^{-2}}{2} = 2{,}5\times 10^{-2}$~mol.\\
+  Donc $x_{\max} = 4{,}9\times 10^{-3}$~mol, et \ce{Mg} est limitant.
+  \item D'après le tableau, $n(\ce{H2}) = x_f$. Donc $x_f = \dfrac{V_{\ce{H2}}}{V_m} = \dfrac{0{,}115}{24} = 4{,}8\times 10^{-3}$~mol.
+  \item $x_f \approx x_{\max}$ (l'écart est d'environ 2~\%, ce qui est de l'ordre de l'incertitude de mesure). La transformation peut être considérée comme \textbf{totale}.
+\end{enumerate}
+
+\cor{Expérience : suivi par absorbance}
+\begin{enumerate}
+  \item \ce{2 I- = I2 + 2 e-} \quad et \quad \ce{S2O8^2- + 2 e- = 2 SO4^2-}. Il y a 2 électrons de chaque côté ; en additionnant : \ce{2 I- + S2O8^2- -> I2 + 2 SO4^2-}.
+  \item Si \ce{I-} est limitant : $4{,}0\times 10^{-3} - 2x_{\max} = 0$, soit $x_{\max} = 2{,}0\times 10^{-3}$~mol.\\
+  Si \ce{S2O8^2-} est limitant : $x_{\max} = 1{,}0\times 10^{-3}$~mol.\\
+  Donc $x_{\max} = 1{,}0\times 10^{-3}$~mol, et \ce{S2O8^2-} est limitant.
+  \item D'après le tableau, $n(\ce{I2}) = x$. À 10 minutes : $[\ce{I2}] = \dfrac{A}{k} = \dfrac{0{,}60}{100} = 6{,}0\times 10^{-3}~\molL$.\\
+  Donc $x = [\ce{I2}] \times V = 6{,}0\times 10^{-3} \times 0{,}100 = 6{,}0\times 10^{-4}$~mol.\\
+  L'absorbance continue ensuite d'augmenter : le système n'est \textbf{pas} encore dans son état final.
+  \item À l'état final, $A = 1{,}00$ : $[\ce{I2}] = 1{,}0\times 10^{-2}~\molL$, donc $x_f = 1{,}0\times 10^{-2} \times 0{,}100 = 1{,}0\times 10^{-3}$~mol.\\
+  $x_f = x_{\max}$ : la transformation est \textbf{totale}.
+\end{enumerate}
+
+\vfill
+\begin{tcolorbox}[colback=bleu!6,colframe=bleu,boxrule=0.6pt,arc=2pt,fonttitle=\bfseries,title={Avant le DS : suis-je capable de\dots{} ?}]
+\renewcommand{\labelitemi}{$\square$}
+\begin{itemize}
+  \item Définir une réaction d'oxydoréduction (ex. 4).
+  \item Identifier en justifiant l'oxydant et le réducteur d'un couple (ex. 1).
+  \item Écrire une demi-équation (ex. 2 et 3).
+  \item Écrire une équation à partir des demi-équations (ex. 4 et 10).
+  \item Définir réaction totale, réactif limitant et proportions stœchiométriques (ex. 5, 6 et 8).
+  \item Établir et exploiter un tableau d'avancement (ex. 5, 6 et 7).
+  \item Déterminer la composition de l'état final d'une transformation totale (ex. 5, 6 et 7).
+  \item Déterminer $x_f$ et le comparer à $x_{\max}$ (ex. 8).
+  \item Déterminer $x_f$ et l'état final à partir d'une mesure (ex. 9 et 10).
+\end{itemize}
+\end{tcolorbox}
+
+\end{document}

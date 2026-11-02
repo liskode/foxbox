@@ -207,7 +207,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'sauvegardes datées avec commentaire et restauration',
       'affichage en grand dans une fenêtre pour le tableau (petite photo, prénom en grand, sans aménagements)',
       'impression A4 portrait',
-      'appel : un clic grise l’élève absent',
+      'appel : un clic grise l’élève absent, sur le plan ou dans la liste des élèves non placés',
     ],
   },
   {

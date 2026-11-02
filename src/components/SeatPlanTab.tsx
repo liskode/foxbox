@@ -479,17 +479,29 @@ export function SeatPlanTab({ group }: { group: Group }) {
                   .
                 </div>
               )}
-              <span className="small muted">Cliquez sur un élève puis sur une place. Cliquez sur deux places pour les échanger.</span>
+              <span className="small muted">
+                {appel
+                  ? 'Appel : cliquez aussi sur les élèves non placés pour les noter absents.'
+                  : 'Cliquez sur un élève puis sur une place. Cliquez sur deux places pour les échanger.'}
+              </span>
               {unplaced.map((s) => {
                 const on = pick && 'student' in pick && pick.student === s.id;
+                const abs = absentToday.has(s.id);
                 return (
                   <button
                     key={s.id}
                     className={'btn small' + (on ? ' primary' : ' ghost')}
-                    style={{ justifyContent: 'flex-start', display: 'flex', gap: 6 }}
-                    onClick={() => setPick(on ? null : { student: s.id })}
+                    style={{ justifyContent: 'flex-start', display: 'flex', gap: 6, opacity: abs ? 0.5 : 1 }}
+                    title={appel ? (abs ? 'Absent : cliquer pour annuler' : 'Cliquer pour noter absent') : undefined}
+                    // Appel : un clic note l'élève absent (ou l'annule), comme sur le plan
+                    onClick={() => (appel ? toggleAbsence(session!.id, group.id, s.id, today()) : setPick(on ? null : { student: s.id }))}
                   >
-                    <Avatar student={s} size={24} zoom /> {s.firstName} {s.lastName} <FlagBadges flags={flags.get(s.id)} />
+                    <Avatar student={s} size={24} zoom />{' '}
+                    <span style={{ textDecoration: abs ? 'line-through' : 'none' }}>
+                      {s.firstName} {s.lastName}
+                    </span>{' '}
+                    <FlagBadges flags={flags.get(s.id)} />
+                    {abs && <span className="tag bad" style={{ marginLeft: 'auto' }}>absent</span>}
                   </button>
                 );
               })}
