@@ -407,7 +407,7 @@ function NotionCards({ notion }: { notion: PfNotion }) {
 
 // ---------- Validation des flashcards ----------
 
-function ValidationTab() {
+export function ValidationTab() {
   const drafts = useLiveQuery(() => db.cardDrafts.where('status').equals('attente').sortBy('id'), [], [] as CardDraft[]);
   const notions = useLiveQuery(() => db.pfNotions.toArray(), [], [] as PfNotion[]);
   const [started, setStarted] = useState(false);

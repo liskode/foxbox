@@ -302,7 +302,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'comptes visiteurs séparés des élèves, sans aucun accès au reste de FoxBox',
       'Deck et entraînement par boîtes de Leitner, adaptés au téléphone',
       'bouton « Signaler » sur chaque flashcard et messagerie privée avec le professeur',
-      'passage en revue des nouvelles flashcards : valider, corriger (formules, images collées) ou écarter avant qu’elles soient visibles',
+      'passage en revue des nouvelles flashcards : valider, corriger (formules, images collées) ou écarter avant qu’elles soient visibles, depuis l’onglet Physifox ou l’onglet Flashcards (« À valider »)',
       'dans l’onglet Physifox, sous chaque partie du cours : ses flashcards, à modifier, déplacer vers une autre partie ou compléter (nouvelle flashcard, ou flashcard existante retrouvée par mot-clé)',
       'statistiques : visiteurs, activité, flashcards les plus ratées',
       'suppression du compte par le visiteur, page de confidentialité',
