@@ -596,3 +596,8 @@ table.list tr.click:hover td { background: #faf7ef; }
   .pf-hero img { width: 64px; }
   .pf-prose td { font-size: .9rem; padding: 4px; }
 }
+
+/* Échanges au sujet d'une copie (vocal du professeur, réponses de l'élève) */
+.eval-msg { display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; border-radius: 12px; max-width: 520px; }
+.eval-msg.teacher { background: var(--calm); border: 1px solid var(--soft-line); }
+.eval-msg.student { background: #eef7f4; margin-left: auto; }

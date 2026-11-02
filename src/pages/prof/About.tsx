@@ -118,6 +118,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'grille façon tableur',
       'résultats : moyenne, répartition, réussite par critère et par compétence',
       'appréciations',
+      'appréciation vocale de chaque copie : l’élève l’écoute dans son espace, on voit s’il l’a écoutée (date et heure), il peut répondre par écrit ou par un vocal ; nouvelles réponses signalées dans la liste des copies',
       'visibilité pour l’élève (note, appréciation, détail, histogramme)',
       'copie des notes pour Pronote et export CSV',
       'renvoi en boîte 1 des flashcards des critères ratés',

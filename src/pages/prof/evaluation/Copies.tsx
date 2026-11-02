@@ -6,6 +6,11 @@ import { LEVELS, LEVEL_KEYS, emptyResult, levelColor, saveResult, score } from '
 import { Avatar } from '../../../components/Avatar';
 import { Icon } from '../../../components/Icon';
 import { NoteButton } from '../../../components/StudentNote';
+import { EvalFeedback } from '../../../components/EvalFeedback';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useAuth } from '../../../lib/auth';
+import { db } from '../../../lib/db';
+import { evalUnread } from '../../../lib/messages';
 
 import { pct, isTyping, parseLevel, useResults, NoteBadge, CompetenceBadges, CurFlags, GroupChip } from './shared';
 
@@ -18,6 +23,18 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
   const cur = list[idx];
   const r = (cur && results.get(cur.student.id)) || (cur ? emptyResult(ev, cur.student.id) : undefined);
   const [focus, setFocus] = useState(0);
+  const { session } = useAuth();
+  const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
+  // Réponses des élèves pas encore vues (pastille dans la liste des copies)
+  const replies = useLiveQuery(
+    async () => {
+      const m = new Map<string, number>();
+      for (const { student } of list) m.set(student.id, await evalUnread(session!.id, ev.id, student.id));
+      return m;
+    },
+    [ev.id, list.length, session?.id],
+    new Map<string, number>(),
+  );
   const [manual, setManual] = useState<string | null>(null);
   const [appr, setAppr] = useState('');
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -121,6 +138,11 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
               <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 700 }}>
                 {student.lastName} {student.firstName} <CurFlags id={student.id} />
               </span>
+              {(replies.get(student.id) ?? 0) > 0 && (
+                <span className="badge" title="Nouvelle réponse de l'élève">
+                  {replies.get(student.id)}
+                </span>
+              )}
               <span style={{ fontSize: '0.8rem' }}>{rr?.absent ? 'ABS' : done ? '✓' : ''}</span>
             </button>
           );
@@ -258,6 +280,22 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
           })}
         </div>
 
+        {/* Appréciation vocale : l'élève l'écoute dans son espace, on voit s'il l'a écoutée, il peut répondre */}
+        <div className="panel stack" style={{ gap: 8 }}>
+          <h3 className="panel-title">
+            <Icon name="mic" size={16} /> Appréciation vocale et échanges
+          </h3>
+          <EvalFeedback
+            key={cur.student.id}
+            evaluationId={ev.id}
+            studentId={cur.student.id}
+            teacherId={session!.id}
+            me={{ id: session!.id, name: me?.name ?? 'Professeur' }}
+            role="prof"
+            studentName={cur.student.firstName}
+          />
+          <span className="small muted">L’élève l’écoute dans son espace (onglet Évaluations) quand la copie est rendue, et peut répondre par écrit ou par un vocal.</span>
+        </div>
       </div>
     </div>
   );

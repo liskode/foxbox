@@ -515,6 +515,8 @@ export interface Message {
   recipients?: string[]; // destinataires (élève, parents) ; le professeur lit toute la conversation
   recipientNames?: Record<string, string>; // leurs noms, pour que chacun voie à qui le message est adressé
   editedAt?: number; // message corrigé après envoi
+  evaluationId?: string; // échange au sujet d'une copie (appréciation vocale, réponses de l'élève) : hors de la messagerie
+  heardOf?: string; // accusé d'écoute d'un mémo vocal (id du message écouté)
   createdAt: number;
 }
 export interface MessageRead {

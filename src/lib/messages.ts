@@ -19,7 +19,8 @@ const recipientsSync = (m: Message, parentIds: string[]) => m.recipients ?? (m.t
 // Messages d'une conversation visibles par `userId` (le professeur voit tout)
 export async function conversation(teacherId: string, studentId: string, userId: string) {
   const parentIds = (await db.parents.where('studentIds').equals(studentId).primaryKeys()) as string[];
-  const all = (await db.messages.where('studentId').equals(studentId).toArray()).filter((m) => m.teacherId === teacherId);
+  // Les échanges au sujet d'une copie (evaluationId) sont affichés avec l'évaluation, pas dans la messagerie
+  const all = (await db.messages.where('studentId').equals(studentId).toArray()).filter((m) => m.teacherId === teacherId && !m.evaluationId);
   return all
     .map((m) => ({ ...m, recipients: recipientsSync(m, parentIds) }))
     .filter((m) => userId === teacherId || m.authorId === userId || m.recipients.includes(userId))
@@ -44,7 +45,7 @@ export async function sendMessage(
   const msg: Message = { ...m, thread: toParents ? 'parents' : 'eleve', id: uid(), attachments, createdAt: Date.now() };
   await db.messages.put(msg);
   await markRead(m.authorId, m.teacherId, m.studentId, msg.createdAt);
-  if (ONLINE) notifyLater(msg.id);
+  if (ONLINE && !msg.heardOf) notifyLater(msg.id); // pas d'e-mail pour un simple accusé d'écoute
   return msg;
 }
 
@@ -73,7 +74,7 @@ export async function unreadIn(userId: string, teacherId: string, studentId: str
 // Tous les messages non lus de l'utilisateur connecté (pastille du menu)
 export async function unreadTotal(userId: string, role: 'prof' | 'eleve' | 'parent') {
   const convs = new Set<string>();
-  for (const m of await db.messages.toArray()) convs.add(`${m.teacherId}|${m.studentId}`);
+  for (const m of await db.messages.toArray()) if (!m.evaluationId) convs.add(`${m.teacherId}|${m.studentId}`);
   let n = 0;
   for (const c of convs) {
     const [t, s] = c.split('|');
@@ -81,4 +82,21 @@ export async function unreadTotal(userId: string, role: 'prof' | 'eleve' | 'pare
     n += await unreadIn(userId, t, s);
   }
   return n;
+}
+
+// ---------- Échanges au sujet d'une copie (appréciation vocale du professeur, réponses de l'élève) ----------
+export const evalReadId = (userId: string, evaluationId: string, studentId: string) => `${userId}|eval|${evaluationId}|${studentId}`;
+
+export async function evalThread(evaluationId: string, studentId: string) {
+  const all = (await db.messages.where('studentId').equals(studentId).toArray()).filter((m) => m.evaluationId === evaluationId);
+  return all.sort((a, b) => a.createdAt - b.createdAt);
+}
+
+// Réponses de l'élève pas encore vues par le professeur (pastille dans la liste des copies)
+export async function evalUnread(teacherId: string, evaluationId: string, studentId: string) {
+  const r = await db.messageReads.get(evalReadId(teacherId, evaluationId, studentId));
+  return (await evalThread(evaluationId, studentId)).filter((m) => m.authorId !== teacherId && !m.heardOf && m.createdAt > (r?.at ?? 0)).length;
+}
+export async function markEvalRead(userId: string, evaluationId: string, studentId: string) {
+  await db.messageReads.put({ id: evalReadId(userId, evaluationId, studentId), userId, at: Date.now() });
 }
