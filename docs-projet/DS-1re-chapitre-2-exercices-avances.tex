@@ -1,0 +1,320 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[a4paper,margin=2cm,bottom=2.5cm]{geometry}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{array,booktabs}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{needspace}
+\usepackage{tikz}
+
+\definecolor{bleu}{RGB}{29,95,168}
+\definecolor{orange}{RGB}{190,95,10}
+\definecolor{vert}{RGB}{35,120,75}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist{nosep,leftmargin=*}
+\titleformat{\section}{\Large\bfseries\color{bleu}}{\thesection.}{0.5em}{}
+\pagestyle{fancy}\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyfoot[L]{\footnotesize Préparation DS Constance sur «~Suivre et modéliser une transformation chimique + Oxydoréduction~»}
+\fancyfoot[R]{\footnotesize\thepage}
+
+\newcommand{\etoiles}[1]{\ifcase#1\or$\bigstar$\or$\bigstar\bigstar$\or$\bigstar\bigstar\bigstar$\fi}
+\newcounter{exo}
+\newcommand{\exo}[2]{\par\needspace{8\baselineskip}\medskip\stepcounter{exo}{\bfseries\color{bleu}Exercice \theexo\ --- #2}\hfill{\color{orange}\etoiles{#1}}\par\nopagebreak}
+\newcounter{cor}
+\newcommand{\cor}[1]{\par\needspace{6\baselineskip}\medskip\stepcounter{cor}{\bfseries\color{vert}Exercice \thecor\ --- #1}\par\nopagebreak}
+\newcommand{\molL}{\text{mol}\cdot\text{L}^{-1}}
+\newcommand{\gmol}{\text{g}\cdot\text{mol}^{-1}}
+\newcommand{\Lmol}{\text{L}\cdot\text{mol}^{-1}}
+\renewcommand{\arraystretch}{1.25}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries\color{bleu} Exercices d'approfondissement}\\[4pt]
+  {\Large Suivre et modéliser une transformation chimique}\\[2pt]
+  {\small Première, spécialité physique-chimie}\\[2pt]
+  {\small Difficulté croissante : {\color{orange}$\bigstar$} application, {\color{orange}$\bigstar\bigstar$} raisonnement, {\color{orange}$\bigstar\bigstar\bigstar$} problème}
+\end{center}
+
+\section{Exercices}
+
+\exo{1}{Demi-équations délicates}
+Écrire la demi-équation de chaque couple, en milieu acide. Pour chacune, vérifier la conservation des éléments et des charges.\\
+a) \ce{ClO-}/\ce{Cl2} \qquad b) \ce{NO3-}/\ce{NO} \qquad c) \ce{O2}/\ce{H2O2} \qquad d) \ce{CH3COOH}/\ce{C2H5OH}
+
+\exo{1}{Équations d'oxydoréduction}
+À l'aide de l'exercice 1 et des couples indiqués, écrire l'équation de la réaction :
+\begin{enumerate}[label=\alph*)]
+  \item entre le cuivre \ce{Cu} et les ions nitrate \ce{NO3-} en milieu acide (couples \ce{Cu^2+}/\ce{Cu} et \ce{NO3-}/\ce{NO}) ;
+  \item entre les ions dichromate \ce{Cr2O7^2-} et l'éthanol \ce{C2H5OH} en milieu acide (couples \ce{Cr2O7^2-}/\ce{Cr^3+} et \ce{CH3COOH}/\ce{C2H5OH}). Rappel : \ce{Cr2O7^2- + 14 H+ + 6 e- = 2 Cr^3+ + 7 H2O} ;
+  \item de décomposition du peroxyde d'hydrogène \ce{H2O2} (couples \ce{H2O2}/\ce{H2O} et \ce{O2}/\ce{H2O2}). Quelle particularité présente \ce{H2O2} dans cette réaction ?
+\end{enumerate}
+
+\exo{2}{Lire un graphique d'avancement}
+On plonge un fil de cuivre dans une solution de nitrate d'argent. Le graphique donne l'évolution des quantités de matière des deux réactifs, \ce{Cu} et \ce{Ag+}, en fonction de l'avancement $x$.
+
+\begin{center}
+\begin{tikzpicture}[x=0.85cm,y=0.32cm]
+  \draw[gray!30,very thin] (0,0) grid[xstep=1,ystep=1] (12,16);
+  \draw[->] (0,0) -- (12.6,0) node[right] {$x$ (mmol)};
+  \draw[->] (0,0) -- (0,17) node[above] {$n$ (mmol)};
+  \foreach \i in {0,2,...,12} \draw (\i,0) -- (\i,-0.3) node[below] {\small\i};
+  \foreach \j in {0,2,...,16} \draw (0,\j) -- (-0.12,\j) node[left] {\small\j};
+  \draw[very thick,bleu] (0,15) -- (7.5,0);
+  \draw[very thick,orange] (0,10) -- (10,0);
+  \node[bleu,fill=white,inner sep=1pt] at (2.6,12.6) {\bfseries droite 1};
+  \node[orange,fill=white,inner sep=1pt] at (6.3,5.6) {\bfseries droite 2};
+\end{tikzpicture}
+\end{center}
+\textit{Donnée : $M(\ce{Ag}) = 107{,}9~\gmol$ ; 1~mmol $= 10^{-3}$~mol.}
+\begin{enumerate}
+  \item Écrire l'équation de la réaction (couples \ce{Ag+}/\ce{Ag} et \ce{Cu^2+}/\ce{Cu}).
+  \item Associer chaque droite à un réactif, en justifiant à l'aide de l'équation.
+  \item Lire les quantités initiales des réactifs, puis la valeur de $x_{\max}$. Quel est le réactif limitant ?
+  \item Il y avait pourtant plus d'ions \ce{Ag+} que d'atomes \ce{Cu} au départ. Expliquer pourquoi ce n'est pas contradictoire.
+  \item Donner la composition de l'état final et calculer la masse d'argent déposée sur le fil.
+\end{enumerate}
+
+\exo{2}{Le bon dosage : aluminium et ions cuivre}
+On dispose de $V = 100$~mL d'une solution bleue de sulfate de cuivre, de concentration en ions \ce{Cu^2+} égale à $C = 0{,}30~\molL$. On y ajoute de la poudre d'aluminium \ce{Al}. La transformation est totale.\\
+\textit{Données : $M(\ce{Al}) = 27{,}0~\gmol$ ; $M(\ce{Cu}) = 63{,}5~\gmol$ ; couples \ce{Al^3+}/\ce{Al} et \ce{Cu^2+}/\ce{Cu} ; les ions \ce{Al^3+} sont incolores.}
+\begin{enumerate}
+  \item Écrire l'équation de la réaction.
+  \item Quelle masse \textbf{minimale} d'aluminium faut-il introduire pour faire disparaître la couleur bleue ?
+  \item On introduit en fait $m = 0{,}81$~g d'aluminium. Déterminer $x_{\max}$, le réactif limitant et la composition de l'état final.
+  \item Calculer la masse totale du solide au fond du bécher à la fin. A-t-elle augmenté ou diminué ?
+  \item Calculer la concentration finale en ions \ce{Al^3+}.
+\end{enumerate}
+
+\exo{2}{Le cuivre attaqué par l'acide nitrique}
+On verse $V = 20{,}0$~mL d'acide nitrique de concentration $C = 2{,}0~\molL$ sur $m = 1{,}27$~g de cuivre. L'acide nitrique apporte \textbf{autant} d'ions \ce{H+} que d'ions \ce{NO3-}, chacun à la concentration $C$. On utilise l'équation de l'exercice~2~a), et la transformation est totale.\\
+\textit{Données : $M(\ce{Cu}) = 63{,}5~\gmol$ ; $V_m = 24~\Lmol$.}
+\begin{enumerate}
+  \item Calculer les quantités initiales des trois réactifs.
+  \item Déterminer $x_{\max}$ et le réactif limitant.
+  \item Donner la composition de l'état final. Reste-t-il du cuivre ? Si oui, quelle masse ?
+  \item Calculer le volume de monoxyde d'azote \ce{NO} formé et la concentration finale en ions \ce{Cu^2+}.
+  \item Quel volume minimal de cet acide aurait-il fallu pour faire disparaître tout le cuivre ?
+\end{enumerate}
+
+\exo{2}{L'eau oxygénée «~à 10 volumes~»}
+Une eau oxygénée (solution de \ce{H2O2}) est dite «~à 10 volumes~» si 1,0~L de solution libère 10~L de dioxygène quand tout le peroxyde d'hydrogène se décompose selon la réaction de l'exercice~2~c).\\
+\textit{Donnée : dans ces conditions, $V_m = 22{,}4~\Lmol$.}
+\begin{enumerate}
+  \item Calculer la quantité de dioxygène libérée par 1,0~L de solution.
+  \item À l'aide d'un tableau d'avancement, en déduire la quantité de \ce{H2O2} contenue dans 1,0~L, puis la concentration de la solution.
+  \item Quel volume de dioxygène libère un flacon de 250~mL ? Vérifier le résultat par un raisonnement simple, sans calcul de quantité de matière.
+\end{enumerate}
+
+\exo{3}{Combien de zinc dans ce laiton ?}
+Le laiton est un alliage de cuivre et de zinc. On plonge un échantillon de laiton de masse $m = 2{,}00$~g dans de l'acide chlorhydrique \textbf{en excès}. Seul le zinc réagit : les ions \ce{H+} n'attaquent pas le cuivre. Quand le dégagement gazeux s'arrête, on a recueilli $V = 220$~mL de dihydrogène.\\
+\textit{Données : $M(\ce{Zn}) = 65{,}4~\gmol$ ; $V_m = 24~\Lmol$ ; couples \ce{Zn^2+}/\ce{Zn} et \ce{H+}/\ce{H2}.}
+\begin{enumerate}
+  \item Écrire l'équation de la réaction.
+  \item Pourquoi peut-on affirmer que le zinc est le réactif limitant ?
+  \item Déterminer la quantité puis la masse de zinc contenue dans l'échantillon. En déduire le pourcentage en masse de zinc dans ce laiton.
+  \item L'acide utilisé a une concentration en ions \ce{H+} de $1{,}0~\molL$. Quel volume minimal fallait-il en verser ?
+\end{enumerate}
+
+\exo{3}{Une transformation qui s'arrête avant la fin}
+On mélange $V_1 = 20{,}0$~mL d'une solution d'ions fer(III) \ce{Fe^3+} à $0{,}100~\molL$ et $V_2 = 30{,}0$~mL d'une solution d'ions iodure \ce{I-} à $0{,}100~\molL$. Il se forme des ions fer(II) \ce{Fe^2+} et du diiode \ce{I2}, seule espèce qui absorbe à la longueur d'onde choisie.\\
+Quand l'absorbance n'évolue plus, on mesure $A = 0{,}80$. On admet que $A = k\,[\ce{I2}]$ avec $k = 50~\Lmol$.
+\begin{enumerate}
+  \item Écrire l'équation de la réaction (couples \ce{Fe^3+}/\ce{Fe^2+} et \ce{I2}/\ce{I-}).
+  \item Déterminer $x_{\max}$ et le réactif limitant.
+  \item Déterminer l'avancement final $x_f$. La transformation est-elle totale ?
+  \item Donner la composition de l'état final.
+  \item Un élève affirme : «~À la fin, il reste des ions \ce{Fe^3+} et des ions \ce{I-}, donc le tableau d'avancement est faux.~» Qu'en pensez-vous ?
+\end{enumerate}
+
+\exo{3}{Problème : l'éthylotest chimique}
+Un éthylotest jetable est un tube contenant des cristaux orange de dichromate de potassium \ce{K2Cr2O7}, en milieu acide (\ce{H+} en excès). L'éthanol de l'air expiré réagit avec les ions dichromate \ce{Cr2O7^2-} (orange) selon la réaction de l'exercice~2~b) ; il se forme des ions \ce{Cr^3+} (verts). La transformation est totale.
+
+En France, la limite légale pour un conducteur est de $0{,}25$~mg d'éthanol par litre d'air expiré. Le fabricant veut que le tube devienne \textbf{entièrement vert} lorsqu'un conducteur à la limite légale souffle $1{,}0$~L d'air.\\
+\textit{Données : $M(\ce{C2H5OH}) = 46{,}0~\gmol$ ; $M(\ce{K2Cr2O7}) = 294{,}2~\gmol$ ; une mole de \ce{K2Cr2O7} apporte une mole d'ions \ce{Cr2O7^2-}.}
+\begin{enumerate}
+  \item Quelle masse de dichromate de potassium le fabricant doit-il placer dans le tube ?
+  \item Un conducteur dont l'air expiré contient $0{,}40~\text{mg}\cdot\text{L}^{-1}$ d'éthanol souffle $1{,}0$~L dans ce tube. Quel est le réactif limitant ? Quelle couleur prend le tube ?
+  \item Même question pour un conducteur à $0{,}15~\text{mg}\cdot\text{L}^{-1}$. Quelle proportion des ions dichromate reste-t-il ?
+  \item Que se passe-t-il si le conducteur souffle seulement $0{,}5$~L d'air ? Pourquoi le mode d'emploi impose-t-il de gonfler entièrement le ballon fourni ?
+\end{enumerate}
+
+\newpage
+\section{Corrections détaillées}
+
+\cor{Demi-équations délicates}
+
+a) \ce{ClO-}/\ce{Cl2}. Cl : \ce{2 ClO- = Cl2}. O : \ce{2 ClO- = Cl2 + 2 H2O}. H : \ce{2 ClO- + 4 H+ = Cl2 + 2 H2O}.\\
+Charges : $-2 + 4 = +2$ à gauche, $0$ à droite :\quad \ce{2 ClO- + 4 H+ + 2 e- = Cl2 + 2 H2O}.
+
+b) \ce{NO3-}/\ce{NO}. O : \ce{NO3- = NO + 2 H2O}. H : \ce{NO3- + 4 H+ = NO + 2 H2O}.\\
+Charges : $-1 + 4 = +3$ à gauche, $0$ à droite :\quad \ce{NO3- + 4 H+ + 3 e- = NO + 2 H2O}.
+
+c) \ce{O2}/\ce{H2O2}. O déjà équilibré ; H : \ce{O2 + 2 H+ = H2O2}. Charges : \quad \ce{O2 + 2 H+ + 2 e- = H2O2}.
+
+d) \ce{CH3COOH}/\ce{C2H5OH}. C : 2 de chaque côté. O : 2 à gauche, 1 à droite : \ce{CH3COOH = C2H5OH + H2O}.\\
+H : 4 à gauche, $6 + 2 = 8$ à droite : \ce{CH3COOH + 4 H+ = C2H5OH + H2O}.\\
+Charges : $+4$ à gauche, $0$ à droite :\quad \ce{CH3COOH + 4 H+ + 4 e- = C2H5OH + H2O}.
+
+\cor{Équations d'oxydoréduction}
+
+a) Le cuivre est oxydé, les ions nitrate sont réduits :\\
+\ce{Cu = Cu^2+ + 2 e-} \quad ($\times 3$) \qquad \ce{NO3- + 4 H+ + 3 e- = NO + 2 H2O} \quad ($\times 2$) \qquad soit 6 électrons échangés :
+\begin{center}\ce{3 Cu + 2 NO3- + 8 H+ -> 3 Cu^2+ + 2 NO + 4 H2O}\end{center}
+Charges : $-2 + 8 = +6$ à gauche ; $+6$ à droite.
+
+b) \ce{Cr2O7^2- + 14 H+ + 6 e- = 2 Cr^3+ + 7 H2O} \quad ($\times 2$)\\
+\ce{C2H5OH + H2O = CH3COOH + 4 H+ + 4 e-} \quad ($\times 3$), soit 12 électrons échangés. En additionnant :
+\begin{center}\ce{2 Cr2O7^2- + 28 H+ + 3 C2H5OH + 3 H2O -> 4 Cr^3+ + 14 H2O + 3 CH3COOH + 12 H+}\end{center}
+On simplifie \ce{H+} ($28 - 12 = 16$) et \ce{H2O} ($14 - 3 = 11$) :
+\begin{center}\ce{2 Cr2O7^2- + 16 H+ + 3 C2H5OH -> 4 Cr^3+ + 3 CH3COOH + 11 H2O}\end{center}
+Charges : $-4 + 16 = +12$ à gauche ; $+12$ à droite.
+
+c) \ce{H2O2 + 2 H+ + 2 e- = 2 H2O} \qquad \ce{H2O2 = O2 + 2 H+ + 2 e-}. En additionnant, les \ce{H+} et les électrons disparaissent :
+\begin{center}\ce{2 H2O2 -> 2 H2O + O2}\end{center}
+Particularité : \ce{H2O2} est \textbf{à la fois l'oxydant} d'un couple (\ce{H2O2}/\ce{H2O}) \textbf{et le réducteur} de l'autre (\ce{O2}/\ce{H2O2}). Il réagit sur lui-même.
+
+\cor{Lire un graphique d'avancement}
+\begin{enumerate}
+  \item \ce{Ag+ + e- = Ag} ($\times 2$) et \ce{Cu = Cu^2+ + 2 e-} :\quad \ce{2 Ag+ + Cu -> 2 Ag + Cu^2+}.
+  \item D'après l'équation, $n(\ce{Ag+}) = n_0(\ce{Ag+}) - 2x$ et $n(\ce{Cu}) = n_0(\ce{Cu}) - x$ : la quantité d'ions \ce{Ag+} diminue deux fois plus vite.\\
+  Droite 1 : elle perd 15~mmol quand $x$ augmente de 7,5~mmol, soit 2 fois plus : c'est \ce{Ag+}.\\
+  Droite 2 : elle perd 10~mmol quand $x$ augmente de 10~mmol : c'est \ce{Cu}.
+  \item Lecture à $x = 0$ : $n_0(\ce{Ag+}) = 15$~mmol et $n_0(\ce{Cu}) = 10$~mmol.\\
+  La transformation s'arrête dès qu'un réactif est épuisé : la droite 1 atteint zéro la première, pour $x = 7{,}5$~mmol.\\
+  Donc $\boldsymbol{x_{\max} = 7{,}5}$~\textbf{mmol} et \ce{Ag+} est le réactif limitant.
+  \item Chaque atome de cuivre consomme \textbf{deux} ions \ce{Ag+}. Il faut comparer $\dfrac{n_0(\ce{Ag+})}{2} = 7{,}5$~mmol et $\dfrac{n_0(\ce{Cu})}{1} = 10$~mmol, et non $15$ et $10$.
+  \item État final : $n(\ce{Ag+}) = 0$ ; $n(\ce{Cu}) = 10 - 7{,}5 = 2{,}5$~mmol ; $n(\ce{Ag}) = 2 \times 7{,}5 = 15$~mmol ; $n(\ce{Cu^2+}) = 7{,}5$~mmol.\\
+  Masse d'argent : $m = n \times M = 15\times 10^{-3} \times 107{,}9 = 1{,}6$~g.
+\end{enumerate}
+
+\cor{Le bon dosage : aluminium et ions cuivre}
+\begin{enumerate}
+  \item \ce{Al = Al^3+ + 3 e-} ($\times 2$) et \ce{Cu^2+ + 2 e- = Cu} ($\times 3$), soit 6 électrons :\quad \ce{2 Al + 3 Cu^2+ -> 2 Al^3+ + 3 Cu}.
+  \item $n(\ce{Cu^2+}) = C \times V = 0{,}30 \times 0{,}100 = 0{,}030$~mol.\\
+  La couleur bleue disparaît si tous les ions \ce{Cu^2+} sont consommés. Il faut au minimum les proportions stœchiométriques :
+  $\dfrac{n(\ce{Al})}{2} = \dfrac{n(\ce{Cu^2+})}{3}$, soit $n(\ce{Al}) = \dfrac{2 \times 0{,}030}{3} = 0{,}020$~mol.\\
+  $m_{\min} = 0{,}020 \times 27{,}0 = \boldsymbol{0{,}54}$~\textbf{g}.
+  \item $n(\ce{Al}) = \dfrac{0{,}81}{27{,}0} = 0{,}030$~mol. Tableau (en mol) :
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+ & \ce{2 Al} & \ce{3 Cu^2+} & \ce{2 Al^3+} & \ce{3 Cu} \\
+\midrule
+État initial & $0{,}030$ & $0{,}030$ & $0$ & $0$ \\
+En cours & $0{,}030 - 2x$ & $0{,}030 - 3x$ & $2x$ & $3x$ \\
+État final & $0{,}010$ & $0$ & $0{,}020$ & $0{,}030$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+  Si \ce{Al} est limitant : $x_{\max} = \dfrac{0{,}030}{2} = 0{,}015$~mol. Si \ce{Cu^2+} est limitant : $x_{\max} = \dfrac{0{,}030}{3} = 0{,}010$~mol.\\
+  Donc $x_{\max} = 0{,}010$~mol et \ce{Cu^2+} est limitant (cohérent : on a mis plus que $0{,}54$~g d'aluminium).
+  \item Le solide final contient l'aluminium restant et le cuivre formé :\\
+  $m(\ce{Al}) = 0{,}010 \times 27{,}0 = 0{,}27$~g \quad et \quad $m(\ce{Cu}) = 0{,}030 \times 63{,}5 = 1{,}91$~g, soit $m_{\text{solide}} = 2{,}18$~g.\\
+  La masse du solide a \textbf{augmenté} (de 0,81~g à 2,18~g) : le cuivre qui se dépose vient de la solution.
+  \item $[\ce{Al^3+}] = \dfrac{0{,}020}{0{,}100} = 0{,}20~\molL$.
+\end{enumerate}
+
+\cor{Le cuivre attaqué par l'acide nitrique}
+\begin{enumerate}
+  \item $n(\ce{Cu}) = \dfrac{1{,}27}{63{,}5} = 0{,}0200$~mol ; $n(\ce{H+}) = n(\ce{NO3-}) = 2{,}0 \times 0{,}0200 = 0{,}040$~mol.
+  \item Équation : \ce{3 Cu + 2 NO3- + 8 H+ -> 3 Cu^2+ + 2 NO + 4 H2O}. On teste les trois réactifs :\\
+  \ce{Cu} : $0{,}0200 - 3x_{\max} = 0$, soit $x_{\max} = 6{,}7\times 10^{-3}$~mol ;\\
+  \ce{NO3-} : $0{,}040 - 2x_{\max} = 0$, soit $x_{\max} = 2{,}0\times 10^{-2}$~mol ;\\
+  \ce{H+} : $0{,}040 - 8x_{\max} = 0$, soit $x_{\max} = 5{,}0\times 10^{-3}$~mol.\\
+  La plus petite valeur : $\boldsymbol{x_{\max} = 5{,}0\times 10^{-3}}$~\textbf{mol}, et \ce{H+} est limitant.\\
+  \textit{Piège : \ce{H+} et \ce{NO3-} sont en même quantité, mais \ce{H+} a un coefficient 4 fois plus grand.}
+  \item $n(\ce{Cu}) = 0{,}0200 - 3 \times 5{,}0\times 10^{-3} = 5{,}0\times 10^{-3}$~mol ; $n(\ce{NO3-}) = 0{,}040 - 0{,}010 = 0{,}030$~mol ; $n(\ce{H+}) = 0$ ;\\
+  $n(\ce{Cu^2+}) = 3x_{\max} = 1{,}5\times 10^{-2}$~mol ; $n(\ce{NO}) = 2x_{\max} = 1{,}0\times 10^{-2}$~mol.\\
+  Il reste du cuivre : $m = 5{,}0\times 10^{-3} \times 63{,}5 = 0{,}32$~g.
+  \item $V(\ce{NO}) = n \times V_m = 1{,}0\times 10^{-2} \times 24 = 0{,}24$~L ; \quad $[\ce{Cu^2+}] = \dfrac{1{,}5\times 10^{-2}}{0{,}0200} = 0{,}75~\molL$.
+  \item Pour consommer tout le cuivre, \ce{H+} doit être au moins en proportions stœchiométriques avec lui :
+  $\dfrac{n(\ce{H+})}{8} = \dfrac{n(\ce{Cu})}{3}$, soit $n(\ce{H+}) = \dfrac{8 \times 0{,}0200}{3} = 5{,}3\times 10^{-2}$~mol.\\
+  $V_{\min} = \dfrac{5{,}3\times 10^{-2}}{2{,}0} = 2{,}7\times 10^{-2}$~L, soit environ \textbf{27~mL}. (Les ions \ce{NO3-} apportés, $5{,}3\times 10^{-2}$~mol, suffisent largement.)
+\end{enumerate}
+
+\cor{L'eau oxygénée «~à 10 volumes~»}
+\begin{enumerate}
+  \item $n(\ce{O2}) = \dfrac{V}{V_m} = \dfrac{10}{22{,}4} = 0{,}446$~mol.
+  \item Pour \ce{2 H2O2 -> 2 H2O + O2} :
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+ & \ce{2 H2O2} & \ce{2 H2O} & \ce{O2} \\
+\midrule
+État initial & $n_0$ & solvant & $0$ \\
+État final & $n_0 - 2x_f$ & solvant & $x_f$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+  Tout \ce{H2O2} se décompose : $n_0 - 2x_f = 0$. Et $n(\ce{O2}) = x_f = 0{,}446$~mol.\\
+  Donc $n_0 = 2 \times 0{,}446 = 0{,}893$~mol dans 1,0~L : $\boldsymbol{C = 0{,}89~\molL}$.
+  \item 250~mL contiennent $0{,}893 \times 0{,}250 = 0{,}223$~mol de \ce{H2O2}, qui libèrent $\dfrac{0{,}223}{2} = 0{,}112$~mol de \ce{O2}, soit $0{,}112 \times 22{,}4 = 2{,}5$~L.\\
+  Vérification : «~10 volumes~» signifie que la solution libère 10 fois son volume de dioxygène : $10 \times 0{,}250 = 2{,}5$~L.
+\end{enumerate}
+
+\cor{Combien de zinc dans ce laiton ?}
+\begin{enumerate}
+  \item \ce{Zn = Zn^2+ + 2 e-} et \ce{2 H+ + 2 e- = H2} :\quad \ce{Zn + 2 H+ -> Zn^2+ + H2}.
+  \item L'acide est en excès : il en reste à la fin, il ne peut pas être limitant. Le dégagement s'arrête donc parce que le zinc est épuisé : $x_f = x_{\max}$ et c'est le zinc qui le fixe.
+  \item D'après le tableau, $n(\ce{H2})_{\text{final}} = x_f$ et $n(\ce{Zn})_{\text{final}} = n_0(\ce{Zn}) - x_f = 0$, donc $n_0(\ce{Zn}) = x_f = n(\ce{H2})$.\\
+  $n(\ce{H2}) = \dfrac{0{,}220}{24} = 9{,}17\times 10^{-3}$~mol, donc $n_0(\ce{Zn}) = 9{,}17\times 10^{-3}$~mol.\\
+  $m(\ce{Zn}) = 9{,}17\times 10^{-3} \times 65{,}4 = 0{,}600$~g. \quad Pourcentage : $\dfrac{0{,}600}{2{,}00} \times 100 = \boldsymbol{30~\%}$ de zinc (et 70~\% de cuivre).
+  \item Il faut au minimum $n(\ce{H+}) = 2\,n_0(\ce{Zn}) = 1{,}83\times 10^{-2}$~mol, soit $V = \dfrac{1{,}83\times 10^{-2}}{1{,}0} = 1{,}8\times 10^{-2}$~L $\approx$ \textbf{18~mL}.
+\end{enumerate}
+
+\cor{Une transformation qui s'arrête avant la fin}
+\begin{enumerate}
+  \item \ce{Fe^3+ + e- = Fe^2+} ($\times 2$) et \ce{2 I- = I2 + 2 e-} :\quad \ce{2 Fe^3+ + 2 I- -> 2 Fe^2+ + I2}.
+  \item $n(\ce{Fe^3+}) = 0{,}100 \times 0{,}0200 = 2{,}0\times 10^{-3}$~mol ; $n(\ce{I-}) = 0{,}100 \times 0{,}0300 = 3{,}0\times 10^{-3}$~mol.\\
+  Si \ce{Fe^3+} est limitant : $x_{\max} = \dfrac{2{,}0\times 10^{-3}}{2} = 1{,}0\times 10^{-3}$~mol. Si \ce{I-} est limitant : $x_{\max} = 1{,}5\times 10^{-3}$~mol.\\
+  Donc $x_{\max} = 1{,}0\times 10^{-3}$~mol et \ce{Fe^3+} est limitant.
+  \item $[\ce{I2}] = \dfrac{A}{k} = \dfrac{0{,}80}{50} = 1{,}6\times 10^{-2}~\molL$. Le volume total est $V_1 + V_2 = 50{,}0$~mL.\\
+  D'après le tableau, $n(\ce{I2}) = x_f$, donc $x_f = 1{,}6\times 10^{-2} \times 0{,}0500 = 8{,}0\times 10^{-4}$~mol.\\
+  $x_f < x_{\max}$ : la transformation est \textbf{non totale}.
+  \item $n(\ce{Fe^3+}) = 2{,}0\times 10^{-3} - 2 \times 8{,}0\times 10^{-4} = 4{,}0\times 10^{-4}$~mol ; $n(\ce{I-}) = 3{,}0\times 10^{-3} - 1{,}6\times 10^{-3} = 1{,}4\times 10^{-3}$~mol ;\\
+  $n(\ce{Fe^2+}) = 2x_f = 1{,}6\times 10^{-3}$~mol ; $n(\ce{I2}) = 8{,}0\times 10^{-4}$~mol.
+  \item L'élève a tort. Le réactif limitant et $x_{\max}$ décrivent ce qui se passerait si la transformation était totale. Ici elle ne l'est pas ($x_f < x_{\max}$) : elle s'arrête avant que \ce{Fe^3+} soit épuisé. Les deux réactifs restent donc présents, ce qui est justement le signe d'une transformation non totale.
+\end{enumerate}
+
+\cor{Problème : l'éthylotest chimique}
+Équation : \ce{2 Cr2O7^2- + 16 H+ + 3 C2H5OH -> 4 Cr^3+ + 3 CH3COOH + 11 H2O}. \ce{H+} est en excès : seuls \ce{Cr2O7^2-} et l'éthanol peuvent être limitants. Le tube est entièrement vert si \ce{Cr2O7^2-} est entièrement consommé.
+\begin{enumerate}
+  \item Éthanol dans 1,0~L d'air à la limite : $n = \dfrac{0{,}25\times 10^{-3}}{46{,}0} = 5{,}43\times 10^{-6}$~mol.\\
+  Le tube doit devenir tout juste vert : réactifs en proportions stœchiométriques :\\
+  $\dfrac{n(\ce{Cr2O7^2-})}{2} = \dfrac{n(\text{éthanol})}{3}$, soit $n(\ce{Cr2O7^2-}) = \dfrac{2 \times 5{,}43\times 10^{-6}}{3} = 3{,}62\times 10^{-6}$~mol.\\
+  $m(\ce{K2Cr2O7}) = 3{,}62\times 10^{-6} \times 294{,}2 = 1{,}07\times 10^{-3}$~g, soit environ \textbf{1,1~mg}.
+  \item $n(\text{éthanol}) = \dfrac{0{,}40\times 10^{-3}}{46{,}0} = 8{,}70\times 10^{-6}$~mol.\\
+  Si \ce{Cr2O7^2-} est limitant : $x_{\max} = \dfrac{3{,}62\times 10^{-6}}{2} = 1{,}81\times 10^{-6}$~mol.\\
+  Si l'éthanol est limitant : $x_{\max} = \dfrac{8{,}70\times 10^{-6}}{3} = 2{,}90\times 10^{-6}$~mol.\\
+  \ce{Cr2O7^2-} est limitant : il est entièrement consommé, le tube devient \textbf{entièrement vert}. Le test est positif.
+  \item $n(\text{éthanol}) = \dfrac{0{,}15\times 10^{-3}}{46{,}0} = 3{,}26\times 10^{-6}$~mol, d'où $x_{\max} = \dfrac{3{,}26\times 10^{-6}}{3} = 1{,}09\times 10^{-6}$~mol, plus petit que $1{,}81\times 10^{-6}$~mol.\\
+  L'éthanol est limitant. Il reste $n(\ce{Cr2O7^2-}) = 3{,}62\times 10^{-6} - 2 \times 1{,}09\times 10^{-6} = 1{,}45\times 10^{-6}$~mol,\\
+  soit $\dfrac{1{,}45}{3{,}62} \approx 40~\%$ des ions dichromate : le tube est \textbf{en partie vert, en partie orange}. Le test est négatif.
+  \item Avec 0,5~L, la quantité d'éthanol est divisée par deux : un conducteur à $0{,}40~\text{mg}\cdot\text{L}^{-1}$ n'apporterait que $4{,}35\times 10^{-6}$~mol, et $\dfrac{4{,}35\times 10^{-6}}{3} = 1{,}45\times 10^{-6} < 1{,}81\times 10^{-6}$~mol : l'éthanol deviendrait limitant et le tube ne virerait pas entièrement. Le résultat dépend de la quantité d'éthanol, donc du volume soufflé : le ballon garantit le volume de 1,0~L prévu par le calcul.
+\end{enumerate}
+
+\vfill
+\begin{tcolorbox}[colback=bleu!6,colframe=bleu,boxrule=0.6pt,arc=2pt,fonttitle=\bfseries,title={Les réflexes à retenir de cette feuille}]
+\begin{itemize}
+  \item Pour trouver le limitant, on compare toujours $\dfrac{n}{\text{coefficient}}$, jamais les quantités seules (ex. 3, 5).
+  \item «~Masse minimale~» ou «~volume minimal~» : on se place dans les \textbf{proportions stœchiométriques} (ex. 4, 5, 7, 9).
+  \item Un réactif «~en excès~» ne peut pas être limitant : l'autre fixe $x_{\max}$ (ex. 7, 9).
+  \item Une mesure sur un produit (gaz, absorbance) donne $x_f$ grâce au tableau ; on compare ensuite à $x_{\max}$ (ex. 6, 7, 8).
+  \item Une espèce peut être l'oxydant d'un couple et le réducteur d'un autre (ex. 2~c, 6).
+\end{itemize}
+\end{tcolorbox}
+
+\end{document}

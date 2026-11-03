@@ -1,0 +1,334 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[a4paper,margin=2cm,bottom=2.5cm]{geometry}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{array,booktabs}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{needspace}
+\usepackage{tikz}
+\usepackage{tkz-tab}
+
+\definecolor{bleu}{RGB}{29,95,168}
+\definecolor{orange}{RGB}{190,95,10}
+\definecolor{vert}{RGB}{35,120,75}
+\definecolor{rouge}{RGB}{180,40,40}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist{nosep,leftmargin=*}
+\titleformat{\section}{\Large\bfseries\color{bleu}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\large\bfseries\color{bleu}}{}{0em}{}
+\pagestyle{fancy}\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyfoot[L]{\footnotesize Mathématiques 1re spécialité --- Constance --- La dérivation}
+\fancyfoot[R]{\footnotesize\thepage}
+
+\newtcolorbox{cours}[1]{colback=bleu!5,colframe=bleu,fonttitle=\bfseries,title={#1},boxrule=0.6pt,arc=2pt,left=6pt,right=6pt}
+\newtcolorbox{piege}{colback=rouge!5,colframe=rouge,fonttitle=\bfseries,title=Pièges classiques,boxrule=0.6pt,arc=2pt,left=6pt,right=6pt}
+\newcommand{\etoiles}[1]{\ifcase#1\or$\bigstar$\or$\bigstar\bigstar$\or$\bigstar\bigstar\bigstar$\fi}
+\newcounter{exo}
+\newcommand{\exo}[2]{\par\needspace{8\baselineskip}\medskip\stepcounter{exo}{\bfseries\color{bleu}Exercice \theexo\ --- #2}\hfill{\color{orange}\etoiles{#1}}\par\nopagebreak}
+\newcounter{res}
+\newcommand{\res}[1]{\par\needspace{4\baselineskip}\smallskip\stepcounter{res}{\bfseries\color{vert}Exercice \theres\ --- #1}\par\nopagebreak}
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\arraystretch}{1.3}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries\color{bleu} La dérivation}\\[4pt]
+  {\small Première, spécialité mathématiques}\\[2pt]
+  {\small L'essentiel du cours, puis des exercices de difficulté croissante :
+  {\color{orange}$\bigstar$} application, {\color{orange}$\bigstar\bigstar$} raisonnement, {\color{orange}$\bigstar\bigstar\bigstar$} problème.
+  Les résultats sont à la fin.}
+\end{center}
+
+\section{L'essentiel du cours}
+
+\begin{cours}{Taux de variation et nombre dérivé}
+Soit $f$ une fonction, $a$ un réel de son ensemble de définition et $h \neq 0$.
+\begin{itemize}
+  \item Le \textbf{taux de variation} de $f$ entre $a$ et $a+h$ est
+  $\displaystyle \frac{f(a+h)-f(a)}{h}$ : c'est le coefficient directeur de la \textbf{sécante} $(AM)$, avec $A(a\,;f(a))$ et $M(a+h\,;f(a+h))$.
+  \item Si ce taux tend vers un nombre réel quand $h$ tend vers 0, on dit que $f$ est \textbf{dérivable en $a$}. Ce nombre est le \textbf{nombre dérivé} :
+  \[ f'(a) = \lim_{h \to 0} \frac{f(a+h)-f(a)}{h}. \]
+\end{itemize}
+\end{cours}
+
+\begin{minipage}{0.52\linewidth}
+\begin{cours}{Tangente}
+La tangente à la courbe de $f$ au point $A(a\,;f(a))$ est la droite qui passe par $A$ et a pour coefficient directeur $f'(a)$.
+
+Son équation :
+\[ \boxed{\,y = f'(a)\,(x-a) + f(a)\,} \]
+Quand $M$ se rapproche de $A$ ($h \to 0$), la sécante $(AM)$ se rapproche de la tangente.
+
+$f'(a) = 0$ : la tangente est \textbf{horizontale}.
+\end{cours}
+\end{minipage}\hfill
+\begin{minipage}{0.44\linewidth}
+\centering
+\begin{tikzpicture}[scale=0.8]
+  \draw[->] (-0.3,0) -- (5.2,0) node[below] {$x$};
+  \draw[->] (0,-0.3) -- (0,5.2) node[left] {$y$};
+  \draw[very thick,bleu,domain=0.3:4.6,samples=60] plot (\x,{0.2*\x*\x+0.6});
+  \draw[thick,orange] (0.3,0.33) -- (4.8,3.03) node[right] {\small tangente};
+  \draw[thick,gray,dashed] (0.6,0.15) -- (4.6,4.15) node[above] {\small sécante};
+  \fill (1.5,1.05) circle (1.6pt) node[below right] {$A$};
+  \fill (3.5,3.05) circle (1.6pt) node[below right] {$M$};
+  \draw[dotted] (1.5,0) node[below] {$a$} -- (1.5,1.05);
+  \draw[dotted] (3.5,0) node[below] {$a+h$} -- (3.5,3.05);
+\end{tikzpicture}
+\end{minipage}
+
+\medskip
+\begin{minipage}[t]{0.44\linewidth}
+\vspace{0pt}
+\begin{cours}{Dérivées usuelles}
+\centering
+\begin{tabular}{ccc}
+$f(x)$ & $f'(x)$ & sur \\ \midrule
+$k$ (constante) & $0$ & $\R$ \\
+$x$ & $1$ & $\R$ \\
+$x^2$ & $2x$ & $\R$ \\
+$x^3$ & $3x^2$ & $\R$ \\
+$x^n$ ($n \geq 1$) & $n\,x^{n-1}$ & $\R$ \\
+$\dfrac{1}{x}$ & $-\dfrac{1}{x^2}$ & $\R^*$ \\[8pt]
+$\sqrt{x}$ & $\dfrac{1}{2\sqrt{x}}$ & $]0\,;+\infty[$
+\end{tabular}
+\end{cours}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.53\linewidth}
+\vspace{0pt}
+\begin{cours}{Opérations ($u$ et $v$ dérivables, $k$ réel)}
+\centering
+\begin{tabular}{cc}
+fonction & dérivée \\ \midrule
+$u + v$ & $u' + v'$ \\
+$k\,u$ & $k\,u'$ \\
+$u\,v$ & $u'\,v + u\,v'$ \\
+$\dfrac{1}{v}$ & $-\dfrac{v'}{v^2}$ \\[8pt]
+$\dfrac{u}{v}$ & $\dfrac{u'\,v - u\,v'}{v^2}$ \\[8pt]
+$g(ax+b)$ & $a\,g'(ax+b)$
+\end{tabular}
+
+\smallskip
+\raggedright\small Pour $\frac{1}{v}$ et $\frac{u}{v}$ : là où $v$ ne s'annule pas.\\
+Ex. : $\big((3x-1)^2\big)' = 3 \times 2(3x-1) = 6(3x-1)$.
+\end{cours}
+\end{minipage}
+
+\medskip
+\begin{cours}{Dérivée et sens de variation}
+Sur un intervalle $I$ :
+$f' \geq 0$ sur $I$ $\Rightarrow$ $f$ \textbf{croissante} sur $I$ ;\quad
+$f' \leq 0$ sur $I$ $\Rightarrow$ $f$ \textbf{décroissante} sur $I$ ;\quad
+$f' = 0$ sur $I$ $\Rightarrow$ $f$ \textbf{constante}.
+
+\textbf{Extremum local} : si $f'$ \textbf{s'annule en changeant de signe} en $a$, alors $f(a)$ est un maximum ou un minimum local.
+
+\textbf{Méthode} : 1) calculer $f'(x)$ ; 2) \textbf{factoriser} $f'(x)$ (ou reconnaître un trinôme) ; 3) tableau de signes de $f'$ ; 4) tableau de variations de $f$, avec les valeurs de $f$ aux extremums.
+\end{cours}
+
+\needspace{9\baselineskip}
+\textbf{Exemple.} $f(x) = x^3 - 3x$ sur $\R$ : $f'(x) = 3x^2 - 3 = 3(x-1)(x+1)$.
+\begin{center}
+\begin{tikzpicture}
+\tkzTabInit[lgt=2,espcl=2.4]{$x$ / 0.8, $f'(x)$ / 0.8, $f(x)$ / 1.6}{$-\infty$, $-1$, $1$, $+\infty$}
+\tkzTabLine{, +, z, -, z, +, }
+\tkzTabVar{-/ , +/ $2$, -/ $-2$, +/ }
+\end{tikzpicture}
+\end{center}
+
+\begin{piege}
+\begin{itemize}
+  \item $(u\,v)' \neq u'\,v'$ et $\left(\frac{u}{v}\right)' \neq \frac{u'}{v'}$.
+  \item Ne pas confondre $f(a)$ (une ordonnée) et $f'(a)$ (une pente).
+  \item $\sqrt{x}$ est définie en 0 mais n'y est \textbf{pas dérivable}.
+  \item $f'(a) = 0$ ne suffit pas pour un extremum : $f(x) = x^3$ a $f'(0) = 0$ mais est croissante sur $\R$.
+  \item Pour le signe de $\frac{u'v - uv'}{v^2}$, seul le numérateur compte : $v^2 > 0$.
+\end{itemize}
+\end{piege}
+
+\section{Exercices}
+
+\exo{1}{Nombre dérivé par la définition}
+\begin{enumerate}
+  \item Soit $f(x) = x^2 - 3x$. Montrer que, pour $h \neq 0$, le taux de variation de $f$ entre 2 et $2+h$ vaut $1 + h$. En déduire $f'(2)$.
+  \item Soit $g(x) = \dfrac{1}{x}$. Calculer le taux de variation de $g$ entre 1 et $1+h$, puis $g'(1)$.
+\end{enumerate}
+
+\exo{1}{Lecture graphique}
+On donne la courbe d'une fonction $f$ et ses tangentes aux points d'abscisses 0, 2 et 4.
+\begin{center}
+\begin{tikzpicture}[scale=0.62]
+  \draw[gray!30,very thin] (-1,-1) grid (6,5);
+  \draw[->] (-1,0) -- (6.3,0) node[right] {$x$};
+  \draw[->] (0,-1) -- (0,5.3) node[above] {$y$};
+  \foreach \i in {-1,1,2,3,4,5} \node[below] at (\i,0) {\small\i};
+  \foreach \j in {-1,1,2,3,4} \node[left] at (0,\j) {\small\j};
+  \node[below left] at (0,0) {\small 0};
+  \draw[very thick,bleu,domain=-0.8:4.8,samples=80] plot (\x,{-0.5*\x*\x+2*\x+1});
+  \draw[thick,orange] (-1,-1) -- (2,5);
+  \draw[thick,orange] (0.5,3) -- (3.5,3);
+  \draw[thick,orange] (3,3) -- (5,-1);
+  \foreach \p in {(0,1),(2,3),(4,1)} \fill \p circle (2pt);
+\end{tikzpicture}
+\end{center}
+\begin{enumerate}
+  \item Lire $f(0)$, $f(2)$ et $f(4)$.
+  \item Lire $f'(0)$, $f'(2)$ et $f'(4)$, en expliquant la méthode.
+  \item Donner l'équation de chacune des trois tangentes.
+\end{enumerate}
+
+\exo{1}{Dérivées usuelles}
+Calculer $f'(x)$ dans chaque cas.
+\begin{multicols}{2}
+\begin{enumerate}[label=\alph*)]
+  \item $f(x) = 3x^4 - 5x^2 + 7x - 2$
+  \item $f(x) = \dfrac{x^3}{3} - \dfrac{x}{2}$
+  \item $f(x) = 5x^2 - \dfrac{1}{x}$ \quad sur $]0\,;+\infty[$
+  \item $f(x) = \dfrac{4}{x} + 2\sqrt{x}$ \quad sur $]0\,;+\infty[$
+\end{enumerate}
+\end{multicols}
+
+\exo{2}{Produits, quotients et $g(ax+b)$}
+Calculer $f'(x)$ et donner le résultat sous une forme simple.
+\begin{multicols}{2}
+\begin{enumerate}[label=\alph*)]
+  \item $f(x) = (2x-1)(x^2+3)$
+  \item $f(x) = x\sqrt{x}$ \quad sur $]0\,;+\infty[$
+  \item $f(x) = \dfrac{3x+1}{x-2}$ \quad sur $]2\,;+\infty[$
+  \item $f(x) = \dfrac{1}{x^2+1}$
+  \item $f(x) = (5-2x)^3$
+  \item $f(x) = \sqrt{4x+1}$ \quad sur $\left]-\frac14\,;+\infty\right[$
+\end{enumerate}
+\end{multicols}
+
+\exo{2}{Tangentes à une courbe}
+Soit $f(x) = x^3 - 2x^2 + 1$ sur $\R$.
+\begin{enumerate}
+  \item Déterminer l'équation de la tangente à la courbe au point d'abscisse 1.
+  \item En quels points la courbe admet-elle une tangente horizontale ?
+  \item Existe-t-il des tangentes parallèles à la droite d'équation $y = 4x$ ? Si oui, en quels points ?
+\end{enumerate}
+
+\exo{2}{Variations d'une fonction polynôme}
+Soit $f(x) = 2x^3 - 3x^2 - 12x + 5$ sur $\R$.
+\begin{enumerate}
+  \item Calculer $f'(x)$ et vérifier que $f'(x) = 6(x-2)(x+1)$.
+  \item Dresser le tableau de signes de $f'$ et le tableau de variations de $f$.
+  \item Préciser les extremums locaux de $f$ et en quelles valeurs ils sont atteints.
+\end{enumerate}
+
+\exo{2}{Variations d'un quotient et inégalité}
+Soit $f(x) = \dfrac{x^2+3}{x-1}$ sur $]1\,;+\infty[$.
+\begin{enumerate}
+  \item Montrer que $f'(x) = \dfrac{(x-3)(x+1)}{(x-1)^2}$.
+  \item Étudier les variations de $f$ sur $]1\,;+\infty[$.
+  \item En déduire que, pour tout $x > 1$, $x^2 + 3 \geq 6(x-1)$.
+\end{enumerate}
+
+\exo{3}{La boîte de volume maximal}
+Dans une plaque carrée de carton de 24~cm de côté, on découpe aux quatre coins un carré de côté $x$ (en cm), puis on relève les bords pour former une boîte sans couvercle.
+\begin{enumerate}
+  \item Dans quel intervalle $x$ peut-il varier ? Montrer que le volume de la boîte est $V(x) = x(24-2x)^2$.
+  \item Montrer que $V'(x) = (24-2x)(24-6x)$.
+  \item Pour quelle valeur de $x$ le volume est-il maximal ? Quel est ce volume ?
+\end{enumerate}
+
+\exo{3}{Le bénéfice d'une entreprise}
+Une entreprise fabrique et vend $q$ centaines d'objets par jour, avec $q \in [0\,;8]$. Le coût de fabrication est $C(q) = q^3 - 6q^2 + 9q + 20$ et la recette est $R(q) = 24q$ (en centaines d'euros).
+\begin{enumerate}
+  \item Montrer que le bénéfice est $B(q) = -q^3 + 6q^2 + 15q - 20$.
+  \item Étudier les variations de $B$ sur $[0\,;8]$. Quelle production rend le bénéfice maximal ? Quel est ce bénéfice ?
+  \item Vérifier que $B(1) = 0$, puis que $B(q) = -(q-1)(q^2 - 5q - 20)$.
+  \item Pour quelles productions l'entreprise est-elle bénéficiaire ? (valeur approchée au centième)
+\end{enumerate}
+
+\exo{3}{Tangentes passant par un point}
+Soit $f(x) = x^2$ et $\mathcal{P}$ sa courbe. On cherche les tangentes à $\mathcal{P}$ qui passent par le point $A(1\,;-3)$, qui n'est pas sur la courbe.
+\begin{enumerate}
+  \item Montrer que la tangente à $\mathcal{P}$ au point d'abscisse $a$ a pour équation $y = 2ax - a^2$.
+  \item Traduire « cette tangente passe par $A$ » par une équation d'inconnue $a$, et la résoudre.
+  \item En déduire les équations des tangentes cherchées.
+\end{enumerate}
+
+\exo{3}{Position d'une courbe par rapport à sa tangente}
+Soit $f(x) = x^3$ et $\mathcal{C}$ sa courbe.
+\begin{enumerate}
+  \item Déterminer l'équation de la tangente $T$ à $\mathcal{C}$ au point d'abscisse 1.
+  \item On pose $d(x) = f(x) - (3x - 2)$. Étudier les variations de $d$ sur $\R$.
+  \item Vérifier que $d(x) = (x-1)^2(x+2)$, puis étudier le signe de $d(x)$.
+  \item En déduire la position de $\mathcal{C}$ par rapport à $T$.
+\end{enumerate}
+
+\newpage
+\section{Résultats}
+\textit{Seulement les résultats, pour vérifier ses réponses : la rédaction reste à faire.}
+
+\res{Nombre dérivé par la définition}
+1. Taux $= 1 + h$, donc $f'(2) = 1$. \qquad
+2. Taux $= -\dfrac{1}{1+h}$, donc $g'(1) = -1$.
+
+\res{Lecture graphique}
+1. $f(0) = 1$ ; $f(2) = 3$ ; $f(4) = 1$. \qquad
+2. $f'(0) = 2$ ; $f'(2) = 0$ ; $f'(4) = -2$ (coefficients directeurs des tangentes). \\
+3. $y = 2x + 1$ ; $y = 3$ ; $y = -2x + 9$.
+
+\res{Dérivées usuelles}
+a) $12x^3 - 10x + 7$ \qquad
+b) $x^2 - \dfrac12$ \qquad
+c) $10x + \dfrac{1}{x^2}$ \qquad
+d) $-\dfrac{4}{x^2} + \dfrac{1}{\sqrt{x}}$
+
+\res{Produits, quotients et $g(ax+b)$}
+a) $6x^2 - 2x + 6$ \qquad
+b) $\dfrac32\sqrt{x}$ \qquad
+c) $\dfrac{-7}{(x-2)^2}$ \qquad
+d) $\dfrac{-2x}{(x^2+1)^2}$ \qquad
+e) $-6(5-2x)^2$ \qquad
+f) $\dfrac{2}{\sqrt{4x+1}}$
+
+\res{Tangentes à une courbe}
+1. $y = -x + 1$. \qquad
+2. $f'(x) = 3x^2 - 4x$ : points d'abscisses $0$ et $\frac43$, soit $(0\,;1)$ et $\left(\frac43\,;-\frac{5}{27}\right)$. \\
+3. Oui : $f'(x) = 4$ pour $x = 2$ et $x = -\frac23$, soit les points $(2\,;1)$ et $\left(-\frac23\,;-\frac{5}{27}\right)$.
+
+\res{Variations d'une fonction polynôme}
+$f$ croissante sur $]-\infty\,;-1]$, décroissante sur $[-1\,;2]$, croissante sur $[2\,;+\infty[$.
+Maximum local $f(-1) = 12$ ; minimum local $f(2) = -15$.
+
+\res{Variations d'un quotient et inégalité}
+$f$ décroissante sur $]1\,;3]$, croissante sur $[3\,;+\infty[$ ; minimum $f(3) = 6$.
+Donc $f(x) \geq 6$ pour tout $x > 1$, puis on multiplie par $x - 1 > 0$.
+
+\res{La boîte de volume maximal}
+1. $x \in \,]0\,;12[$. \qquad
+3. Volume maximal pour $x = 4$~cm : $V(4) = 1\,024~\text{cm}^3$.
+
+\res{Le bénéfice d'une entreprise}
+2. $B'(q) = -3q^2 + 12q + 15 = -3(q-5)(q+1)$ : $B$ croissante sur $[0\,;5]$, décroissante sur $[5\,;8]$.
+Bénéfice maximal pour 500 objets : $B(5) = 80$, soit 8\,000~€. \\
+4. $B(q) > 0$ pour $1 < q < \dfrac{5 + \sqrt{105}}{2} \approx 7{,}62$ : entre 100 et environ 762 objets.
+
+\res{Tangentes passant par un point}
+2. $a^2 - 2a - 3 = 0$, donc $a = -1$ ou $a = 3$. \qquad
+3. $y = -2x - 1$ et $y = 6x - 9$.
+
+\res{Position d'une courbe par rapport à sa tangente}
+1. $T : y = 3x - 2$. \qquad
+2. $d'(x) = 3(x-1)(x+1)$ : $d$ croissante sur $]-\infty\,;-1]$, décroissante sur $[-1\,;1]$, croissante sur $[1\,;+\infty[$ ; $d(-1) = 4$, $d(1) = 0$. \\
+3. $d(x) < 0$ pour $x < -2$, $d(x) \geq 0$ pour $x \geq -2$ (nul en $-2$ et en $1$). \\
+4. $\mathcal{C}$ est en dessous de $T$ pour $x < -2$, au-dessus pour $x > -2$ ; elles se touchent en $x = 1$ et se coupent en $x = -2$.
+
+\end{document}
