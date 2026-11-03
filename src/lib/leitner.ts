@@ -1,7 +1,7 @@
 // Moteur de révision : boîte de Leitner à 7 boîtes.
 import { db, uid, isTutoring, type Card, type Group, type Rating, type Rule, type StudentCard, type Review } from './db';
 import { unitSubject } from './units';
-import { addDays, today } from './dates';
+import { addDays, studyDay } from './dates';
 
 // Intervalle (en jours) avant la prochaine révision, selon la boîte atteinte.
 export const INTERVALS = [0, 1, 2, 4, 8, 16, 32, 64];
@@ -68,12 +68,14 @@ export function buildQueue(
 
 // Cartes publiées (à la date `day`) dans les classes de l'élève pour une matière, et cartes de ses séances
 // de soutien (celles des points du programme travaillés et celles ajoutées pendant la séance).
-export async function availableCards(studentId: string, subject: string, day = today()): Promise<Available[]> {
+export async function availableCards(studentId: string, subject: string, day?: string): Promise<Available[]> {
+  day ??= await studentDay(studentId);
   const ms = await db.memberships.where('studentId').equals(studentId).toArray();
   const groups = (await db.groups.bulkGet(ms.map((m) => m.groupId))).filter(
     (g) => g && !g.archived && (isTutoring(g) ? g.tracks?.some((t) => t.subject === subject) : g.subject === subject),
   ) as Group[];
   const result = new Map<string, Available>();
+  const d = day;
   const offer = (c: Card | undefined, date: string) => {
     if (!c || c.deleted) return;
     const prev = result.get(c.id);
@@ -82,7 +84,7 @@ export async function availableCards(studentId: string, subject: string, day = t
   };
   for (const g of groups) {
     const tutoring = isTutoring(g);
-    const pubs = (await db.publications.where('groupId').equals(g.id).toArray()).filter((p) => p.date <= day);
+    const pubs = (await db.publications.where('groupId').equals(g.id).toArray()).filter((p) => p.date <= d);
     for (const p of pubs) {
       let units = [p.unitId, ...(await db.units.where('parentId').equals(p.unitId).primaryKeys())];
       // Soutien : une séance peut mêler plusieurs matières, on ne garde que les points de cette matière
@@ -95,7 +97,7 @@ export async function availableCards(studentId: string, subject: string, day = t
     const main = g.tracks?.[0]?.subject;
     const own = (c: Card) => (g.tracks?.some((t) => t.subject === c.subject) ? c.subject : main) === subject;
     for (const ss of await db.tutoringSessions.where('groupId').equals(g.id).toArray()) {
-      if (ss.date > day || !ss.studentIds.includes(studentId)) continue;
+      if (ss.date > d || !ss.studentIds.includes(studentId)) continue;
       for (const c of await db.cards.bulkGet(ss.cardIds)) if (c && own(c)) offer(c, ss.date);
     }
   }
@@ -104,19 +106,28 @@ export async function availableCards(studentId: string, subject: string, day = t
   return [...result.values()];
 }
 
+// Fuseau de l'élève : celui fixé dans son groupe de soutien (sinon celui de son appareil)
+export async function studentZone(studentId: string): Promise<string | undefined> {
+  const ms = await db.memberships.where('studentId').equals(studentId).toArray();
+  return (await db.groups.bulkGet(ms.map((m) => m.groupId))).find((g) => g && !g.archived && g.timezone)?.timezone;
+}
+// Jour de révision de l'élève (change à 3 h du matin, à son heure)
+export const studentDay = async (studentId: string) => studyDay(await studentZone(studentId));
+
 export async function studentSubjects(studentId: string): Promise<string[]> {
   const ms = await db.memberships.where('studentId').equals(studentId).toArray();
   const groups = await db.groups.bulkGet(ms.map((m) => m.groupId));
   return [...new Set(groups.filter((g) => g && !g.archived).flatMap((g) => (isTutoring(g) ? (g!.tracks ?? []).map((t) => t.subject) : [g!.subject])))];
 }
 
-export async function doneToday(studentId: string, subject: string, day = today()): Promise<number> {
+export async function doneToday(studentId: string, subject: string, day?: string): Promise<number> {
+  day ??= await studentDay(studentId);
   const rs = await db.reviews.where('[studentId+date]').equals([studentId, day]).toArray();
   return rs.filter((r) => r.subject === subject).length;
 }
 
 export async function todaySession(studentId: string, subject: string, extra = 0) {
-  const day = today();
+  const day = await studentDay(studentId);
   const student = await db.students.get(studentId);
   const goal = student?.goals[subject] ?? DEFAULT_GOAL;
   const avail = await availableCards(studentId, subject, day);
@@ -131,7 +142,7 @@ export async function todaySession(studentId: string, subject: string, extra = 0
 export async function recordAnswer(studentId: string, cardId: string, subject: string, rating: Rating) {
   const student = await db.students.get(studentId);
   const prev = await db.studentCards.get(`${studentId}|${cardId}`);
-  const { sc, review } = applyAnswer(studentId, cardId, subject, prev, rating, student?.rule ?? 'strict', today());
+  const { sc, review } = applyAnswer(studentId, cardId, subject, prev, rating, student?.rule ?? 'strict', await studentDay(studentId));
   await db.transaction('rw', db.studentCards, db.reviews, async () => {
     await db.studentCards.put(sc);
     await db.reviews.add(review);

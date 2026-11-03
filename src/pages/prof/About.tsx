@@ -285,6 +285,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     text: 'Ce que voit l’élève sur ordinateur ou téléphone.',
     details: [
       'révision quotidienne par boîtes de Leitner (7 boîtes, objectif du jour)',
+      'le jour de révision change à 3 h du matin (et non à minuit), à l’heure de l’élève : celle du fuseau fixé dans son suivi de soutien, sinon celle de son appareil',
       'pensé pour le téléphone : flashcard en grand, boutons de réponse sous le pouce, menu en bas de l’écran',
       'réponses « Je ne sais pas », « J’hésite… », « Facile »',
       'progrès : série, régularité, boîtes',

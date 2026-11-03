@@ -1,6 +1,6 @@
 import { db, isClass, type Review, type StudentCard, type Student } from './db';
-import { addDays, diffDays, today } from './dates';
-import { availableCards } from './leitner';
+import { addDays, diffDays, studyDay } from './dates';
+import { availableCards, studentDay } from './leitner';
 
 export const WINDOW = 30;
 
@@ -13,7 +13,7 @@ export interface Summary {
   lastDay?: string;
 }
 
-export function summarize(reviews: Review[], day = today()): Summary {
+export function summarize(reviews: Review[], day = studyDay()): Summary {
   const from = addDays(day, -WINDOW + 1);
   const recent = reviews.filter((r) => r.date >= from && r.date <= day);
   const days = new Set(recent.map((r) => r.date));
@@ -65,7 +65,7 @@ export function heatmapCounts(reviews: Review[]): Map<string, number> {
   return m;
 }
 
-export function streak(counts: Map<string, number>, day = today()): number {
+export function streak(counts: Map<string, number>, day = studyDay()): number {
   let d = counts.has(day) ? day : addDays(day, -1);
   let n = 0;
   while (counts.has(d)) {
@@ -96,12 +96,12 @@ export async function groupOverview(groupId: string) {
   if (!group) return null;
   const ms = await db.memberships.where('groupId').equals(groupId).toArray();
   const students = (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[];
-  const day = today();
   const allReviews: Review[] = [];
   const rows: StudentRow[] = [];
   for (const s of students) {
     const rs = (await db.reviews.where('studentId').equals(s.id).toArray()).filter((r) => r.subject === group.subject);
     allReviews.push(...rs);
+    const day = await studentDay(s.id);
     const summary = summarize(rs, day);
     rows.push({ student: s, summary, inactiveDays: summary.lastDay ? diffDays(day, summary.lastDay) : null });
   }

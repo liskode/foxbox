@@ -1,4 +1,4 @@
-import { addDays, fromISO, today, frDate } from '../lib/dates';
+import { addDays, fromISO, studyDay, frDate } from '../lib/dates';
 import type { CardAgg } from '../lib/stats';
 
 export const themeClass = (t?: string) => (t ? 't-' + t.split(' ')[0] : '');
@@ -29,8 +29,8 @@ const SHADES = ['#e9e5dc', '#c8eadf', '#95d6c3', '#5fbfa4', '#2f8f75'];
 
 // Calendrier de régularité : une ligne par semaine (la plus ancienne en haut, la semaine en cours en bas),
 // 7 colonnes du lundi au dimanche ; se lit de gauche à droite, ligne par ligne.
-export function Heatmap({ counts, weeks = 7 }: { counts: Map<string, number>; weeks?: number }) {
-  const end = today();
+export function Heatmap({ counts, weeks = 7, day }: { counts: Map<string, number>; weeks?: number; day?: string }) {
+  const end = day ?? studyDay();
   const dow = (fromISO(end).getDay() + 6) % 7; // lundi = 0
   const start = addDays(end, -dow - 7 * (weeks - 1));
   const max = Math.max(1, ...counts.values());

@@ -2,9 +2,8 @@
 import { useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Card } from '../lib/db';
-import { today } from '../lib/dates';
 import { boxDistribution, difficultForStudent, heatmapCounts, streak, summarize } from '../lib/stats';
-import { availableCards, studentSubjects } from '../lib/leitner';
+import { availableCards, studentDay, studentSubjects } from '../lib/leitner';
 import { Boxes, Heatmap, Pct, RateBar } from './widgets';
 import { CardFace } from './CardFace';
 import { CardDetail } from './CardDetail';
@@ -53,6 +52,7 @@ export function StudentReport({
   const data = useLiveQuery(async () => {
     if (!subj) return null;
     const reviews = (await db.reviews.where('studentId').equals(studentId).toArray()).filter((r) => r.subject === subj);
+    const day = await studentDay(studentId);
     const dist = await boxDistribution(studentId, subj);
     const hard = difficultForStudent(reviews);
     const cards = await db.cards.bulkGet(hard.map((h) => h.cardId));
@@ -85,6 +85,7 @@ export function StudentReport({
       for (const c of cs) if (c && !c.deleted && (c.subject === subj || subjects.length < 2)) suspended.push({ card: c, box: (await db.studentCards.get(`${studentId}|${c.id}`))?.box ?? 0 });
     }
     return {
+      day,
       byBox,
       suspended,
       reviews,
@@ -97,7 +98,7 @@ export function StudentReport({
   if (!subjects.length) return <div className="notice">Pas encore de classe : rien à afficher.</div>;
   if (!data) return <div className="muted">Calcul…</div>;
   const counts = heatmapCounts(data.reviews);
-  const sum = summarize(data.reviews);
+  const sum = summarize(data.reviews, data.day);
   const total = data.dist.reduce((a, b) => a + b, 0);
   const mastered = data.dist.slice(5).reduce((a, b) => a + b, 0);
 
@@ -116,7 +117,7 @@ export function StudentReport({
         <div className="panel report-line">
           <div className="report-stats">
             <span title="Série en cours (jours de révision d'affilée)">
-              <Icon name="flame" size={22} /> <b>{streak(counts)} j</b>
+              <Icon name="flame" size={22} /> <b>{streak(counts, data.day)} j</b>
             </span>
             <span title="Jours de révision sur les 30 derniers jours">
               <Icon name="calendar" size={22} /> <b>{sum.activeDays} / 30</b>
@@ -126,7 +127,7 @@ export function StudentReport({
             </span>
           </div>
           <div className="tile-cards">
-            <Heatmap counts={counts} />
+            <Heatmap counts={counts} day={data.day} />
             <Boxes dist={data.dist} compact />
           </div>
           <div className="report-sessions" title="Dernières séances de révision">
@@ -156,7 +157,7 @@ export function StudentReport({
             }}
           >
             {[
-              ['Série', `${streak(counts)} j`],
+              ['Série', `${streak(counts, data.day)} j`],
               ['Jours (30 j)', `${sum.activeDays} / 30`],
               ['Réussite (30 j)', sum.total ? <Pct v={sum.success} /> : '—'],
               ['Score', `${sum.score} / 100`],
@@ -169,7 +170,7 @@ export function StudentReport({
           </div>
           <div className="panel stack" style={{ gap: 6, padding: '12px 14px' }}>
             <b className="small">Régularité</b>
-            <Heatmap counts={counts} />
+            <Heatmap counts={counts} day={data.day} />
           </div>
           <div className="panel stack" style={{ gap: 4, padding: '12px 14px', flex: 1, minWidth: 240 }}>
             <b className="small">
@@ -188,7 +189,7 @@ export function StudentReport({
             <div className="panel">
               <div className="muted small">Série en cours</div>
               <div className="stat-n">
-                <Icon name="flame" size={18} /> {streak(counts)} j
+                <Icon name="flame" size={18} /> {streak(counts, data.day)} j
               </div>
             </div>
             <div className="panel">
@@ -208,7 +209,7 @@ export function StudentReport({
           </div>
           <div className="panel stack">
             <h3 style={{ margin: 0 }}>Régularité</h3>
-            <Heatmap counts={counts} />
+            <Heatmap counts={counts} day={data.day} />
           </div>
           <div className="panel stack">
             <div className="spread">
@@ -248,7 +249,7 @@ export function StudentReport({
                         <div className="meta">
                           <span className="code">{card.code}</span>
                           <span className="small muted" title="Prochaine révision">
-                            {!due ? 'nouvelle' : due <= today() ? 'à revoir' : `le ${due.slice(8, 10)}/${due.slice(5, 7)}`}
+                            {!due ? 'nouvelle' : due <= data.day ? 'à revoir' : `le ${due.slice(8, 10)}/${due.slice(5, 7)}`}
                           </span>
                           <span
                             className="small"
