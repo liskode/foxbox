@@ -90,7 +90,7 @@ export function RateBar({ agg }: { agg?: CardAgg }) {
   const p = (n: number) => `${(n / agg.total) * 100}%`;
   return (
     <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
-      <div className="rate" title={`${agg.forgot} oubli · ${agg.hard} dur · ${agg.easy} facile`}>
+      <div className="rate" title={`${agg.forgot} oubli · ${agg.hard} hésitation · ${agg.easy} facile`}>
         <span style={{ width: p(agg.forgot), background: 'var(--forgot)' }} />
         <span style={{ width: p(agg.hard), background: 'var(--hard)' }} />
         <span style={{ width: p(agg.easy), background: 'var(--easy)' }} />

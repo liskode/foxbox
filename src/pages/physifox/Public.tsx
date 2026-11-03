@@ -511,7 +511,7 @@ export function PfReview() {
           ) : (
             <div className="answers">
               <button className="forgot" onClick={() => answer('forgot')}><Icon name="x" size={22} stroke={2.4} />Je ne sais pas</button>
-              <button className="hard" onClick={() => answer('hard')}><Icon name="minus" size={22} stroke={2.4} />Dur</button>
+              <button className="hard" onClick={() => answer('hard')}><Icon name="minus" size={22} stroke={2.4} />J'hésite…</button>
               <button className="easy" onClick={() => answer('easy')}><Icon name="check" size={22} stroke={2.6} />Facile</button>
             </div>
           )}

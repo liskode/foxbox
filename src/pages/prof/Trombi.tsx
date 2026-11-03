@@ -152,7 +152,7 @@ function Session({ entries, teacherId, onEnd, free = false }: { entries: Entry[]
             Je ne sais pas
           </button>
           <button className="hard" onClick={() => answer('hard')}>
-            Dur
+            J'hésite…
           </button>
           <button className="easy" onClick={() => answer('easy')}>
             Facile
@@ -270,7 +270,7 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
             </button>
           </div>
           <span className="small muted">
-            Même principe que les élèves : une photo, vous cherchez le prénom, puis Facile / Dur / Je ne sais pas. Un visage
+            Même principe que les élèves : une photo, vous cherchez le prénom, puis Facile / J'hésite… / Je ne sais pas. Un visage
             oublié revient en fin de séance.
           </span>
         </div>

@@ -9,6 +9,7 @@ import { frDate } from '../lib/dates';
 import { mediaUrl, RichText } from './CardFace';
 import { openDocument, sizeLabel } from './UnitDetails';
 import { toast } from './Toast';
+import { VoiceRecorder } from './Voice';
 import { Icon } from './Icon';
 
 function useMedia(id: string) {
@@ -71,6 +72,17 @@ function Face({
       {url ? <img src={url} alt="" /> : isStudent || isTeacher ? initials : codeFor(m.authorName, faces?.relations)}
     </span>
   );
+}
+
+// Vocal joint, pas encore envoyé : on peut le réécouter
+function PendingAudio({ blob }: { blob: Blob }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    const u = URL.createObjectURL(blob);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [blob]);
+  return url ? <audio controls src={url} style={{ height: 32, maxWidth: 240 }} /> : <>Mémo vocal</>;
 }
 
 export interface Person {
@@ -145,7 +157,6 @@ export function Chat({
   const [text, setText] = useState('');
   const [files, setFiles] = useState<(File | Blob)[]>([]);
   const [busy, setBusy] = useState(false);
-  const [rec, setRec] = useState<MediaRecorder | null>(null);
   const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
   const end = useRef<HTMLDivElement>(null);
 
@@ -175,32 +186,6 @@ export function Chat({
     const m = msgs.find((x) => x.id === editing.id);
     if (m && editing.text.trim() !== m.text) await db.messages.update(m.id, { text: editing.text.trim(), editedAt: Date.now() });
     setEditing(null);
-  }
-
-  // Mémo vocal : appui pour démarrer, nouvel appui pour arrêter (le mémo est joint au message)
-  async function toggleRecord() {
-    if (rec) {
-      rec.stop();
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') return toast('Enregistrement impossible sur cet appareil', { error: true });
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const type = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm';
-      const r = new MediaRecorder(stream, { mimeType: type });
-      const chunks: Blob[] = [];
-      r.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-      r.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = Object.assign(new Blob(chunks, { type }), { name: `memo-vocal.${type === 'audio/mp4' ? 'm4a' : 'webm'}` });
-        setFiles((f) => [...f, blob]);
-        setRec(null);
-      };
-      r.start();
-      setRec(r);
-    } catch {
-      toast('Micro refusé : autorisez-le dans les réglages du navigateur', { error: true });
-    }
   }
 
   // « à moi, Mère – …, Nino » : le professeur reçoit toujours les messages de l'élève et des parents
@@ -298,7 +283,7 @@ export function Chat({
           {files.map((f, i) => (
             <span key={i} className="tag plain">
               <Icon name={f.type.startsWith('audio/') ? 'mic' : f.type.startsWith('image/') ? 'camera' : 'file'} size={13} />{' '}
-              {f.type.startsWith('audio/') ? 'Mémo vocal' : (f as File).name}
+              {f.type.startsWith('audio/') ? <PendingAudio blob={f} /> : (f as File).name}
               <button className="btn small ghost" style={{ border: 'none', padding: 0 }} title="Retirer" onClick={() => setFiles(files.filter((_, j) => j !== i))}>
                 <Icon name="x" size={12} />
               </button>
@@ -328,11 +313,9 @@ export function Chat({
             }}
           />
         </label>
-        <button className={'btn small' + (rec ? ' danger' : '')} onClick={toggleRecord}>
-          <Icon name={rec ? 'x' : 'mic'} size={15} /> {rec ? 'Arrêter l’enregistrement' : 'Mémo vocal'}
-        </button>
+        <VoiceRecorder small validateLabel="Joindre au message" onValidate={(b) => setFiles((f) => [...f, b])} />
         <div style={{ flex: 1 }} />
-        <button className="btn primary" disabled={busy || !!rec || (!text.trim() && !files.length)} onClick={send}>
+        <button className="btn primary" disabled={busy || (!text.trim() && !files.length)} onClick={send}>
           {busy ? 'Envoi…' : 'Envoyer'}
         </button>
       </div>

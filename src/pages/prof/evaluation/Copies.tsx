@@ -36,6 +36,10 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
     new Map<string, number>(),
   );
   const [manual, setManual] = useState<string | null>(null);
+  // Recherche d'un élève par son prénom (ou son nom), sans tenir compte des accents
+  const [q, setQ] = useState('');
+  const fold = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const shown = q.trim() ? list.filter(({ student }) => fold(`${student.firstName} ${student.lastName}`).includes(fold(q.trim()))) : list;
   const [appr, setAppr] = useState('');
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -91,13 +95,24 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
   return (
     <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 250px) 1fr', gap: 16, alignItems: 'start' }}>
       {/* Téléphone : choix de l'élève dans un menu, avec copie précédente / suivante */}
+      <input
+        className="show-phone"
+        type="search"
+        placeholder="Chercher un élève (prénom)…"
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          const first = list.find(({ student }) => fold(`${student.firstName} ${student.lastName}`).includes(fold(e.target.value.trim())));
+          if (e.target.value.trim() && first) setParams({ onglet: 'copies', eleve: first.student.id }, { replace: true });
+        }}
+      />
       <div className="show-phone row" style={{ gap: 8, flexWrap: 'nowrap' }}>
         <button className="btn" onClick={() => goStudent(-1)} disabled={idx === 0} aria-label="Copie précédente">
           <Icon name="arrowLeft" />
         </button>
         <label className="tab-select" style={{ margin: 0, flex: 1 }}>
           <select value={sid ?? ''} onChange={(e) => setParams({ onglet: 'copies', eleve: e.target.value }, { replace: true })}>
-            {list.map(({ student }) => {
+            {(shown.some((x) => x.student.id === sid) ? shown : list).map(({ student }) => {
               const rr = results.get(student.id);
               return (
                 <option key={student.id} value={student.id}>
@@ -114,7 +129,19 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
         </button>
       </div>
       <div className="panel stack hide-phone" style={{ gap: 2, maxHeight: '75vh', overflowY: 'auto', padding: 10 }}>
-        {list.map(({ student }) => {
+        <input
+          type="search"
+          placeholder="Chercher (prénom)…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => {
+            // Entrée : ouvre la copie du premier élève trouvé
+            if (e.key === 'Enter' && shown[0]) setParams({ onglet: 'copies', eleve: shown[0].student.id }, { replace: true });
+          }}
+          style={{ position: 'sticky', top: 0, zIndex: 1, marginBottom: 6 }}
+        />
+        {q.trim() && !shown.length && <span className="small muted">Aucun élève trouvé.</span>}
+        {shown.map(({ student }) => {
           const rr = results.get(student.id);
           const done = rr?.absent || score(ev, rr);
           return (

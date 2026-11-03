@@ -7,48 +7,13 @@ import { evalThread, markEvalRead, sendMessage } from '../lib/messages';
 import { mediaUrl } from './CardFace';
 import { frDate } from '../lib/dates';
 import { toast } from './Toast';
+import { VoiceRecorder } from './Voice';
 import { Icon } from './Icon';
 
 const time = (ts: number) => {
   const d = new Date(ts);
   return `${frDate(d.toISOString().slice(0, 10))} à ${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
 };
-
-// Enregistrement d'un mémo vocal : un appui pour démarrer, un autre pour arrêter
-export function useVoiceRecorder(onDone: (blob: Blob) => void) {
-  const [rec, setRec] = useState<MediaRecorder | null>(null);
-  const [since, setSince] = useState(0);
-  const [, tick] = useState(0);
-  useEffect(() => {
-    if (!rec) return;
-    const t = setInterval(() => tick((n) => n + 1), 500);
-    return () => clearInterval(t);
-  }, [rec]);
-  async function toggle() {
-    if (rec) return rec.stop();
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') return toast('Enregistrement impossible sur cet appareil', { error: true });
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const type = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm';
-      const r = new MediaRecorder(stream, { mimeType: type });
-      const chunks: Blob[] = [];
-      r.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-      r.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        setRec(null);
-        const blob = Object.assign(new Blob(chunks, { type }), { name: `vocal.${type === 'audio/mp4' ? 'm4a' : 'webm'}` });
-        if (blob.size) onDone(blob);
-      };
-      r.start();
-      setSince(Date.now());
-      setRec(r);
-    } catch {
-      toast('Micro refusé : autorisez-le dans les réglages du navigateur', { error: true });
-    }
-  }
-  const secs = rec ? Math.floor((Date.now() - since) / 1000) : 0;
-  return { recording: !!rec, toggle, elapsed: `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` };
-}
 
 function Audio({ m, onPlay }: { m: Message; onPlay?: () => void }) {
   const a = m.attachments.find((x) => x.type.startsWith('audio/'));
@@ -109,7 +74,6 @@ export function EvalFeedback({
       setBusy(false);
     }
   }
-  const voice = useVoiceRecorder((b) => send([b]));
   // Élève : l'écoute d'un vocal du professeur est signalée une fois (accusé d'écoute visible par le professeur)
   async function heard(m: Message) {
     if (role !== 'eleve' || !tId || sent.current.has(m.id) || thread.some((x) => x.heardOf === m.id)) return;
@@ -157,10 +121,13 @@ export function EvalFeedback({
         );
       })}
       <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
-        <button className={'btn' + (voice.recording ? ' danger' : role === 'prof' && !shown.length ? ' primary' : '')} onClick={voice.toggle} disabled={busy || !tId}>
-          <Icon name="mic" />{' '}
-          {voice.recording ? `Arrêter et envoyer (${voice.elapsed})` : role === 'prof' ? 'Appréciation vocale' : 'Répondre par un vocal'}
-        </button>
+        <VoiceRecorder
+          label={role === 'prof' ? 'Appréciation vocale' : 'Répondre par un vocal'}
+          validateLabel={role === 'prof' ? 'Envoyer à l’élève' : 'Envoyer'}
+          primary={role === 'prof' && !shown.length}
+          disabled={busy || !tId}
+          onValidate={(b) => send([b])}
+        />
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}

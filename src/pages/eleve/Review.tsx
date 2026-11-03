@@ -112,7 +112,7 @@ export function ReviewSession() {
               </button>
               <button className="hard" onClick={() => answer('hard')}>
                 <Icon name="minus" size={22} stroke={2.4} />
-                Dur
+                J'hésite…
               </button>
               <button className="easy" onClick={() => answer('easy')}>
                 <Icon name="check" size={22} stroke={2.6} />

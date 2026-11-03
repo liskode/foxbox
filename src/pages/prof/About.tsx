@@ -118,7 +118,8 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'grille façon tableur',
       'résultats : moyenne, répartition, réussite par critère et par compétence',
       'appréciations',
-      'appréciation vocale de chaque copie : l’élève l’écoute dans son espace, on voit s’il l’a écoutée (date et heure), il peut répondre par écrit ou par un vocal ; nouvelles réponses signalées dans la liste des copies',
+      'appréciation vocale de chaque copie, réécoutée avant envoi (« Recommencer » possible) : l’élève l’écoute dans son espace, on voit s’il l’a écoutée (date et heure), il peut répondre par écrit ou par un vocal ; nouvelles réponses signalées dans la liste des copies',
+      'recherche d’un élève par son prénom dans la liste des copies (Entrée ouvre sa copie)',
       'visibilité pour l’élève (note, appréciation, détail, histogramme)',
       'copie des notes pour Pronote et export CSV',
       'renvoi en boîte 1 des flashcards des critères ratés',
@@ -237,7 +238,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'tarif à 0 (soutien gratuit) : aucun règlement ni montant affiché, ni pour vous ni pour les parents',
       'relevé mensuel et attestation annuelle (séances à domicile) à imprimer, avec vos coordonnées et votre SIRET',
       'récapitulatif global par mois et par élève (heures, montants, reçu, domicile / en ligne)',
-      'messages : une conversation par élève, avec un petit rond à côté de chaque message (photo de l’élève, code du parent, votre photo ou logo), destinataires cochés à chaque message (l’élève, un ou plusieurs parents) ; chacun ne lit que ce qui lui est adressé ; photo, document ou mémo vocal ; message corrigeable après envoi ; pastille des messages non lus',
+      'messages : une conversation par élève, avec un petit rond à côté de chaque message (photo de l’élève, code du parent, votre photo ou logo), destinataires cochés à chaque message (l’élève, un ou plusieurs parents) ; chacun ne lit que ce qui lui est adressé ; photo, document ou mémo vocal (réécouté avant d’être joint, aide « ? » si le micro ne marche pas) ; message corrigeable après envoi ; pastille des messages non lus',
     ],
   },
   {
@@ -285,7 +286,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     details: [
       'révision quotidienne par boîtes de Leitner (7 boîtes, objectif du jour)',
       'pensé pour le téléphone : flashcard en grand, boutons de réponse sous le pouce, menu en bas de l’écran',
-      'réponses « Je ne sais pas », « Dur », « Facile »',
+      'réponses « Je ne sais pas », « J’hésite… », « Facile »',
       'progrès : série, régularité, boîtes',
       'onglet Évaluations (élèves suivis en soutien) : « Signaler un DS à venir » (date, matière, programme par points cochés, texte ou capture Pronote), puis copie, corrigé et note ; graphique de progression par matière ; notes des évaluations rendues en classe',
       'documents de cours des séances faites',
