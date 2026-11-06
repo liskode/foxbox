@@ -83,7 +83,13 @@ export function LevelsOverview() {
                             <span
                               key={g.id}
                               className="small"
-                              title={all ? 'Terminée' : next ? `Prochaine séance prévue le ${dm(next)}` : undefined}
+                              title={
+                                all
+                                  ? 'Terminée'
+                                  : [n ? `${n} séance(s) faite(s) sur ${items.length}` : '', next ? `prochaine séance prévue le ${dm(next)}` : '']
+                                      .filter(Boolean)
+                                      .join(' · ') || undefined
+                              }
                               style={{
                                 borderRadius: 6,
                                 padding: '0 5px',
@@ -93,7 +99,8 @@ export function LevelsOverview() {
                                 color: n ? 'var(--ink)' : '#9a968d',
                               }}
                             >
-                              {g.name.replace(/_.*/, '')} {all ? '✓' : n ? `${n}/${items.length}` : next ? dm(next) : ''}
+                              {g.name.replace(/_.*/, '')} {all ? '✓' : n ? `${n} sur ${items.length}` : next ? dm(next) : ''}
+                              {!all && n > 0 && next && <span style={{ fontWeight: 500, color: '#9a968d' }}> · {dm(next)}</span>}
                             </span>
                           );
                         })}
