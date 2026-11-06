@@ -180,7 +180,14 @@ async function pushGroup(table: string, ids: string[], explicitDelete: Set<strin
     }
     return;
   }
-  const live = rows.filter((r) => !r.deleted);
+  // Ligne écrite par quelqu'un d'autre (ex. document déposé par l'élève, rattaché à une séance par le professeur) :
+  // elle existe déjà en ligne, on la modifie (les règles refusent de la « recréer » au nom d'un autre auteur)
+  const foreign = rows.filter((r) => me && !r.deleted && (r as Obj).author_id && (r as Obj).author_id !== me);
+  for (const r of foreign) {
+    const { error } = await supabase.from(spec.remote).update({ data: (r as Obj).data, deleted: false }).eq('id', r.id);
+    if (error) throw error;
+  }
+  const live = rows.filter((r) => !r.deleted && !foreign.includes(r));
   const dead = rows.filter((r) => r.deleted).map((r) => r.id);
   if (live.length) {
     const { error } = await supabase.from(spec.remote).upsert(live);
