@@ -1,0 +1,298 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[a4paper,margin=2cm,bottom=2.5cm]{geometry}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{array,booktabs}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{needspace}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathmorphing}
+
+\definecolor{bleu}{RGB}{29,95,168}
+\definecolor{orange}{RGB}{190,95,10}
+\definecolor{vert}{RGB}{35,120,75}
+\definecolor{rouge}{RGB}{180,40,40}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist{nosep,leftmargin=*}
+\titleformat{\section}{\Large\bfseries\color{bleu}}{\thesection.}{0.5em}{}
+\pagestyle{fancy}\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyfoot[L]{\footnotesize Physique-chimie 1re spécialité --- Constance --- Ondes mécaniques}
+\fancyfoot[R]{\footnotesize\thepage}
+
+\newtcolorbox{cours}[1]{colback=bleu!5,colframe=bleu,fonttitle=\bfseries,title={#1},boxrule=0.6pt,arc=2pt,left=6pt,right=6pt}
+\newtcolorbox{piege}{colback=rouge!5,colframe=rouge,fonttitle=\bfseries,title=Pièges classiques,boxrule=0.6pt,arc=2pt,left=6pt,right=6pt}
+\newcommand{\etoiles}[1]{\ifcase#1\or$\bigstar$\or$\bigstar\bigstar$\or$\bigstar\bigstar\bigstar$\fi}
+\newcounter{exo}
+\newcommand{\exo}[2]{\par\needspace{8\baselineskip}\medskip\stepcounter{exo}{\bfseries\color{bleu}Exercice \theexo\ --- #2}\hfill{\color{orange}\etoiles{#1}}\par\nopagebreak}
+\newcounter{res}
+\newcommand{\res}[1]{\par\needspace{4\baselineskip}\smallskip\stepcounter{res}{\bfseries\color{vert}Exercice \theres\ --- #1}\par\nopagebreak}
+\newcommand{\ms}{\text{m}\cdot\text{s}^{-1}}
+\renewcommand{\arraystretch}{1.3}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries\color{bleu} Ondes mécaniques}\\[4pt]
+  {\small Première, spécialité physique-chimie}\\[2pt]
+  {\small L'essentiel du cours, puis des exercices de difficulté croissante :
+  {\color{orange}$\bigstar$} application, {\color{orange}$\bigstar\bigstar$} raisonnement, {\color{orange}$\bigstar\bigstar\bigstar$} problème.
+  Les résultats sont à la fin.}
+\end{center}
+
+\section{L'essentiel du cours}
+
+\begin{cours}{Onde mécanique progressive}
+Une \textbf{onde mécanique progressive} est la propagation d'une \textbf{perturbation} dans un \textbf{milieu matériel}, avec transport d'\textbf{énergie} mais \textbf{sans transport de matière}.
+\begin{itemize}
+  \item Exemples : la ola (les spectateurs restent à leur place), une corde, un ressort, les vagues, le son, les ondes sismiques.
+  \item Une onde mécanique \textbf{ne se propage pas dans le vide} (il faut un milieu : solide, liquide ou gaz). Les ondes électromagnétiques (lumière, radio\dots), elles, se propagent aussi dans le vide.
+\end{itemize}
+\end{cours}
+
+\begin{cours}{Transversale ou longitudinale ?}
+\begin{minipage}{0.48\linewidth}
+\textbf{Transversale} : la perturbation est \textbf{perpendiculaire} à la direction de propagation.\\
+Ex. : corde, ola, surface de l'eau.
+
+\centering
+\begin{tikzpicture}[scale=0.7]
+  \draw[thick] (0,0) -- (2,0) .. controls (2.5,0) and (2.5,1) .. (3,1) .. controls (3.5,1) and (3.5,0) .. (4,0) -- (6,0);
+  \draw[->,orange,thick] (3,1.2) -- (3,1.9) node[right] {\small perturbation};
+  \draw[->,bleu,thick] (4.3,0.6) -- (5.8,0.6) node[above] {\small propagation};
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}
+\textbf{Longitudinale} : la perturbation est \textbf{parallèle} à la direction de propagation.\\
+Ex. : ressort comprimé, son.
+
+\centering
+\begin{tikzpicture}[scale=0.7]
+  \draw[thick,decorate,decoration={coil,aspect=0.4,segment length=4mm,amplitude=3mm}] (0,0) -- (2,0);
+  \draw[thick,decorate,decoration={coil,aspect=0.4,segment length=1.5mm,amplitude=3mm}] (2,0) -- (3,0);
+  \draw[thick,decorate,decoration={coil,aspect=0.4,segment length=4mm,amplitude=3mm}] (3,0) -- (6,0);
+  \draw[<->,orange,thick] (1.9,0.6) -- (3.1,0.6);
+  \node[orange] at (2.5,1.05) {\small compression};
+  \draw[->,bleu,thick] (3.8,0.75) -- (5.8,0.75) node[above] {\small propagation};
+\end{tikzpicture}
+\end{minipage}
+\end{cours}
+
+\begin{cours}{Célérité et retard}
+Un point $M'$ reproduit la perturbation du point $M$ avec un \textbf{retard} $\tau = t' - t$ ($t$ et $t'$ : instants d'arrivée en $M$ et en $M'$).
+\[ \boxed{\,v = \frac{MM'}{\tau}\,} \qquad \text{soit} \qquad \tau = \frac{MM'}{v} \]
+La \textbf{célérité} $v$ (vitesse de propagation, en $\ms$) dépend du \textbf{milieu}, pas de la forme ni de l'amplitude de la perturbation.
+Son : environ $340~\ms$ dans l'air, $1\,500~\ms$ dans l'eau, $5\,000~\ms$ dans l'acier.
+\end{cours}
+
+\begin{cours}{Onde périodique : une double périodicité}
+La source répète la perturbation à intervalles réguliers.
+\begin{itemize}
+  \item \textbf{Période $T$} (en s) : périodicité \textbf{temporelle}, la plus petite durée au bout de laquelle un point se retrouve dans le même état. \textbf{Fréquence} $f = \dfrac{1}{T}$ (en Hz).
+  \item \textbf{Longueur d'onde $\lambda$} (en m) : périodicité \textbf{spatiale}, la plus petite distance entre deux points \textbf{en phase}.
+  \item Pendant une période, l'onde avance d'une longueur d'onde :
+  \[ \boxed{\,\lambda = v \times T = \frac{v}{f}\,} \]
+  \item Deux points distants de $\lambda$, $2\lambda$, $3\lambda$\dots\ sont \textbf{en phase} (même état au même instant) ; distants de $\frac{\lambda}{2}$, $\frac{3\lambda}{2}$\dots\ ils sont en \textbf{opposition de phase} (l'un en haut quand l'autre est en bas).
+\end{itemize}
+
+\begin{minipage}{0.48\linewidth}
+\centering
+\begin{tikzpicture}[x=1.2cm,y=0.6cm]
+  \draw[->] (0,0) -- (3.3,0) node[right] {$t$};
+  \draw[->] (0,-1.3) -- (0,1.5) node[left] {$y$};
+  \draw[thick,bleu,domain=0:3,samples=80] plot (\x,{sin(\x*240)});
+  \draw[<->] (0.375,1.25) -- (1.875,1.25) node[midway,above] {$T$};
+  \node[below] at (1.6,-1.3) {\small un point, en fonction du temps};
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.48\linewidth}
+\centering
+\begin{tikzpicture}[x=1.2cm,y=0.6cm]
+  \draw[->] (0,0) -- (3.3,0) node[right] {$x$};
+  \draw[->] (0,-1.3) -- (0,1.5) node[left] {$y$};
+  \draw[thick,orange,domain=0:3,samples=80] plot (\x,{cos(\x*240)});
+  \draw[<->] (0,1.25) -- (1.5,1.25) node[midway,above] {$\lambda$};
+  \node[below] at (1.6,-1.3) {\small tout le milieu, à un instant};
+\end{tikzpicture}
+\end{minipage}
+\end{cours}
+
+\begin{piege}
+\begin{itemize}
+  \item $T$ se lit sur un graphique en fonction du \textbf{temps}, $\lambda$ sur un graphique en fonction de la \textbf{position}.
+  \item Pour être précis, mesurer \textbf{plusieurs} périodes ou longueurs d'onde, puis diviser (5 intervalles entre 6 crêtes = $5\lambda$).
+  \item La fréquence est fixée par la \textbf{source} : elle ne change pas quand l'onde change de milieu. La célérité, elle, change, donc $\lambda = \frac{v}{f}$ aussi.
+  \item Convertir les unités : cm en m, ms en s, kHz en Hz, km/h en $\ms$.
+  \item L'amplitude diminue en s'éloignant de la source (amortissement), mais la célérité ne change pas.
+\end{itemize}
+\end{piege}
+
+\section{Exercices}
+
+\exo{1}{Classer les ondes}
+Pour chaque onde, dire si elle est transversale ou longitudinale, et si elle peut se propager dans le vide.\\
+a) la ola dans un stade \quad b) une compression le long d'un ressort \quad c) le son \quad d) une vague à la surface de l'eau \quad e) une secousse le long d'une corde \quad f) la lumière du Soleil
+
+\exo{1}{Calculs directs}
+\begin{enumerate}
+  \item Un son parcourt 1,02~km en 3,0~s. Calculer sa célérité.
+  \item Pendant un orage, on entend le tonnerre 4,5~s après avoir vu l'éclair. À quelle distance est tombée la foudre ? ($v_{\text{son}} = 340~\ms$ ; la lumière arrive quasi instantanément.)
+  \item Dans une cuve à ondes, la source vibre à $f = 20$~Hz et la longueur d'onde vaut 1,0~cm. Calculer la période et la célérité des ondes.
+  \item Le «~la~» du diapason a une fréquence de 440~Hz. Calculer sa longueur d'onde dans l'air.
+\end{enumerate}
+
+\exo{2}{Une secousse le long d'une corde}
+On crée en $S$ ($x = 0$), à $t = 0$, une secousse qui se propage le long d'une corde. On photographie la corde à deux instants.
+\begin{center}
+\begin{tikzpicture}[x=3.6cm,y=0.5cm]
+  \foreach \yy/\tt/\xf in {2.6/{$t_1 = 0{,}10$ s}/0.60, 0/{$t_2 = 0{,}25$ s}/1.50} {
+    \draw[thick] (0,\yy) -- (\xf-0.30,\yy) .. controls (\xf-0.2,\yy) and (\xf-0.2,\yy+1.2) .. (\xf-0.15,\yy+1.2) .. controls (\xf-0.1,\yy+1.2) and (\xf-0.1,\yy) .. (\xf,\yy) -- (2.2,\yy);
+    \node[left] at (0,\yy) {\small\tt};
+    \draw[dotted] (\xf,\yy) -- (\xf,-0.8);
+  }
+  \draw[->] (0,-0.8) -- (2.3,-0.8) node[right] {$x$ (m)};
+  \foreach \i/\l in {0/0,0.3/{0,3},0.6/{0,6},0.9/{0,9},1.2/{1,2},1.5/{1,5},1.8/{1,8},2.1/{2,1}} \draw (\i,-0.7) -- (\i,-0.9) node[below] {\small\l};
+\end{tikzpicture}
+\end{center}
+\begin{enumerate}
+  \item L'onde est-elle transversale ou longitudinale ? Y a-t-il transport de matière ?
+  \item À l'aide de la position du front de la secousse aux deux instants, calculer la célérité de l'onde.
+  \item Un point $M$ est situé à 3,0~m de $S$. Avec quel retard reproduit-il le mouvement de $S$ ? À quel instant commence-t-il à bouger ?
+  \item La secousse s'étend sur 0,30~m. Pendant combien de temps un point de la corde est-il en mouvement ?
+\end{enumerate}
+
+\exo{2}{La cuve à ondes}
+Une soufflerie crée des vagues rectilignes à la surface de l'eau, à la fréquence $f = 25$~Hz. Vues du dessus, les crêtes apparaissent comme des lignes claires. On mesure \textbf{4,0~cm} entre la première et la sixième ligne claire. Trois petits flotteurs $A$, $B$ et $C$ sont posés sur l'eau, alignés dans la direction de propagation, avec $AB = 1{,}6$~cm et $AC = 2{,}0$~cm.
+\begin{enumerate}
+  \item Les flotteurs avancent-ils avec les vagues ? Que mettent-ils en évidence ?
+  \item Calculer la période des vagues, puis leur longueur d'onde (attention : combien de longueurs d'onde entre la 1re et la 6e ligne ?).
+  \item En déduire la célérité des vagues.
+  \item $A$ et $B$ sont-ils en phase ou en opposition de phase ? Et $A$ et $C$ ? Justifier.
+  \item Une crête passe par $A$ à l'instant $t_1$. Où se trouve-t-elle à l'instant $t_1 + T$ ?
+\end{enumerate}
+
+\exo{2}{Lire $T$ et $\lambda$ sur des graphiques}
+Une onde sinusoïdale se propage le long d'une corde. Le graphique 1 donne l'élongation $y$ d'un point $M$ en fonction du temps ; le graphique 2 donne l'aspect de la corde à un instant donné.
+\begin{center}
+\begin{tikzpicture}[x=6cm,y=0.45cm]
+  \draw[gray!30,very thin,xstep=0.1,ystep=1] (0,-2) grid (0.8,2);
+  \draw[->] (0,0) -- (0.86,0) node[right] {$t$ (s)};
+  \draw[->] (0,-2.2) -- (0,2.6) node[above] {$y$ (cm)};
+  \foreach \i/\l in {0.2/{0,2},0.4/{0,4},0.6/{0,6},0.8/{0,8}} \node[below] at (\i,-2) {\small\l};
+  \draw[thick,bleu,domain=0:0.8,samples=100] plot (\x,{2*sin(\x*900)});
+  \node at (0.4,-3.3) {\small Graphique 1 : point $M$};
+\end{tikzpicture}\hspace{8mm}
+\begin{tikzpicture}[x=2cm,y=0.45cm]
+  \draw[gray!30,very thin,xstep=0.3,ystep=1] (0,-2) grid (2.4,2);
+  \draw[->] (0,0) -- (2.6,0) node[right] {$x$ (m)};
+  \draw[->] (0,-2.2) -- (0,2.6) node[above] {$y$ (cm)};
+  \foreach \i/\l in {0.6/{0,6},1.2/{1,2},1.8/{1,8},2.4/{2,4}} \node[below] at (\i,-2) {\small\l};
+  \draw[thick,orange,domain=0:2.4,samples=100] plot (\x,{2*cos(\x*300)});
+  \node at (1.2,-3.3) {\small Graphique 2 : la corde à un instant};
+\end{tikzpicture}
+\end{center}
+\begin{enumerate}
+  \item Sur quel graphique lit-on la période ? la longueur d'onde ? Lire leurs valeurs, ainsi que l'amplitude.
+  \item Calculer la fréquence et la célérité de l'onde.
+  \item Les points $N$ et $P$ sont situés respectivement à 3,6~m et 3,0~m de $M$, plus loin de la source. Calculer le retard de $N$ sur $M$. Comparer l'état vibratoire de $N$, puis de $P$, avec celui de $M$.
+\end{enumerate}
+
+\exo{2}{Sonar et échographie}
+\begin{enumerate}
+  \item Un sonar émet une salve d'ultrasons vers le fond de la mer et reçoit l'écho 0,40~s plus tard. Calculer la profondeur. ($v = 1\,500~\ms$ dans l'eau de mer.)
+  \item Une sonde d'échographie émet des ultrasons de fréquence 5,0~MHz dans le corps, où leur célérité vaut $1\,540~\ms$. Calculer leur longueur d'onde en mm.
+\end{enumerate}
+
+\exo{3}{Localiser un séisme}
+Un séisme produit deux types d'ondes : les ondes P (longitudinales, $v_P = 6{,}0~\text{km}\cdot\text{s}^{-1}$) et les ondes S (transversales, $v_S = 3{,}5~\text{km}\cdot\text{s}^{-1}$). Une station enregistre l'arrivée des ondes S \textbf{20~s} après celle des ondes P.
+\begin{enumerate}
+  \item Quelles ondes arrivent en premier ? Pourquoi ?
+  \item On note $d$ la distance entre le foyer du séisme et la station. Exprimer les durées de trajet $\Delta t_P$ et $\Delta t_S$ en fonction de $d$.
+  \item En déduire $d$.
+  \item La station a enregistré les ondes P à 10~h~15~min~40~s. À quelle heure s'est produit le séisme ?
+\end{enumerate}
+
+\exo{3}{Mesurer la célérité des ultrasons}
+Un émetteur envoie des ultrasons de fréquence $f = 40{,}0$~kHz vers deux récepteurs $R_1$ et $R_2$, dont on observe les signaux à l'oscilloscope. Au départ, $R_1$ et $R_2$ sont côte à côte et leurs signaux sont en phase. On éloigne $R_2$ dans l'axe : les signaux se retrouvent en phase 10 fois de suite, et on a alors déplacé $R_2$ de 8,5~cm.
+\begin{enumerate}
+  \item Quelle distance sépare deux positions successives de $R_2$ où les signaux sont en phase ?
+  \item En déduire la longueur d'onde, puis la célérité des ultrasons.
+  \item Pourquoi compter 10 décalages plutôt qu'un seul ?
+  \item Les signaux sont-ils en phase ou en opposition de phase si l'on éloigne $R_2$ de 2,55~cm à partir de la position de départ ?
+\end{enumerate}
+
+\exo{3}{La houle arrive sur la plage}
+Une houle de période $T = 8{,}0$~s se propage vers la côte. Loin de la plage, sa célérité vaut $12{,}5~\ms$. Près de la plage, elle n'est plus que de $5{,}0~\ms$.
+En eau peu profonde, la célérité de la houle dépend de la profondeur $h$ : $v = \sqrt{g\,h}$ avec $g = 9{,}81~\text{m}\cdot\text{s}^{-2}$.
+\begin{enumerate}
+  \item Calculer la fréquence et la longueur d'onde de la houle loin de la plage.
+  \item La période change-t-elle à l'approche de la plage ? Calculer la nouvelle longueur d'onde. Que constate-t-on ?
+  \item Calculer la profondeur aux deux endroits.
+  \item Un surfeur immobile voit passer combien de crêtes par minute ?
+\end{enumerate}
+
+\newpage
+\section{Résultats}
+\textit{Seulement les résultats, pour vérifier ses réponses : la rédaction reste à faire.}
+
+\res{Classer les ondes}
+Transversales : a, d, e. Longitudinales : b, c. Aucune ne se propage dans le vide, sauf f : la lumière est une onde électromagnétique (pas une onde mécanique).
+
+\res{Calculs directs}
+1. $v = 340~\ms$. \qquad
+2. $d = 340 \times 4{,}5 \approx 1{,}5 \times 10^3$~m. \qquad
+3. $T = 0{,}050$~s ; $v = 0{,}20~\ms$. \qquad
+4. $\lambda \approx 0{,}77$~m.
+
+\res{Une secousse le long d'une corde}
+1. Transversale ; pas de transport de matière. \qquad
+2. $v = \dfrac{1{,}50 - 0{,}60}{0{,}25 - 0{,}10} = 6{,}0~\ms$. \\
+3. $\tau = 0{,}50$~s : $M$ commence à bouger à $t = 0{,}50$~s. \qquad
+4. $0{,}30 / 6{,}0 = 0{,}050$~s.
+
+\res{La cuve à ondes}
+1. Non : ils montent et descendent sur place (pas de transport de matière). \qquad
+2. $T = 0{,}040$~s ; 5 longueurs d'onde, donc $\lambda = 0{,}80$~cm. \\
+3. $v = 0{,}20~\ms$. \qquad
+4. $AB = 2\lambda$ : en phase ; $AC = 2{,}5\,\lambda$ : opposition de phase. \qquad
+5. À 0,80~cm plus loin, sur la crête suivante.
+
+\res{Lire $T$ et $\lambda$ sur des graphiques}
+1. $T = 0{,}40$~s (graphique 1) ; $\lambda = 1{,}2$~m (graphique 2) ; amplitude 2~cm. \qquad
+2. $f = 2{,}5$~Hz ; $v = 3{,}0~\ms$. \\
+3. Retard de $N$ : 1,2~s $= 3T$. $MN = 3\lambda$ : $N$ en phase avec $M$ ; $MP = 2{,}5\,\lambda$ : $P$ en opposition de phase.
+
+\res{Sonar et échographie}
+1. Profondeur : $\dfrac{1\,500 \times 0{,}40}{2} = 300$~m. \qquad
+2. $\lambda \approx 3{,}1 \times 10^{-4}$~m $= 0{,}31$~mm.
+
+\res{Localiser un séisme}
+1. Les ondes P (plus rapides). \qquad
+2. $\Delta t_P = \dfrac{d}{v_P}$ et $\Delta t_S = \dfrac{d}{v_S}$. \qquad
+3. $\dfrac{d}{3{,}5} - \dfrac{d}{6{,}0} = 20$ donne $d = 168$~km $\approx 1{,}7 \times 10^2$~km. \\
+4. $\Delta t_P = 28$~s : le séisme s'est produit à 10~h~15~min~12~s.
+
+\res{Mesurer la célérité des ultrasons}
+1. Une longueur d'onde. \qquad
+2. $\lambda = 0{,}85$~cm ; $v = 340~\ms$. \qquad
+3. Pour diviser l'erreur de mesure par 10. \qquad
+4. $2{,}55~\text{cm} = 3\lambda$ : en phase.
+
+\res{La houle arrive sur la plage}
+1. $f = 0{,}125$~Hz ; $\lambda = 100$~m. \qquad
+2. Non ($T$ est fixée par la source) ; $\lambda = 40$~m : les crêtes se rapprochent. \\
+3. $h \approx 16$~m loin de la plage ; $h \approx 2{,}5$~m près de la plage. \qquad
+4. $60 / 8{,}0 = 7{,}5$ crêtes par minute.
+
+\end{document}
