@@ -60,6 +60,16 @@ export function StudentsTab({ group }: { group: Group }) {
     );
   }
 
+  // Liste « Nom, Prénom », un élève par ligne (pour Plickers, un tableur…)
+  function exportTxt() {
+    const txt = students.map((s) => [s.lastName, s.firstName].filter(Boolean).join(', ')).join('\n') + '\n';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
+    a.download = `${group.name.replace(/_.*/, '')} - liste des élèves.txt`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
   async function addOne() {
     const r = await askForm(`Ajouter un élève à ${group.name}`, [
       { key: 'firstName', label: 'Prénom' },
@@ -85,6 +95,9 @@ export function StudentsTab({ group }: { group: Group }) {
             </label>
             <button className="btn" onClick={() => setPdfOpen(true)}>
               <Icon name="file" size={16} /> Trombinoscope PDF
+            </button>
+            <button className="btn" onClick={exportTxt} disabled={!students.length} title="Nom, Prénom : un élève par ligne (pour Plickers par exemple)">
+              <Icon name="file" size={16} /> Liste (.txt)
             </button>
             <label className="btn">
               <Icon name="camera" size={16} /> Photos (fichiers)

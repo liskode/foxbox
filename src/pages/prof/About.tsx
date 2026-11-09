@@ -196,6 +196,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'liste À faire de la classe',
       'onglets Progression, Élèves, Trombi, Plan de classe, Évaluations, Flashcards, Réglages',
       'import des élèves (CSV Pronote) et des photos (PDF trombinoscope)',
+      'export de la liste des élèves en texte « Nom, Prénom » (pour Plickers par exemple)',
     ],
   },
   {
