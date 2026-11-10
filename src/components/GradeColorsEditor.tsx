@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth';
 import { db } from '../lib/db';
 import { DEFAULT_GRADE_COLORS, type GradeColors } from '../lib/gradeColors';
 import { Icon } from './Icon';
+import { ColorPicker } from './ColorPicker';
 
 export function useGradeColors(): GradeColors {
   const { session } = useAuth();
@@ -29,10 +30,10 @@ function Scale({ colors, thresholds, onChange, labels }: { colors: string[]; thr
               %
             </label>
           )}
-          <label className="stack" style={{ alignItems: 'center', gap: 0 }} title={labels?.[i]}>
-            <input type="color" value={c} onChange={(e) => onChange(colors.map((x, j) => (j === i ? e.target.value : x)), thresholds)} style={{ width: 36, height: 26, padding: 0, border: '1px solid var(--muted-line)', borderRadius: 6 }} />
+          <div className="stack" style={{ alignItems: 'center', gap: 0 }} title={labels?.[i]}>
+            <ColorPicker value={c} onChange={(v) => onChange(colors.map((x, j) => (j === i ? v : x)), thresholds)} />
             {labels && <span className="small muted">{labels[i]}</span>}
-          </label>
+          </div>
         </Fragment>
       ))}
     </div>

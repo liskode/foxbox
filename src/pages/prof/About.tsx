@@ -287,6 +287,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'notification par e-mail des nouveaux messages (professeur, élève, parents : chacun choisit)',
       'origines des flashcards (ER, MM…)',
       'classes : création, couleurs des niveaux (de la 6e à la terminale), archivage',
+      'choix des couleurs dans une palette standard (couleurs vives, gris, 12 teintes du foncé au pâle)',
       'compte',
     ],
   },

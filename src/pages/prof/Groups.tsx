@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { SeatPlanTab } from '../../components/SeatPlanTab';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, isClass, SUBJECTS, CLASS_COLORS, type Group, shortName } from '../../lib/db';
+import { db, uid, isClass, SUBJECTS, type Group, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { ClassOverview, ClassEvaluations } from '../../components/ClassOverview';
 import { Progression } from '../../components/Progression';
 import { Trombi } from './Trombi';
+import { ColorPicker } from '../../components/ColorPicker';
 import { levelOfName, levelColors, applyLevelColors, setLevelColor, LEVELS, LYCEE } from '../../lib/units';
 import { StatsTab } from './groups/StatsTab';
 import { StudentsTab } from './groups/StudentsTab';
@@ -81,27 +82,14 @@ export function Groups({ embedded = false }: { embedded?: boolean }) {
       <div className="panel stack">
         <h3 style={{ margin: 0 }}>Couleurs des niveaux</h3>
         <span className="small muted">Toutes les classes d'un même niveau (déduit du début du nom : « 4A… » → 4e, « 2B… » → 2nde, « 1G… » → 1re, « TG… » ou « Tle… » → Tle) prennent sa couleur.</span>
-        {[...LEVELS, ...LYCEE].map((l) => (
-          <div key={l} className="row" style={{ gap: 8 }}>
-            <b style={{ width: 44 }}>{l}</b>
-            {CLASS_COLORS.map((c) => (
-              <button
-                key={c.value}
-                title={c.name}
-                onClick={() => setLevelColor(session!.id, l, c.value)}
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  background: c.value,
-                  cursor: 'pointer',
-                  border: colors[l] === c.value ? '3px solid var(--ink)' : '1.5px solid #00000033',
-                  padding: 0,
-                }}
-              />
-            ))}
-          </div>
-        ))}
+        <div className="row" style={{ gap: 24 }}>
+          {[...LEVELS, ...LYCEE].map((l) => (
+            <div key={l} className="row" style={{ gap: 8 }}>
+              <b>{l}</b>
+              <ColorPicker value={colors[l]} onChange={(c) => setLevelColor(session!.id, l, c)} title={`Couleur des classes de ${l}`} />
+            </div>
+          ))}
+        </div>
       </div>
       <div className="panel stack">
         <h3 style={{ margin: 0 }}>Nouvelle classe</h3>

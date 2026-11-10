@@ -58,7 +58,7 @@ export interface Group {
   subject: string;
   teacherIds: string[];
   archived?: boolean;
-  color?: string; // couleur de repérage (palette CLASS_COLORS)
+  color?: string; // couleur de repérage (celle de son niveau)
   seatPlans?: import('./rooms').SeatPlan[]; // plans de classe
   subgroups?: Subgroup[]; // demi-groupes, îlots… (un élève est dans un seul sous-groupe)
   // Soutien scolaire : un « groupe de soutien » (un élève seul, ou 2-3 élèves) suivi dans une ou plusieurs matières
@@ -95,19 +95,6 @@ export const SUBGROUP_COLORS = ['#e05a4f', '#3b82f6', '#16a34a', '#f59e0b', '#93
 
 // Couleurs de classe : déclinaisons claires de la charte physifox, lisibles avec du texte noir
 // Ordre arc-en-ciel (du rose au violet), le neutre en dernier
-export const CLASS_COLORS = [
-  { name: 'Rose', value: '#f4d8e2' },
-  { name: 'Saumon', value: '#f9d3cd' },
-  { name: 'Orange', value: '#fcdcc0' },
-  { name: 'Moutarde', value: '#fbe7b0' },
-  { name: 'Kaki', value: '#e6e2bd' },
-  { name: 'Pistache', value: '#dcedcf' },
-  { name: 'Turquoise', value: '#cfece4' },
-  { name: 'Ciel', value: '#d3eaf5' },
-  { name: 'Lavande', value: '#e0dbf1' },
-  { name: 'Sable', value: '#ece6d8' },
-];
-
 export interface Student {
   id: string;
   firstName: string;
