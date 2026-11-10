@@ -1,5 +1,5 @@
 // Moteur de révision : boîte de Leitner à 7 boîtes.
-import { db, uid, isTutoring, type Card, type Group, type Rating, type Rule, type StudentCard, type Review } from './db';
+import { db, uid, isTutoring, receives, type Card, type Group, type Rating, type Rule, type StudentCard, type Review } from './db';
 import { unitSubject } from './units';
 import { addDays, studyDay } from './dates';
 
@@ -84,8 +84,12 @@ export async function availableCards(studentId: string, subject: string, day?: s
   };
   for (const g of groups) {
     const tutoring = isTutoring(g);
-    const pubs = (await db.publications.where('groupId').equals(g.id).toArray()).filter((p) => p.date <= d);
-    for (const p of pubs) {
+    // Classe : points publiés pour le groupe. Soutien : points travaillés dans les séances que l'élève a reçues
+    // (présent, ou contenu envoyé par le professeur)
+    const pubs = tutoring
+      ? (await db.tutoringSessions.where('groupId').equals(g.id).toArray()).filter((s) => receives(s, studentId)).flatMap((s) => s.unitIds.map((unitId) => ({ unitId, date: s.date })))
+      : await db.publications.where('groupId').equals(g.id).toArray();
+    for (const p of pubs.filter((x) => x.date <= d)) {
       let units = [p.unitId, ...(await db.units.where('parentId').equals(p.unitId).primaryKeys())];
       // Soutien : une séance peut mêler plusieurs matières, on ne garde que les points de cette matière
       if (tutoring) units = (await db.units.bulkGet(units)).filter((u) => u && unitSubject(u) === subject).map((u) => u!.id);
@@ -97,7 +101,7 @@ export async function availableCards(studentId: string, subject: string, day?: s
     const main = g.tracks?.[0]?.subject;
     const own = (c: Card) => (g.tracks?.some((t) => t.subject === c.subject) ? c.subject : main) === subject;
     for (const ss of await db.tutoringSessions.where('groupId').equals(g.id).toArray()) {
-      if (ss.date > d || !ss.studentIds.includes(studentId)) continue;
+      if (ss.date > d || !receives(ss, studentId)) continue;
       for (const c of await db.cards.bulkGet(ss.cardIds)) if (c && own(c)) offer(c, ss.date);
     }
   }

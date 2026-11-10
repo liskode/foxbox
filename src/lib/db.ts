@@ -68,6 +68,7 @@ export interface Group {
   suspended?: Record<string, string[]>; // flashcards suspendues, par élève : sorties de ses révisions, sans être supprimées
   timezone?: string; // fuseau horaire de l'élève (s'il vit ailleurs : Ottawa, Dallas…)
   relations?: import('./relations').Relation[]; // interlocuteurs et leurs codes, recopiés depuis les Réglages
+  memberNames?: Record<string, string>; // soutien en groupe : prénoms des élèves, recopiés pour que chacun voie qui est dans le groupe
 }
 export interface Track {
   subject: string;
@@ -76,6 +77,10 @@ export interface Track {
 export type UnitStatus = 'nonvu' | 'retravailler' | 'acquis';
 // Une classe (et non un groupe de soutien)
 export const isClass = (g?: Group | null) => !!g && g.kind !== 'soutien';
+// Un élève reçoit le contenu d'une séance (flashcards, documents, liens, points du programme) s'il était présent,
+// ou si le professeur le lui a envoyé (absent, ou arrivé plus tard dans le groupe)
+export const receives = (s: TutoringSession, studentId: string) => s.studentIds.includes(studentId) || !!s.sharedWith?.includes(studentId);
+
 export const isTutoring = (g?: Group | null) => !!g && g.kind === 'soutien';
 
 export interface Subgroup {
@@ -450,7 +455,9 @@ export interface TutoringSession {
   tz?: string; // fuseau du professeur à la création (Europe/Paris si absent)
   duration: number; // minutes
   place: 'domicile' | 'en ligne';
+  address?: string; // lieu de la séance en présentiel (texte libre)
   studentIds: string[]; // élèves présents
+  sharedWith?: string[]; // élèves absents (ou arrivés plus tard) à qui le contenu de la séance a été envoyé
   unitIds: string[]; // points du programme travaillés (séquences ou séances de la progression, toutes matières)
   cardIds: string[]; // flashcards ajoutées pendant la séance
   done: string; // contenu de la séance (prévu à l'avance, puis ce qui a été fait)
@@ -518,8 +525,9 @@ export interface Payment {
   label?: string; // ex. « Forfait 10 h »
   createdAt: number;
 }
-// Message d'un fil de discussion (fil « eleve » : élève ↔ professeur ; fil « parents » : parents ↔ professeur)
-export type Thread = 'eleve' | 'parents';
+// Message d'un fil de discussion (fil « eleve » : élève ↔ professeur ; fil « parents » : parents ↔ professeur ;
+// fil « groupe » : professeur et élèves d'un groupe de soutien, studentId = identifiant du groupe)
+export type Thread = 'eleve' | 'parents' | 'groupe';
 export interface Message {
   id: string;
   teacherId: string;

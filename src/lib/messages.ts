@@ -2,6 +2,7 @@
 // l'élève et ses parents (le professeur reçoit toujours les messages de l'élève et des parents) ; chacun ne lit que
 // les messages qu'il a écrits ou qui lui sont adressés. Pièces jointes (photo, document, mémo vocal) rangées sous
 // msg/<élève>/<eleve|parents|tous>/… ; un e-mail prévient les destinataires qui l'ont demandé (fonction « notify »).
+// Soutien en groupe : fil « groupe » (studentId = identifiant du groupe), lu par le professeur et tous les élèves du groupe.
 import { db, fileBlob, uid, type Message } from './db';
 import { ONLINE, supabase } from './supabase';
 import { push } from './sync';
@@ -23,18 +24,19 @@ export async function conversation(teacherId: string, studentId: string, userId:
   const all = (await db.messages.where('studentId').equals(studentId).toArray()).filter((m) => m.teacherId === teacherId && !m.evaluationId);
   return all
     .map((m) => ({ ...m, recipients: recipientsSync(m, parentIds) }))
-    .filter((m) => userId === teacherId || m.authorId === userId || m.recipients.includes(userId))
+    .filter((m) => m.thread === 'groupe' || userId === teacherId || m.authorId === userId || m.recipients.includes(userId))
     .sort((a, b) => a.createdAt - b.createdAt);
 }
 
 export async function sendMessage(
   m: Omit<Message, 'id' | 'createdAt' | 'attachments' | 'thread'> & { recipients: string[] },
   files: (File | Blob)[] = [],
+  group = false, // fil du groupe de soutien (m.studentId = identifiant du groupe)
 ) {
   // Fil (pour les règles d'accès des pièces jointes) : élève seul, parents seuls, ou tous
   const toStudent = m.recipients.includes(m.studentId) || m.authorId === m.studentId;
-  const toParents = m.recipients.some((r) => r !== m.studentId && r !== m.teacherId) || (m.authorId !== m.studentId && m.authorId !== m.teacherId);
-  const folder = toStudent && toParents ? 'tous' : toStudent ? 'eleve' : 'parents';
+  const toParents = !group && (m.recipients.some((r) => r !== m.studentId && r !== m.teacherId) || (m.authorId !== m.studentId && m.authorId !== m.teacherId));
+  const folder = group ? 'groupe' : toStudent && toParents ? 'tous' : toStudent ? 'eleve' : 'parents';
   const attachments: Message['attachments'] = [];
   for (const f of files) {
     const mediaId = `msg/${m.studentId}/${folder}/${uid()}`;
@@ -42,10 +44,10 @@ export async function sendMessage(
     await db.media.put({ id: mediaId, name, blob: f instanceof File ? await fileBlob(f) : f });
     attachments.push({ mediaId, name, size: f.size, type: f.type });
   }
-  const msg: Message = { ...m, thread: toParents ? 'parents' : 'eleve', id: uid(), attachments, createdAt: Date.now() };
+  const msg: Message = { ...m, thread: group ? 'groupe' : toParents ? 'parents' : 'eleve', id: uid(), attachments, createdAt: Date.now() };
   await db.messages.put(msg);
   await markRead(m.authorId, m.teacherId, m.studentId, msg.createdAt);
-  if (ONLINE && !msg.heardOf) notifyLater(msg.id); // pas d'e-mail pour un simple accusé d'écoute
+  if (ONLINE && !msg.heardOf && !group) notifyLater(msg.id); // pas d'e-mail pour un accusé d'écoute ni pour le fil de groupe
   return msg;
 }
 

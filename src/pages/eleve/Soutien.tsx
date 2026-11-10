@@ -2,7 +2,7 @@ import { useState } from 'react';
 // Espace élève : soutien scolaire (travail pour la prochaine fois, dépôt de documents, historique des séances).
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, type Group, type HomeworkStatus } from '../../lib/db';
+import { db, receives, type Group, type HomeworkStatus } from '../../lib/db';
 import { tutoringsOf } from '../../lib/tutoring';
 import { frDate, today as todayISO } from '../../lib/dates';
 import { FileList, HOMEWORK, SessionSummary, UploadButton, hLabel, homeworkOf, isUpcoming, localWhen, placeLabel, whenLabel, dayName } from '../../components/Soutien';
@@ -101,7 +101,7 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
   const sessions = useLiveQuery(
     async () =>
       (await db.tutoringSessions.where('groupId').equals(group.id).toArray())
-        .filter((s) => s.studentIds.includes(studentId))
+        .filter((s) => receives(s, studentId))
         .sort((a, b) => b.date.localeCompare(a.date) || (b.start ?? '').localeCompare(a.start ?? '')),
     [group.id, studentId],
   );
@@ -139,6 +139,7 @@ function GroupBlock({ group, studentId, showName }: { group: Group; studentId: s
           </div>
           <span className="row small" style={{ gap: 6 }}>
             {durationLabel(next.duration)} <span className="tag plain">{placeLabel(next)}</span>
+            {next.place !== 'en ligne' && next.address && <span>· {next.address}</span>}
           </span>
           <SessionSummary session={next} studentId={studentId} units={units} />
         </div>

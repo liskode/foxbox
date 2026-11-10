@@ -6,14 +6,21 @@ import { today } from '../../lib/dates';
 import { unitLabel } from '../../lib/units';
 import { DocumentList } from '../../components/UnitDetails';
 import { FileList, LinkList, whenLabel, isUpcoming } from '../../components/Soutien';
-import { isTutoring, type TutoringFile, type TutoringSession } from '../../lib/db';
+import { isTutoring, receives, type TutoringFile, type TutoringSession } from '../../lib/db';
 import { Icon } from '../../components/Icon';
 
 export function StudentDocuments() {
   const { session } = useAuth();
   const blocks = useLiveQuery(async () => {
     const ms = await db.memberships.where('studentId').equals(session!.id).toArray();
-    const pubs = (await db.publications.where('groupId').anyOf(ms.map((m) => m.groupId)).toArray()).filter((p) => p.date <= today());
+    // Soutien : seulement les points des séances reçues par l'élève (présent, ou contenu envoyé)
+    const received = new Set(
+      (await db.tutoringSessions.where('groupId').anyOf(ms.map((m) => m.groupId)).toArray()).filter((s) => receives(s, session!.id)).flatMap((s) => s.unitIds),
+    );
+    const tutoringIds = new Set((await db.groups.bulkGet(ms.map((m) => m.groupId))).filter((g) => isTutoring(g)).map((g) => g!.id));
+    const pubs = (await db.publications.where('groupId').anyOf(ms.map((m) => m.groupId)).toArray()).filter(
+      (p) => p.date <= today() && (!tutoringIds.has(p.groupId) || received.has(p.unitId)),
+    );
     const all = await db.units.toArray();
     const visible = new Set<string>();
     for (const p of pubs) {
@@ -38,7 +45,7 @@ export function StudentDocuments() {
     const groups = (await db.groups.bulkGet(ms.map((m) => m.groupId))).filter((g) => isTutoring(g) && !g!.archived);
     const out: { s: TutoringSession; files: TutoringFile[] }[] = [];
     for (const g of groups) {
-      const ss = (await db.tutoringSessions.where('groupId').equals(g!.id).toArray()).filter((x) => x.studentIds.includes(session!.id));
+      const ss = (await db.tutoringSessions.where('groupId').equals(g!.id).toArray()).filter((x) => receives(x, session!.id));
       for (const x of ss) {
         const files = await db.tutoringFiles.where('sessionId').equals(x.id).sortBy('createdAt');
         if (files.length || x.links.length) out.push({ s: x, files });

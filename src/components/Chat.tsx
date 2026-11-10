@@ -55,9 +55,9 @@ function Face({
   m: Message;
   studentId: string;
   teacherId: string;
-  faces?: { student?: Student; teacherPhotoId?: string; relations?: Relation[] };
+  faces?: { student?: Student; teacherPhotoId?: string; relations?: Relation[]; group?: boolean };
 }) {
-  const isStudent = m.authorId === studentId;
+  const isStudent = m.authorId === studentId || (!!faces?.group && m.authorId !== teacherId);
   const isTeacher = m.authorId === teacherId;
   const url = usePhoto(isStudent ? faces?.student?.photoId : isTeacher ? faces?.teacherPhotoId : undefined);
   const initials = m.authorName
@@ -97,19 +97,22 @@ export function Chat({
   role,
   title,
   hint,
+  group,
 }: {
   teacherId: string;
-  studentId: string;
+  studentId: string; // fil de groupe : identifiant du groupe
   me: Person;
   role: 'prof' | 'eleve' | 'parent';
   title?: string;
   hint?: string;
+  group?: { names: string[] }; // fil du groupe de soutien : tout le monde lit tout ; prénoms des élèves
 }) {
   const msgs = useLiveQuery(() => conversation(teacherId, studentId, me.id), [teacherId, studentId, me.id], []);
   // Destinataires possibles. Professeur : l'élève et ses parents. Élève ou parent : les personnes du dernier
   // message reçu (« répondre à tous »), le professeur recevant toujours.
   const people = useLiveQuery(
     async () => {
+      if (group) return [] as Person[];
       if (role === 'prof') {
         const st = await db.students.get(studentId);
         const ps = await db.parents.where('studentIds').equals(studentId).toArray();
@@ -123,19 +126,24 @@ export function Chat({
   // Photo de l'élève, photo du professeur et codes des interlocuteurs (recopiés dans le groupe de soutien)
   const faces = useLiveQuery(
     async () => {
+      const t = role === 'prof' ? await db.teachers.get(teacherId) : undefined;
+      if (group) {
+        const g = await db.groups.get(studentId);
+        return { teacherPhotoId: t?.photoId ?? g?.teacherPhotoId, group: true };
+      }
       const st = await db.students.get(studentId);
       const ms = await db.memberships.where('studentId').equals(studentId).toArray();
       const g = (await db.groups.bulkGet(ms.map((m) => m.groupId))).find((x) => x?.kind === 'soutien' && x.teacherIds.includes(teacherId));
-      const t = role === 'prof' ? await db.teachers.get(teacherId) : undefined;
       return { student: st, teacherPhotoId: t?.photoId ?? g?.teacherPhotoId, relations: t?.relations ?? g?.relations };
     },
-    [studentId, teacherId, role],
+    [studentId, teacherId, role, !!group],
   );
   const last = msgs[msgs.length - 1];
   const lastIn = [...msgs].reverse().find((m) => m.authorId !== me.id) ?? last;
   const names = (m?: Message) => ({ ...(m?.recipientNames ?? {}), ...(m ? { [m.authorId]: m.authorName } : {}) });
-  const options: Person[] =
-    role === 'prof'
+  const options: Person[] = group
+    ? []
+    : role === 'prof'
       ? people
       : lastIn
         ? [...new Set([lastIn.authorId, ...(lastIn.recipients ?? [])])]
@@ -169,11 +177,15 @@ export function Chat({
 
   async function send() {
     if (!text.trim() && !files.length) return;
-    if (role === 'prof' && !chosen.length) return toast('Cochez au moins un destinataire', { error: true });
+    if (role === 'prof' && !group && !chosen.length) return toast('Cochez au moins un destinataire', { error: true });
     setBusy(true);
     try {
       const recipientNames = Object.fromEntries(options.filter((o) => chosen.includes(o.id)).map((o) => [o.id, o.name]));
-      await sendMessage({ teacherId, studentId, authorId: me.id, authorName: me.name, text: text.trim(), recipients: [...new Set(chosen)], recipientNames }, files);
+      await sendMessage(
+        { teacherId, studentId, authorId: me.id, authorName: me.name, text: text.trim(), recipients: group ? [] : [...new Set(chosen)], recipientNames },
+        files,
+        !!group,
+      );
       setText('');
       setFiles([]);
     } finally {
@@ -191,6 +203,7 @@ export function Chat({
   // « à moi, Mère – …, Nino » : le professeur reçoit toujours les messages de l'élève et des parents
   const known = Object.fromEntries(people.map((p) => [p.id, p.name]));
   const toLabel = (m: Message) => {
+    if (group) return '';
     const ids = [...new Set(m.recipients ?? [])].filter((id) => id !== me.id && id !== m.authorId);
     const n = ids.map((id) => (m.recipientNames ?? {})[id] ?? known[id] ?? (id === studentId ? 'l’élève' : 'un parent'));
     if (m.authorId !== teacherId) n.unshift(me.id === teacherId ? 'moi' : 'le professeur');
@@ -250,7 +263,12 @@ export function Chat({
         })}
         <div ref={end} />
       </div>
-      {(options.length > 0 || role !== 'prof') && (
+      {group && (
+        <div className="small">
+          <b>À :</b> tout le groupe ({[me.id === teacherId ? '' : 'le professeur', ...group.names].filter(Boolean).join(', ')})
+        </div>
+      )}
+      {!group && (options.length > 0 || role !== 'prof') && (
         <div className="row small" style={{ gap: 12 }}>
           <b>À :</b>
           {role !== 'prof' && (
@@ -277,7 +295,7 @@ export function Chat({
           ))}
         </div>
       )}
-      {role === 'prof' && !options.length && <span className="small muted">Pas encore de destinataire : l'élève et ses accès parents apparaîtront ici.</span>}
+      {role === 'prof' && !group && !options.length && <span className="small muted">Pas encore de destinataire : l'élève et ses accès parents apparaîtront ici.</span>}
       {files.length > 0 && (
         <div className="row" style={{ gap: 6 }}>
           {files.map((f, i) => (

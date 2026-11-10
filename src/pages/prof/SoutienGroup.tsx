@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isTutoring, type Group, type Student, type Track } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
-import { addStudents, durationLabel, lastSeen, newSession, setUnitStatus, STATES, trackLabel, unitState } from '../../lib/tutoring';
+import { addStudents, durationLabel, lastSeen, missedSessions, newSession, sendMissedSessions, setUnitStatus, STATES, trackLabel, unitState } from '../../lib/tutoring';
 import { byProgression, themeLabel, unitLabel, unitSubject } from '../../lib/units';
 import { frDate, today } from '../../lib/dates';
 import { resetPassword } from '../../lib/students';
@@ -43,14 +43,20 @@ export function SoutienGroup() {
   const { session } = useAuth();
   const unread = useLiveQuery(
     async () => {
-      let n = 0;
+      let n = students.length > 1 ? await unreadIn(session!.id, session!.id, id!) : 0; // fil du groupe
       for (const s of students) n += await unreadIn(session!.id, session!.id, s.id);
       return n;
     },
-    [students, session?.id],
+    [students, session?.id, id],
     0,
   );
   const tab = (params.get('onglet') as Tab) || 'seances';
+  // Prénoms des élèves recopiés dans le groupe : chacun voit qui fait partie du groupe (fil de discussion commun)
+  useEffect(() => {
+    if (!group || !students.length) return;
+    const names = Object.fromEntries(students.map((s) => [s.id, s.firstName]));
+    if (JSON.stringify(names) !== JSON.stringify(group.memberNames ?? {})) db.groups.update(group.id, { memberNames: names });
+  }, [group, students]);
   if (group === undefined) return null;
   if (!group || !isTutoring(group)) return <div className="page muted">Suivi introuvable.</div>;
   const tabs = [
@@ -106,7 +112,7 @@ export function SoutienGroup() {
           ))}
         </div>
       )}
-      {tab === 'messages' && <MessagesTab students={students} />}
+      {tab === 'messages' && <MessagesTab group={group} students={students} />}
       {tab === 'eleves' && <StudentsTab group={group} students={students} />}
       {tab === 'reglages' && <SettingsTab group={group} />}
     </div>
@@ -326,7 +332,7 @@ function StudentsTab({ group, students }: { group: Group; students: Student[] })
           </form>
         ) : (
           <button className="btn ghost" onClick={() => setAdding({ firstName: '', lastName: '' })}>
-            + Ajouter un élève (binôme)
+            + Ajouter un élève
           </button>
         )}
       </div>
@@ -339,6 +345,7 @@ function StudentCardPanel({ student, group }: { student: Student; group: Group }
   const [draft, setDraft] = useState<typeof tutor | null>(null);
   const info = draft ?? tutor ?? {};
   const save = () => draft && setTutor(draft).then(() => setDraft(null));
+  const missed = useLiveQuery(() => missedSessions(group.id, student.id), [group.id, student.id], []);
   return (
     <div className="panel stack">
       <div className="row" style={{ gap: 14 }}>
@@ -350,6 +357,20 @@ function StudentCardPanel({ student, group }: { student: Student; group: Group }
           <span className="small">
             Identifiant : <span className="code">{student.login}</span> · mot de passe : <span className="code">{student.password}</span>
           </span>
+          {missed.length > 0 && (
+            <span className="row small" style={{ gap: 8 }}>
+              <span className="muted">{missed.length} séance(s) passée(s) dont il n'a pas reçu le contenu (absent ou arrivé plus tard)</span>
+              <button
+                className="btn small ghost"
+                onClick={async () => {
+                  const r = await sendMissedSessions(group.id, student.id);
+                  toast(`Contenu de ${r.n} séance(s) envoyé à ${student.firstName}`, { undo: r.undo });
+                }}
+              >
+                Lui envoyer ces séances
+              </button>
+            </span>
+          )}
         </div>
         <div className="row" style={{ gap: 6 }}>
           <Link className="btn small" to={`/prof/eleves/${student.id}?classe=${group.id}`}>
@@ -459,12 +480,23 @@ function EvaluationsTab({ group, students }: { group: Group; students: Student[]
 }
 
 // Messages : pour chaque élève, le fil avec l'élève et le fil avec ses parents (séparés)
-function MessagesTab({ students }: { students: Student[] }) {
+function MessagesTab({ group, students }: { group: Group; students: Student[] }) {
   const { session } = useAuth();
   const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
   if (!me) return null;
   return (
     <div className="stack">
+      {students.length > 1 && (
+        <Chat
+          teacherId={me.id}
+          studentId={group.id}
+          me={{ id: me.id, name: me.name }}
+          role="prof"
+          group={{ names: students.map((s) => s.firstName) }}
+          title="Fil du groupe"
+          hint="Lu par tous les élèves du groupe (pas par les parents). Chaque élève peut aussi vous écrire en privé : voir les conversations ci-dessous."
+        />
+      )}
       {students.map((s) => (
         <div key={s.id} className="stack" style={{ gap: 8 }}>
           {students.length > 1 && <h2 style={{ margin: 0 }}>{s.firstName}</h2>}

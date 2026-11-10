@@ -21,6 +21,7 @@ import { markFilesSeen } from '../../components/TutoringTile';
 import { money, loadLedger } from '../../lib/billing';
 import { Icon } from '../../components/Icon';
 import { TimeInput } from '../../components/TimeInput';
+import { LazyInput } from '../../components/LazyInput';
 
 const DURATIONS = [30, 45, 60, 75, 90, 105, 120, 150, 180];
 const FORMULA_HINT = 'Formules entre $ … $ (ex. $\\frac{1}{2}mv^2$), gras entre ** … **';
@@ -87,21 +88,55 @@ export function SoutienSession() {
               ))}
             </div>
           </div>
+          {s.place !== 'en ligne' && (
+            <label className="field" style={{ flex: 1, minWidth: 220 }}>
+              Adresse
+              <LazyInput value={s.address ?? ''} placeholder="Lieu de la séance (adresse, salle…)" onSave={(v) => set({ address: v.trim() || undefined })} />
+            </label>
+          )}
         </div>
         <SessionAmounts s={s} students={present} groupId={group.id} />
         {students.length > 1 && (
-          <div className="row" style={{ gap: 12 }}>
-            <b className="small">Présents :</b>
-            {students.map((x) => (
-              <label key={x.id} className="row small" style={{ gap: 4, fontWeight: 700 }}>
-                <input
-                  type="checkbox"
-                  checked={s.studentIds.includes(x.id)}
-                  onChange={(e) => set({ studentIds: e.target.checked ? [...s.studentIds, x.id] : s.studentIds.filter((i) => i !== x.id) })}
-                />
-                {x.firstName}
-              </label>
-            ))}
+          <div className="stack" style={{ gap: 6 }}>
+            <div className="row" style={{ gap: 12 }}>
+              <b className="small">Présents :</b>
+              {students.map((x) => (
+                <label key={x.id} className="row small" style={{ gap: 4, fontWeight: 700 }}>
+                  <input
+                    type="checkbox"
+                    checked={s.studentIds.includes(x.id)}
+                    onChange={(e) =>
+                      set({
+                        studentIds: e.target.checked ? [...s.studentIds, x.id] : s.studentIds.filter((i) => i !== x.id),
+                        sharedWith: (s.sharedWith ?? []).filter((i) => i !== x.id),
+                      })
+                    }
+                  />
+                  {x.firstName}
+                </label>
+              ))}
+            </div>
+            {/* Absents : ils ne reçoivent pas le contenu de la séance, sauf si on le leur envoie */}
+            {students
+              .filter((x) => !s.studentIds.includes(x.id))
+              .map((x) => {
+                const sent = !!s.sharedWith?.includes(x.id);
+                return (
+                  <div key={x.id} className="row small" style={{ gap: 8 }}>
+                    <span className="tag warn">{x.firstName} absent(e)</span>
+                    <span className="muted">{sent ? 'contenu de la séance envoyé (flashcards, documents, liens)' : 'ne reçoit pas le contenu de la séance'}</span>
+                    <button
+                      className="btn small ghost"
+                      onClick={async () => {
+                        await set({ sharedWith: sent ? (s.sharedWith ?? []).filter((i) => i !== x.id) : [...(s.sharedWith ?? []), x.id] });
+                        toast(sent ? `Contenu retiré pour ${x.firstName}` : `Contenu de la séance envoyé à ${x.firstName}`);
+                      }}
+                    >
+                      {sent ? 'Retirer' : 'Lui envoyer le contenu'}
+                    </button>
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>

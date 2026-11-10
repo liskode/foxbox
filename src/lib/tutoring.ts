@@ -2,7 +2,7 @@
 // Un groupe de soutien est une ligne de `groups` (kind = 'soutien') : élèves, flashcards et règles d'accès
 // fonctionnent comme pour une classe. Les points du programme travaillés en séance sont « publiés » pour le groupe
 // (table `publications`, à la date de la séance) : l'élève reçoit leurs flashcards et leurs documents.
-import { db, uid, fileBlob, isTutoring, type Group, type Track, type TutoringSession, type Unit, type UnitStatus } from './db';
+import { db, uid, fileBlob, isTutoring, receives, type Group, type Track, type TutoringSession, type Unit, type UnitStatus } from './db';
 import { importStudents } from './students';
 import { shareTeacherProfile } from './relations';
 import { ONLINE } from './supabase';
@@ -47,6 +47,18 @@ export const durationLabel = (min: number) => {
   return h ? `${h} h${m ? ` ${String(m).padStart(2, '0')}` : ''}` : `${m} min`;
 };
 
+// Séances passées du groupe dont l'élève n'a pas reçu le contenu (absent, ou arrivé plus tard)
+export async function missedSessions(groupId: string, studentId: string) {
+  const day = today();
+  return (await db.tutoringSessions.where('groupId').equals(groupId).toArray()).filter((s) => s.date <= day && !receives(s, studentId));
+}
+// Lui envoie le contenu de ces séances (flashcards, documents, liens, points du programme) ; renvoie de quoi annuler
+export async function sendMissedSessions(groupId: string, studentId: string) {
+  const missed = await missedSessions(groupId, studentId);
+  for (const s of missed) await db.tutoringSessions.update(s.id, { sharedWith: [...(s.sharedWith ?? []), studentId] });
+  return { n: missed.length, undo: async () => { for (const s of missed) await db.tutoringSessions.update(s.id, { sharedWith: s.sharedWith }); } };
+}
+
 // Les points du programme travaillés en séance sont publiés pour le groupe, à la date de la première séance
 export async function syncPublications(groupId: string) {
   const sessions = await db.tutoringSessions.where('groupId').equals(groupId).toArray();
@@ -80,6 +92,7 @@ export async function newSession(group: Group): Promise<TutoringSession> {
     tz: browserZone(),
     duration: prev?.duration ?? 60,
     place: prev?.place ?? 'domicile',
+    address: prev?.address,
     studentIds: ms.map((m) => m.studentId),
     unitIds: [],
     cardIds: [],
