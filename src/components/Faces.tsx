@@ -9,52 +9,9 @@ export const LEVEL_FACES = [
 
 const INK = 'var(--ink, #222)';
 
-// Tête de renard au trait : 0 pleure, 1 contrarié, 2 sourit, 3 rit
+// Tête de renard (images du dossier public/ressenti) : 0 pleure, 1 contrarié, 2 sourit, 3 très content
 export function FoxFace({ mood, size = 64 }: { mood: number; size?: number }) {
-  const eyesOpen = mood === 1 || mood === 2;
-  return (
-    <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
-      <g stroke={INK} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round">
-        <path d="M11 27 L9 5 L27 15 Z" fill="#f2a65a" />
-        <path d="M53 27 L55 5 L37 15 Z" fill="#f2a65a" />
-        <path d="M14 22 L13 11 L22 16" fill="none" strokeWidth={1.5} />
-        <path d="M50 22 L51 11 L42 16" fill="none" strokeWidth={1.5} />
-        <path d="M9 28 Q9 15 26 15 L38 15 Q55 15 55 28 Q55 42 32 59 Q9 42 9 28 Z" fill="#f2a65a" />
-        <path d="M15 36 Q32 30 49 36 Q44 50 32 59 Q20 50 15 36 Z" fill="#fff4e6" />
-        <ellipse cx="32" cy="43" rx="3.2" ry="2.4" fill={INK} />
-        {eyesOpen && (
-          <>
-            <circle cx="23" cy="29" r="2.4" fill={INK} />
-            <circle cx="41" cy="29" r="2.4" fill={INK} />
-          </>
-        )}
-        {mood === 0 && (
-          <>
-            <path d="M19 27 L25 30 L19 32" fill="none" />
-            <path d="M45 27 L39 30 L45 32" fill="none" />
-            <ellipse cx="32" cy="51" rx="4" ry="4.5" fill="#7a2e2e" />
-            <path d="M18 33 Q15 39 18 41 Q21 39 18 33 Z" fill="#7cc4ec" />
-            <path d="M46 33 Q43 39 46 41 Q49 39 46 33 Z" fill="#7cc4ec" />
-          </>
-        )}
-        {mood === 1 && (
-          <>
-            <path d="M19 24 L26 26" fill="none" />
-            <path d="M45 24 L38 26" fill="none" />
-            <path d="M26 52 Q32 47 38 52" fill="none" />
-          </>
-        )}
-        {mood === 2 && <path d="M26 48 Q32 53 38 48" fill="none" />}
-        {mood === 3 && (
-          <>
-            <path d="M19 30 Q23 25 27 30" fill="none" />
-            <path d="M37 30 Q41 25 45 30" fill="none" />
-            <path d="M24 47 Q32 47 40 47 Q38 56 32 56 Q26 56 24 47 Z" fill="#c9524f" />
-          </>
-        )}
-      </g>
-    </svg>
-  );
+  return <img src={`${import.meta.env.BASE_URL}ressenti/renard-${mood}.png`} alt="" width={size} height={Math.round(size * 0.83)} style={{ objectFit: 'contain', display: 'block' }} />;
 }
 
 // Visage d'un critère : 0 triste, 1 moyen, 2 content, 3 étoile

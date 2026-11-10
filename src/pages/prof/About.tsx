@@ -123,7 +123,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'copie des notes pour Pronote et export CSV',
       'notation en 4 niveaux (touches 1 2 3 4 = 0, 40, 80, 100 %) ou saisie libre',
       'flashcards des critères ratés : retour en boîte 1 (0 %) ou une boîte en arrière (40 %)',
-      'autocorrection par l’élève, copie sous les yeux, une fois les copies rendues pour sa classe : ressenti global (4 têtes de renard) et commentaire, puis chaque critère estimé avec 4 visages ; il voit ensuite sa note estimée et la correction du professeur en face, et écrit son bilan',
+      'autocorrection par l’élève, copie sous les yeux, une fois les copies rendues pour sa classe : ressenti global (4 renards : en pleurs, contrarié, souriant, à lunettes de soleil) et commentaire, puis chaque critère estimé avec 4 visages ; il voit ensuite sa note estimée et la correction du professeur en face, et écrit son bilan',
       'dans la liste des copies : ressenti, note estimée (s’il se surestime ou se sous-estime), estimation de chaque critère et bilan de l’élève',
     ],
   },
