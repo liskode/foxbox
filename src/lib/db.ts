@@ -48,6 +48,7 @@ export interface Teacher {
   photoId?: string; // photo ou logo, à côté de ses messages
   relations?: import('./relations').Relation[]; // interlocuteurs de la famille (Mère M, Père P…)
   origins?: import('./cardCodes').Origin[]; // origines des flashcards (ER, MM…)
+  gradeColors?: import('./gradeColors').GradeColors; // couleurs de réussite de la grille de correction
 }
 
 export interface Group {

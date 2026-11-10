@@ -3,7 +3,9 @@
 import { Fragment, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, shortName, type Evaluation, type Group, type Result } from '../../../lib/db';
-import { LEVEL_KEYS, emptyResult, levelColor, round1, saveResult, score } from '../../../lib/grading';
+import { LEVEL_KEYS, emptyResult, round1, saveResult, score } from '../../../lib/grading';
+import { levelCellColor, overallColor } from '../../../lib/gradeColors';
+import { GradeColorsEditor, useGradeColors } from '../../../components/GradeColorsEditor';
 import { Avatar } from '../../../components/Avatar';
 import { Icon } from '../../../components/Icon';
 import { useCompetences } from '../../../components/CompetencePicker';
@@ -17,6 +19,7 @@ const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.l
 export function GrilleTab({ ev }: { ev: Evaluation }) {
   const { list, results } = useResults(ev);
   const comps = useCompetences();
+  const gc = useGradeColors(); // couleurs de réussite (réglables)
   const groups = useLiveQuery(
     async () => ((await db.groups.bulkGet(ev.groupIds)).filter(Boolean) as Group[]).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
     [ev.groupIds.join()],
@@ -92,7 +95,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
   const sticky = { position: 'sticky' as const, background: 'var(--paper)' };
   // Colonne de moyennes (« Tous » ou une classe)
   const SumCell = ({ v, color, bold }: { v: number | null; color?: string; bold?: boolean }) => (
-    <td style={{ textAlign: 'center', fontWeight: bold ? 900 : 800, background: color ?? levelColor(v), borderLeft: '2px solid var(--ink)', borderRight: '2px solid var(--ink)', height: 26 }}>
+    <td style={{ textAlign: 'center', fontWeight: bold ? 900 : 800, background: color ?? overallColor(v, gc), borderLeft: '2px solid var(--ink)', borderRight: '2px solid var(--ink)', height: 26 }}>
       {v === null ? '' : Math.round(v * 100)}
     </td>
   );
@@ -102,7 +105,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
     v === null || v === undefined ? (
       <span style={{ height: 20 }} />
     ) : (
-      <span style={{ background: levelColor(v / 20), borderRadius: 6, padding: '0 5px', fontSize: '0.8rem', fontWeight: bold ? 900 : 500, color: 'var(--ink)' }}>
+      <span style={{ background: overallColor(v / 20, gc), borderRadius: 6, padding: '0 5px', fontSize: '0.8rem', fontWeight: bold ? 900 : 500, color: 'var(--ink)' }}>
         {round1(v)}
       </span>
     );
@@ -112,8 +115,9 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
       <span className="small muted">
         Même clavier que la correction copie par copie : <span className="code">1 2 3 4</span>, <span className="code">0</span> pour une valeur
         libre, flèches pour se déplacer (↑ ↓ question, ← → élève). Colonne « Tous » et colonne de chaque classe : réussite moyenne (%) ; cliquez sur
-        une classe pour replier ou déplier ses élèves.
+        une classe pour replier ou déplier ses élèves. Survol d'un élève : son appréciation.
       </span>
+      <GradeColorsEditor />
       <div style={{ overflow: 'auto', maxHeight: '75vh' }}>
         <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem' }}>
           <thead>
@@ -154,7 +158,11 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                   {!folded.has(g.id) &&
                     items.map(({ student, si }) => (
                       <th key={student.id} style={{ ...sticky, top: 0, zIndex: 2, padding: 2, width: 46 }}>
-                        <div className="stack" style={{ alignItems: 'center', gap: 2 }} title={`${student.firstName} ${student.lastName}`}>
+                        <div
+                          className="stack"
+                          style={{ alignItems: 'center', gap: 2 }}
+                          title={results.get(student.id)?.appreciation?.trim() || `${student.firstName} ${student.lastName} (pas d'appréciation)`}
+                        >
                           <Avatar student={student} size={28} zoom />
                           <span
                             style={{
@@ -207,7 +215,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                             style={{
                               textAlign: 'center',
                               cursor: 'pointer',
-                              background: r?.absent ? '#e9e5dc' : levelColor(l),
+                              background: r?.absent ? '#e9e5dc' : levelCellColor(l, gc),
                               outline: on ? '2.5px solid var(--ink)' : '1px solid var(--muted-line)',
                               outlineOffset: on ? -2 : -1,
                               height: 26,
@@ -245,7 +253,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
               </tr>
             ))}
             {rows.map(({ c: k, sub }) => {
-              const tone = (v: number | null) => (v === null ? undefined : masteryOf(v).color);
+              const tone = (v: number | null) => overallColor(v, gc);
               const mAll = mean(present(list.map((x) => results.get(x.student.id))).map((r) => scoreOf(r, k)?.value).filter((v): v is number => v !== undefined));
               return (
                 <tr key={k.id}>
@@ -269,7 +277,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                               <td
                                 key={student.id}
                                 title={sc ? `${k.code} ${k.name} : ${round1(sc.note)}/${round1(sc.total)} pts · ${masteryOf(sc.value).name}` : undefined}
-                                style={{ textAlign: 'center', fontWeight: 500, fontSize: '0.8rem', background: sc ? masteryOf(sc.value).color : undefined }}
+                                style={{ textAlign: 'center', fontWeight: 500, fontSize: '0.8rem', background: sc ? overallColor(sc.value, gc) : undefined }}
                               >
                                 {sc ? Math.round(sc.value * 100) : ''}
                               </td>
