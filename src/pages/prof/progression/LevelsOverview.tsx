@@ -38,7 +38,7 @@ export function LevelsOverview() {
         )}
         <HideDoneToggle value={hideDone} onChange={setHideDone} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(230px, 1fr)', gap: 14, alignItems: 'start', overflowX: 'auto', paddingBottom: 8 }}>
         {data.levels.map((lp) => {
           const seqs = sequencesOf(units, lp.level, current);
           return (
