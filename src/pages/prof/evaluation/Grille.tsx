@@ -83,6 +83,16 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
     </td>
   );
 
+  // Note /20 juste sous le nom (élève) ou sous la classe (moyenne), comme dans le tableur
+  const NoteTag = ({ v, bold }: { v: number | null | undefined; bold?: boolean }) =>
+    v === null || v === undefined ? (
+      <span style={{ height: 20 }} />
+    ) : (
+      <span style={{ background: levelColor(v / 20), borderRadius: 6, padding: '0 5px', fontSize: '0.8rem', fontWeight: bold ? 900 : 500, color: 'var(--ink)' }}>
+        {round1(v)}
+      </span>
+    );
+
   return (
     <div className="panel stack">
       <span className="small muted">
@@ -94,7 +104,9 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
         <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem' }}>
           <thead>
             <tr>
-              <th style={{ ...sticky, left: 0, top: 0, zIndex: 3, minWidth: 220 }} />
+              <th style={{ ...sticky, left: 0, top: 0, zIndex: 3, minWidth: 220, verticalAlign: 'bottom', textAlign: 'right', padding: '2px 8px 4px' }}>
+                <b>Note /20</b>
+              </th>
               <th style={{ ...sticky, top: 0, zIndex: 2, padding: '2px 4px', width: 52 }} title="Moyenne de tous les élèves">
                 <div className="stack" style={{ alignItems: 'center', gap: 2 }}>
                   <span className="chip" style={{ fontWeight: 900 }}>
@@ -103,6 +115,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                   <span className="small muted" style={{ whiteSpace: 'nowrap' }}>
                     {all.length} copie(s)
                   </span>
+                  <NoteTag v={noteMean(all)} bold />
                 </div>
               </th>
               {byGroup.map(({ g, items }) => (
@@ -121,6 +134,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                       <span className="small muted" style={{ whiteSpace: 'nowrap' }}>
                         {folded.has(g.id) ? `${items.length} élèves` : 'moyenne'}
                       </span>
+                      <NoteTag v={noteMean(rsOf(items))} bold />
                     </button>
                   </th>
                   {!folded.has(g.id) &&
@@ -140,6 +154,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                           >
                             {student.firstName}
                           </span>
+                          {results.get(student.id)?.absent ? <span className="small muted">abs</span> : <NoteTag v={score(ev, results.get(student.id))?.note20} />}
                         </div>
                       </th>
                     ))}
@@ -182,7 +197,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                               outline: on ? '2.5px solid var(--ink)' : '1px solid var(--muted-line)',
                               outlineOffset: on ? -2 : -1,
                               height: 26,
-                              fontWeight: 800,
+                              fontWeight: 500,
                             }}
                           >
                             {on && manual !== null ? (
@@ -215,28 +230,6 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                 ))}
               </tr>
             ))}
-            <tr>
-              <td style={{ ...sticky, left: 0, padding: '4px 6px', fontWeight: 900 }}>Note /20</td>
-              <td style={{ textAlign: 'center', fontWeight: 900, borderLeft: '2px solid var(--ink)', borderRight: '2px solid var(--ink)' }}>
-                {noteMean(all) === null ? '' : round1(noteMean(all)!)}
-              </td>
-              {byGroup.map(({ g, items }) => {
-                const m = noteMean(rsOf(items));
-                return (
-                  <Fragment key={g.id}>
-                    <td style={{ textAlign: 'center', fontWeight: 900, borderLeft: '2px solid var(--ink)', borderRight: '2px solid var(--ink)' }}>
-                      {m === null ? '' : round1(m)}
-                    </td>
-                    {!folded.has(g.id) &&
-                      items.map(({ student }) => (
-                        <td key={student.id} style={{ textAlign: 'center', fontWeight: 900 }}>
-                          {score(ev, results.get(student.id))?.note20 ?? ''}
-                        </td>
-                      ))}
-                  </Fragment>
-                );
-              })}
-            </tr>
             {cats.map((cat) => {
               const tone = (v: number | null) => (v === null ? undefined : masteryOf(v).color);
               return (
@@ -257,7 +250,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                               <td
                                 key={student.id}
                                 title={sc ? `${cat.name} : ${sc.note}/${sc.total} pts · ${masteryOf(sc.value).name}` : undefined}
-                                style={{ textAlign: 'center', fontWeight: 700, fontSize: '0.8rem', background: sc ? masteryOf(sc.value).color : undefined }}
+                                style={{ textAlign: 'center', fontWeight: 500, fontSize: '0.8rem', background: sc ? masteryOf(sc.value).color : undefined }}
                               >
                                 {sc ? Math.round(sc.value * 100) : ''}
                               </td>
