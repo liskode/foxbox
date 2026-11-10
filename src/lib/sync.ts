@@ -173,7 +173,9 @@ async function pushGroup(table: string, ids: string[], explicitDelete: Set<strin
       // Absent de la copie locale : on ne supprime en ligne que sur demande explicite
       return explicitDelete.has(`${table}|${id}`) ? { id, deleted: true } : null;
     })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    // Connexion notée sous un autre compte dans ce navigateur (élève ou parent de test) : elle n'est pas à envoyer
+    .filter((r) => table !== 'visits' || !(r as Obj).user_id || (r as Obj).user_id === me);
   if (spec.updateOnly) {
     for (const r of rows) {
       const { error } = await supabase.from(spec.remote).update({ data: (r as Obj).data, deleted: r.deleted }).eq('id', r.id);
