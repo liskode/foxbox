@@ -27,6 +27,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
     [],
   );
   const [folded, setFolded] = useState<Set<string>>(new Set()); // classes repliées
+  const [foldedComps, setFoldedComps] = useState<Set<string>>(new Set()); // compétences dont les sous-compétences sont repliées
   const [cell, setCell] = useState<[number, number]>([0, 0]); // [critère, élève (rang dans list)]
   const [manual, setManual] = useState<string | null>(null);
 
@@ -254,14 +255,23 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
               </tr>
             ))}
             {rows.map(({ c: k, sub }) => {
+              if (sub && foldedComps.has(k.parentId!)) return null;
+              const hasSubs = !sub && rows.some((x) => x.c.parentId === k.id);
               const tone = (v: number | null) => overallColor(v, gc);
               const mAll = mean(present(list.map((x) => results.get(x.student.id))).map((r) => scoreOf(r, k)?.value).filter((v): v is number => v !== undefined));
               return (
                 <tr key={k.id}>
                   <td
                     style={{ ...sticky, left: 0, padding: sub ? '2px 6px 2px 24px' : '4px 6px', fontWeight: sub ? 500 : 800, borderTop: sub ? undefined : '1px solid var(--muted-line)' }}
-                    title={k.name}
+                    title={hasSubs ? (foldedComps.has(k.id) ? 'Déplier les sous-compétences' : 'Replier les sous-compétences') : k.name}
+                    onClick={
+                      hasSubs
+                        ? () => setFoldedComps((f) => (f.has(k.id) ? new Set([...f].filter((x) => x !== k.id)) : new Set([...f, k.id])))
+                        : undefined
+                    }
+                    className={hasSubs ? 'clickable' : undefined}
                   >
+                    {hasSubs && <Icon name={foldedComps.has(k.id) ? 'arrowRight' : 'chevronDown'} size={12} />}{' '}
                     <span style={{ background: k.color, borderRadius: 6, padding: '0 6px', fontWeight: 800 }}>{k.code}</span> {sub ? k.name : `${k.name} (%)`}
                   </td>
                   <SumCell v={mAll} color={tone(mAll)} bold />
@@ -278,7 +288,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                               <td
                                 key={student.id}
                                 title={sc ? `${k.code} ${k.name} : ${round1(sc.note)}/${round1(sc.total)} pts · ${masteryOf(sc.value).name}` : undefined}
-                                style={{ textAlign: 'center', fontWeight: 500, fontSize: '0.8rem', background: sc ? overallColor(sc.value, gc) : undefined }}
+                                style={{ textAlign: 'center', fontWeight: sub ? 500 : 800, fontSize: '0.8rem', background: sc ? overallColor(sc.value, gc) : undefined }}
                               >
                                 {sc ? Math.round(sc.value * 100) : ''}
                               </td>

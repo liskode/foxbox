@@ -114,7 +114,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'sujet et corrigé en PDF',
       'variantes selon les classes',
       'modèles réutilisables',
-      'grille façon tableur, élèves rangés par classe : colonne « Tous » (réussite moyenne par question), puis pour chaque classe sa colonne de moyennes et ses élèves, repliables ; note /20 sous chaque élève, appréciation au survol ; réussite par compétence et par sous-compétence ; couleurs de réussite réglables dans les Réglages (6 couleurs pour les moyennes, 4 pour les cases élève × critère, seuils en %)',
+      'grille façon tableur, élèves rangés par classe : colonne « Tous » (réussite moyenne par question), puis pour chaque classe sa colonne de moyennes et ses élèves, repliables ; note /20 sous chaque élève, appréciation au survol ; réussite par compétence (en gras) et par sous-compétence, repliables par compétence ; couleurs de réussite réglables dans les Réglages (6 couleurs pour les moyennes, 4 pour les cases élève × critère, seuils en %)',
       'résultats : moyenne, répartition, réussite par critère et par compétence',
       'appréciations',
       'appréciation vocale de chaque copie, réécoutée avant envoi (« Recommencer » possible) : l’élève l’écoute dans son espace, on voit s’il l’a écoutée (date et heure), il peut répondre par écrit ou par un vocal ; nouvelles réponses signalées dans la liste des copies',
