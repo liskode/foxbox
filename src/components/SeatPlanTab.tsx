@@ -1,6 +1,7 @@
 // Plan de classe : les élèves de la classe placés sur les places d'une salle.
 // Un clic sur un élève puis sur une place l'y installe ; un clic sur deux places les échange.
-import { toggleAbsence } from '../lib/absences';
+import { absenceId, toggleAbsence } from '../lib/absences';
+import { LazyInput } from './LazyInput';
 import { today } from '../lib/dates';
 import { ask } from './Dialog';
 import { useEffect, useState } from 'react';
@@ -439,6 +440,15 @@ export function SeatPlanTab({ group }: { group: Group }) {
                   {absentToday.size ? ' : ' + students.filter((x) => absentToday.has(x.id)).map((x) => x.firstName).join(', ') : ''}
                 </span>
               )}
+              {/* Commentaire facultatif pour chaque absent (motif, justificatif…), visible sur sa fiche */}
+              {students
+                .filter((x) => absentToday.has(x.id))
+                .map((x) => (
+                  <label key={x.id} className="row small" style={{ gap: 6, flexWrap: 'nowrap' }}>
+                    <b style={{ minWidth: 70 }}>{x.firstName}</b>
+                    <AbsenceReason id={absenceId(group.id, x.id, today())} />
+                  </label>
+                ))}
             </div>
             <div className="panel stack" style={{ gap: 6 }}>
               <b>
@@ -607,4 +617,11 @@ function SavedPlans({ group, plans, plan }: { group: Group; plans: SeatPlan[]; p
       {!saved.length && <span className="small muted">Aucune sauvegarde. Sauvegardez le plan avant de le modifier pour pouvoir y revenir.</span>}
     </div>
   );
+}
+
+// Commentaire d'une absence (motif, justificatif…), enregistré après une courte pause
+function AbsenceReason({ id }: { id: string }) {
+  const a = useLiveQuery(() => db.absences.get(id), [id]);
+  if (!a) return null;
+  return <LazyInput value={a.reason ?? ''} placeholder="commentaire (facultatif)" onSave={(reason) => db.absences.update(id, { reason: reason.trim() || undefined })} style={{ flex: 1, minWidth: 0 }} />;
 }

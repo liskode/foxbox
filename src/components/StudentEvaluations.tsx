@@ -109,7 +109,7 @@ export function StudentCompetenceHisto({ student }: { student: Student }) {
       {bars.length ? (
         <>
           <CompetenceHisto bars={bars} height={110} />
-          <span className="small muted">Toutes évaluations confondues · hauteur : points du barème · vert : réussi.</span>
+          <span className="small muted">Toutes évaluations confondues</span>
         </>
       ) : (
         <span className="muted small">Pas encore de critère rattaché à une compétence.</span>
@@ -189,45 +189,15 @@ export function StudentCompetenceDetail({ student }: { student: Student }) {
 export function StudentAbsences({ student }: { student: Student }) {
   const list = useLiveQuery(() => absencesOf(student.id), [student.id], []);
   return (
-    <div className="panel stack" style={{ gap: 6 }}>
+    <div className="panel stack" style={{ gap: 4, maxHeight: 320, overflowY: 'auto' }}>
       <h3 className="panel-title"><Icon name="door" size={16} /> Absences ({list.length})</h3>
-      {list.length ? (
-        <table className="list">
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left' }}>Date</th>
-              <th style={{ textAlign: 'left' }}>Séance</th>
-              <th style={{ textAlign: 'left' }}>Motif</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((a) => (
-              <tr key={a.id}>
-                <td className="small" style={{ whiteSpace: 'nowrap' }}>
-                  {frDate(a.date)}
-                </td>
-                <td className="small">{a.seance || <span className="muted">— (aucune séance cochée ce jour-là)</span>}</td>
-                <td style={{ width: '40%' }}>
-                  <input
-                    defaultValue={a.reason ?? ''}
-                    placeholder="motif, justificatif…"
-                    onBlur={(e) => e.target.value !== (a.reason ?? '') && db.absences.update(a.id, { reason: e.target.value })}
-                    style={{ width: '100%' }}
-                  />
-                </td>
-                <td>
-                  <button className="btn small ghost" title="Supprimer cette absence" onClick={() => confirm('Supprimer cette absence ?') && db.absences.delete(a.id)}>
-                    ✕
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <span className="muted small">Aucune absence relevée. L'appel se fait sur le plan de classe (bouton « Faire l'appel » de la classe).</span>
-      )}
+      {list.map((a) => (
+        <div key={a.id} className="small" title={a.seance || undefined} style={{ borderTop: '1px solid var(--muted-line)', paddingTop: 3 }}>
+          <b style={{ whiteSpace: 'nowrap' }}>{frDate(a.date)}</b>
+          {a.reason && <span className="muted"> · {a.reason}</span>}
+        </div>
+      ))}
+      {!list.length && <span className="muted small">Aucune absence. L'appel se fait sur le plan de classe.</span>}
     </div>
   );
 }

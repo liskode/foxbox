@@ -134,7 +134,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'référentiel collège R2026 : RES, ANA, REA, VAL, COM et leurs 20 sous-compétences, modifiable',
       'dans le barème, un clic sur une pastille déplie ses sous-compétences avec leur intitulé, à cocher ; un second clic replie',
       'RES : dans le barème, la séance ou la séquence de la progression à restituer ; dans la grille, une ligne par séance sous RES (points de cours à revoir)',
-      'fiche élève : note privée et absences, histogramme des compétences à côté ; évaluations sur une ligne ; détail en 2 colonnes : points de cours à restituer (les moins réussis d’abord) et sous-compétences ; flashcards ; connexions en bas',
+      'fiche élève : note privée, absences (date et commentaire) et histogramme des compétences côte à côte ; évaluations sur une ligne ; détail en 2 colonnes : points de cours à restituer (les moins réussis d’abord) et sous-compétences ; flashcards ; connexions en bas',
       'tableau de la classe par sous-compétence, avec la part des élèves en MS ou TBM',
       'niveaux du LSU (MI, MF, MS, TBM)',
       'tableau élèves × compétences par classe',
@@ -217,6 +217,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'affichage en grand dans une fenêtre pour le tableau (petite photo, prénom en grand, sans aménagements)',
       'impression A4 portrait',
       'appel : un clic grise l’élève absent, sur le plan ou dans la liste des élèves non placés',
+      'commentaire facultatif pour chaque absent (motif, justificatif…) dans le cadre Appel, repris sur sa fiche',
     ],
   },
   {

@@ -170,16 +170,14 @@ export function StudentPage() {
           </div>
         </div>
       </div>
-      {/* Note et absences à gauche, histogramme des compétences à droite */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, alignItems: 'start' }}>
-        <div className="stack">
-          <div className="panel stack">
-            <h3 className="panel-title"><Icon name="edit" size={16} /> Note</h3>
-            <FlagChecks studentId={student.id} />
-            <NoteEditor key={student.id} studentId={student.id} />
-          </div>
-          <StudentAbsences student={student} />
+      {/* Note, absences et histogramme des compétences : trois blocs côte à côte, de même hauteur */}
+      <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 200px auto', gap: 16, alignItems: 'stretch' }}>
+        <div className="panel stack">
+          <h3 className="panel-title"><Icon name="edit" size={16} /> Note</h3>
+          <FlagChecks studentId={student.id} />
+          <NoteEditor key={student.id} studentId={student.id} />
         </div>
+        <StudentAbsences student={student} />
         <StudentCompetenceHisto student={student} />
       </div>
       <StudentEvaluations student={student} />
