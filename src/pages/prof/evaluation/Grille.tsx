@@ -5,7 +5,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, shortName, type Evaluation, type Group, type Result } from '../../../lib/db';
 import { LEVEL_KEYS, emptyResult, round1, saveResult, score } from '../../../lib/grading';
 import { levelCellColor, overallColor } from '../../../lib/gradeColors';
-import { GradeColorsEditor, useGradeColors } from '../../../components/GradeColorsEditor';
+import { useGradeColors } from '../../../components/GradeColorsEditor';
+import { Link } from 'react-router-dom';
 import { Avatar } from '../../../components/Avatar';
 import { Icon } from '../../../components/Icon';
 import { useCompetences } from '../../../components/CompetencePicker';
@@ -115,9 +116,9 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
       <span className="small muted">
         Même clavier que la correction copie par copie : <span className="code">1 2 3 4</span>, <span className="code">0</span> pour une valeur
         libre, flèches pour se déplacer (↑ ↓ question, ← → élève). Colonne « Tous » et colonne de chaque classe : réussite moyenne (%) ; cliquez sur
-        une classe pour replier ou déplier ses élèves. Survol d'un élève : son appréciation.
+        une classe pour replier ou déplier ses élèves. Survol d'un élève : son appréciation. Couleurs et seuils :{' '}
+        <Link to="/prof/reglages">Réglages</Link>.
       </span>
-      <GradeColorsEditor />
       <div style={{ overflow: 'auto', maxHeight: '75vh' }}>
         <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem' }}>
           <thead>

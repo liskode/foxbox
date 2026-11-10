@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../lib/auth';
 import { db } from '../lib/db';
 import { DEFAULT_GRADE_COLORS, type GradeColors } from '../lib/gradeColors';
+import { Icon } from './Icon';
 
 export function useGradeColors(): GradeColors {
   const { session } = useAuth();
@@ -43,11 +44,13 @@ export function GradeColorsEditor() {
   const cur = useGradeColors();
   const save = (next: GradeColors) => db.teachers.update(session!.id, { gradeColors: next });
   return (
-    <details className="small">
-      <summary style={{ cursor: 'pointer', fontWeight: 700 }}>Couleurs et seuils de réussite</summary>
-      <div className="stack" style={{ gap: 10, marginTop: 8 }}>
+    <div className="panel stack small" style={{ gap: 10 }}>
+      <h3 className="panel-title">
+        <Icon name="eval" size={16} /> Évaluations : couleurs et seuils de réussite
+      </h3>
+      <div className="stack" style={{ gap: 10 }}>
         <div className="stack" style={{ gap: 4 }}>
-          <b>Moyennes et notes (moyenne d'un critère, d'une classe, note d'un élève, compétences)</b>
+          <b>Moyennes et notes de la grille de correction (moyenne d'un critère, d'une classe, note d'un élève, compétences)</b>
           <Scale colors={cur.overall.colors} thresholds={cur.overall.thresholds} onChange={(colors, thresholds) => save({ ...cur, overall: { colors, thresholds } })} />
         </div>
         <div className="stack" style={{ gap: 4 }}>
@@ -64,6 +67,6 @@ export function GradeColorsEditor() {
           Couleurs par défaut
         </button>
       </div>
-    </details>
+    </div>
   );
 }
