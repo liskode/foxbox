@@ -21,6 +21,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
   const { list, results } = useResults(ev);
   const comps = useCompetences();
   const gc = useGradeColors(); // couleurs de réussite (réglables)
+  const allUnits = useLiveQuery(() => db.units.toArray(), [], []);
   const groups = useLiveQuery(
     async () => ((await db.groups.bulkGet(ev.groupIds)).filter(Boolean) as Group[]).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
     [ev.groupIds.join()],
@@ -37,15 +38,30 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
   const cats = evalCategories(comps, ev);
   // Lignes de compétences : chaque catégorie, puis ses sous-compétences utilisées dans le barème
   const used = new Set(ev.criteria.flatMap((c) => c.competenceIds ?? []));
-  const rows = cats.flatMap((cat) => [{ c: cat, sub: false }, ...childrenOf(comps, cat.id).filter((k) => used.has(k.id)).map((k) => ({ c: k, sub: true }))]);
+  // RES : une ligne par séance ou séquence à restituer (points de cours à revoir)
+  const unitsUsed = [...new Set(ev.criteria.flatMap((c) => (c.competenceIds?.includes('APP') ? (c.unitIds ?? []) : [])))];
+  const unitRows = (cat: Competence): Competence[] =>
+    cat.id !== 'APP'
+      ? []
+      : unitsUsed.map((uid) => {
+          const u = allUnits.find((x) => x.id === uid);
+          return { id: `unit:${uid}`, code: u?.code ?? '?', name: u?.name ?? '(séance supprimée)', color: cat.color, parentId: cat.id };
+        });
+  const rows = cats.flatMap((cat) => [
+    { c: cat, sub: false },
+    ...childrenOf(comps, cat.id).filter((k) => used.has(k.id)).map((k) => ({ c: k, sub: true })),
+    ...unitRows(cat).map((k) => ({ c: k, sub: true })),
+  ]);
   // Réussite d'une copie sur une catégorie (barème pondéré) ou une sous-compétence (critères qui la portent)
   const scoreOf = (r: Result, k: Competence) => {
     if (!k.parentId) return competenceScores(comps, ev, r).find((x) => x.c.id === k.id);
     let note = 0;
     let total = 0;
+    const unit = k.id.startsWith('unit:') ? k.id.slice(5) : null; // séance à restituer (RES)
     for (const cr of ev.criteria) {
       const l = r.levels[cr.id];
-      if (!cr.competenceIds?.includes(k.id) || l === null || l === undefined) continue;
+      const on = unit ? !!cr.competenceIds?.includes('APP') && !!cr.unitIds?.includes(unit) : !!cr.competenceIds?.includes(k.id);
+      if (!on || l === null || l === undefined) continue;
       note += l * cr.points;
       total += cr.points;
     }

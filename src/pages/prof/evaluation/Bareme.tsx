@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, isClass, uid, SUBJECTS, type Criterion, type Evaluation, shortName } from '../../../lib/db';
+import { db, isClass, uid, SUBJECTS, type Criterion, type Evaluation, type Unit, shortName } from '../../../lib/db';
 import {
   duplicate,
   maxPoints,
@@ -14,7 +14,7 @@ import {
   variantOf,
   assignClass,
 } from '../../../lib/grading';
-import { LEVELS as UNIT_LEVELS, levelOfName, nextSeanceCode, unitLabel, byProgression } from '../../../lib/units';
+import { LEVELS as UNIT_LEVELS, levelOfName, nextSeanceCode, unitLabel, unitSubject, byProgression } from '../../../lib/units';
 import { CardBrowser } from '../../../components/CardBrowser';
 import { CompetencePicker } from '../../../components/CompetencePicker';
 import { DocumentsEditor } from '../../../components/UnitDetails';
@@ -71,6 +71,42 @@ function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => 
         </>
       )}
     </>
+  );
+}
+
+// RES (restituer ses connaissances) : séances ou séquences de la progression que le critère demande de restituer
+function RestoreUnits({ value, seqs, units, onChange }: { value: string[]; seqs: Unit[]; units: Unit[]; onChange: (ids: string[]) => void }) {
+  const byId = new Map(units.map((u) => [u.id, u]));
+  return (
+    <div className="row small" style={{ gap: 4, marginTop: 4 }}>
+      <span className="muted">À restituer :</span>
+      {value.map((id) => {
+        const u = byId.get(id);
+        return (
+          <span key={id} className="tag plain">
+            {u ? unitLabel(u) : '(supprimée)'}
+            <button type="button" className="btn small ghost" style={{ border: 'none', padding: 0 }} title="Retirer" onClick={() => onChange(value.filter((x) => x !== id))}>
+              <Icon name="x" size={11} />
+            </button>
+          </span>
+        );
+      })}
+      <select value="" onChange={(e) => e.target.value && onChange([...value, e.target.value])} style={{ maxWidth: 260 }}>
+        <option value="">{value.length ? '+ autre séance…' : 'choisir la séance ou la séquence…'}</option>
+        {seqs.map((q) => (
+          <optgroup key={q.id} label={unitLabel(q)}>
+            {[q, ...units.filter((u) => u.parentId === q.id && !u.isEval).sort(byProgression)]
+              .filter((u) => !value.includes(u.id))
+              .map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.id === q.id ? `${unitLabel(u)} (séquence entière)` : unitLabel(u)}
+                </option>
+              ))}
+          </optgroup>
+        ))}
+      </select>
+      {!seqs.length && <span className="muted">(choisissez le niveau de l'évaluation pour voir la progression)</span>}
+    </div>
   );
 }
 
@@ -284,6 +320,9 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
                 <td style={{ width: '70%' }}>
                   <LazyInput style={{ width: '100%' }} value={c.label} placeholder="Ex. Équilibrage 5 3 4" onSave={(label) => setCrit(i, { label })} />
                   <CompetencePicker value={c.competenceIds ?? []} onChange={(ids) => setCrit(i, { competenceIds: ids })} />
+                  {c.competenceIds?.includes('APP') && (
+                    <RestoreUnits value={c.unitIds ?? []} seqs={seqs.filter((q) => unitSubject(q) === ev.subject)} units={units} onChange={(unitIds) => setCrit(i, { unitIds })} />
+                  )}
                 </td>
                 <td>
                   <input

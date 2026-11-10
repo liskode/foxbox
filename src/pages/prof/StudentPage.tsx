@@ -9,7 +9,7 @@ import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar } from '../../components/Avatar';
 import { removePhoto } from '../../lib/photos';
 import { NoteEditor, FlagChecks } from '../../components/StudentNote';
-import { StudentEvaluations, StudentCompetenceHisto, StudentAbsences } from '../../components/StudentEvaluations';
+import { StudentEvaluations, StudentCompetenceHisto, StudentCompetenceDetail, StudentAbsences } from '../../components/StudentEvaluations';
 import { Icon } from '../../components/Icon';
 import { StudentVisits } from '../../components/Visits';
 
@@ -170,19 +170,20 @@ export function StudentPage() {
           </div>
         </div>
       </div>
-      <div className="panel stack">
-        <h3 className="panel-title"><Icon name="edit" size={16} /> Note</h3>
-        <FlagChecks studentId={student.id} />
-        <NoteEditor key={student.id} studentId={student.id} />
-      </div>
+      {/* Note et absences à gauche, histogramme des compétences à droite */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, alignItems: 'start' }}>
         <div className="stack">
-          <StudentEvaluations student={student} />
+          <div className="panel stack">
+            <h3 className="panel-title"><Icon name="edit" size={16} /> Note</h3>
+            <FlagChecks studentId={student.id} />
+            <NoteEditor key={student.id} studentId={student.id} />
+          </div>
           <StudentAbsences student={student} />
-          <StudentVisits student={student} />
         </div>
         <StudentCompetenceHisto student={student} />
       </div>
+      <StudentEvaluations student={student} />
+      <StudentCompetenceDetail student={student} />
       <section className="stack" style={{ gap: 12, borderTop: '3px solid var(--line)', paddingTop: 12 }}>
         <h2 className="row" style={{ margin: 0, gap: 8 }}><Icon name="cards" size={20} /> Flashcards</h2>
         <StudentReport
@@ -227,6 +228,7 @@ export function StudentPage() {
           }
         />
       </section>
+      <StudentVisits student={student} />
       <div>
         <button
           className="btn danger"

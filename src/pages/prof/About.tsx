@@ -133,7 +133,8 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     details: [
       'référentiel collège R2026 : RES, ANA, REA, VAL, COM et leurs 20 sous-compétences, modifiable',
       'dans le barème, un clic sur une pastille déplie ses sous-compétences avec leur intitulé, à cocher ; un second clic replie',
-      'fiche élève : détail des sous-compétences évaluées (niveau et points)',
+      'RES : dans le barème, la séance ou la séquence de la progression à restituer ; dans la grille, une ligne par séance sous RES (points de cours à revoir)',
+      'fiche élève : note privée et absences, histogramme des compétences à côté ; évaluations sur une ligne ; détail en 2 colonnes : points de cours à restituer (les moins réussis d’abord) et sous-compétences ; flashcards ; connexions en bas',
       'tableau de la classe par sous-compétence, avec la part des élèves en MS ou TBM',
       'niveaux du LSU (MI, MF, MS, TBM)',
       'tableau élèves × compétences par classe',

@@ -6,7 +6,8 @@ import { absencesOf } from '../lib/absences';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Student } from '../lib/db';
-import { score, dateFor, FAIL_LEVEL } from '../lib/grading';
+import { unitLabel } from '../lib/units';
+import { score, dateFor } from '../lib/grading';
 import { frDate } from '../lib/dates';
 import { Icon } from './Icon';
 
@@ -22,42 +23,30 @@ export function useStudentEvals(studentId: string) {
   }, [studentId], []);
 }
 
+// Évaluations de l'élève : une ligne par évaluation (date, nom, note, appréciation)
 export function StudentEvaluations({ student }: { student: Student }) {
   const list = useStudentEvals(student.id);
   return (
-    <div className="panel stack">
+    <div className="panel stack" style={{ gap: 4 }}>
       <h3 className="panel-title"><Icon name="eval" size={16} /> Évaluations</h3>
       {!list.length && <span className="muted small">Aucune évaluation corrigée pour l'instant.</span>}
-      <table className="list">
-        <tbody>
-          {list.map(({ r, ev, date }) => {
-            const s = score(ev!, r);
-            const failed = ev!.criteria.filter((c) => {
-              const l = r.levels[c.id];
-              return l !== null && l !== undefined && l <= FAIL_LEVEL;
-            });
-            return (
-              <tr key={r.id}>
-                <td style={{ whiteSpace: 'nowrap' }} className="small muted">
-                  {frDate(date)}
-                </td>
-                <td>
-                  <Link to={`/prof/correction/${ev!.id}?onglet=copies&eleve=${student.id}`}>
-                    <b>{ev!.name}</b>
-                  </Link>
-                  {failed.length > 0 && (
-                    <div className="small muted" title={failed.map((c) => c.label).join('\n')}>
-                      {failed.length} critère(s) raté(s)
-                    </div>
-                  )}
-                </td>
-                <td style={{ whiteSpace: 'nowrap', fontWeight: 900 }}>{r.absent ? 'Absent' : s ? `${s.note20}/20` : '—'}</td>
-                <td className="small muted">{r.appreciation}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {list.map(({ r, ev, date }) => {
+        const s = score(ev!, r);
+        return (
+          <div key={r.id} className="row" style={{ gap: 10, flexWrap: 'nowrap', alignItems: 'baseline', borderTop: '1px solid var(--muted-line)', paddingTop: 4 }}>
+            <span className="small muted" style={{ whiteSpace: 'nowrap', width: 96 }}>
+              {frDate(date)}
+            </span>
+            <Link to={`/prof/correction/${ev!.id}?onglet=copies&eleve=${student.id}`} style={{ fontWeight: 800, whiteSpace: 'nowrap' }}>
+              {ev!.name}
+            </Link>
+            <b style={{ whiteSpace: 'nowrap' }}>{r.absent ? 'Absent' : s ? `${s.note20}/20` : '—'}</b>
+            <span className="small muted" style={{ flex: 1 }}>
+              {r.appreciation}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -109,7 +98,6 @@ export function StudentCompetenceHisto({ student }: { student: Student }) {
   const bars = categories(comps)
     .map((c) => sums.get(c.id))
     .filter((x): x is NonNullable<typeof x> => !!x);
-  const subs = subCompetenceScores(comps, list.map(({ ev, r }) => ({ ev: ev!, r })));
   return (
     <div className="panel stack" style={{ gap: 8 }}>
       <div className="spread">
@@ -122,11 +110,77 @@ export function StudentCompetenceHisto({ student }: { student: Student }) {
         <>
           <CompetenceHisto bars={bars} height={110} />
           <span className="small muted">Toutes évaluations confondues · hauteur : points du barème · vert : réussi.</span>
-          <SubCompetenceList subs={subs} />
         </>
       ) : (
         <span className="muted small">Pas encore de critère rattaché à une compétence.</span>
       )}
+    </div>
+  );
+}
+
+// Détail des compétences : RES (séances et séquences à restituer, les moins réussies d'abord) et sous-compétences des autres
+export function StudentCompetenceDetail({ student }: { student: Student }) {
+  const list = useStudentEvals(student.id);
+  const comps = useCompetences();
+  const units = useLiveQuery(() => db.units.toArray(), [], []);
+  const copies = list.filter(({ r }) => !r.absent).map(({ ev, r }) => ({ ev: ev!, r }));
+  const res = new Map<string, { note: number; total: number; n: number }>();
+  for (const { ev, r } of copies)
+    for (const cr of ev.criteria) {
+      const l = r.levels[cr.id];
+      if (!cr.competenceIds?.includes('APP') || l === null || l === undefined) continue;
+      for (const u of cr.unitIds ?? []) {
+        const cur = res.get(u) ?? { note: 0, total: 0, n: 0 };
+        cur.note += l * cr.points;
+        cur.total += cr.points;
+        cur.n++;
+        res.set(u, cur);
+      }
+    }
+  const resCat = comps.find((c) => c.id === 'APP');
+  const resRows = [...res]
+    .map(([id, x]) => ({ u: units.find((u) => u.id === id), ...x, value: x.total ? x.note / x.total : 0 }))
+    .sort((a, b) => a.value - b.value);
+  const subs = subCompetenceScores(comps, copies);
+  if (!resRows.length && !subs.length) return null;
+  return (
+    <div className="panel stack" style={{ gap: 8 }}>
+      <h3 className="panel-title"><Icon name="target" size={16} /> Détail des compétences</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16, alignItems: 'start' }}>
+        <div className="stack" style={{ gap: 4 }}>
+          <b className="small">
+            <span style={{ background: resCat?.color, borderRadius: 5, padding: '0 4px' }}>{resCat?.code ?? 'RES'}</span> Points de cours à restituer
+          </b>
+          {resRows.length ? (
+            <table className="list small">
+              <tbody>
+                {resRows.map(({ u, note, total, n, value }, i) => {
+                  const m = masteryOf(value);
+                  return (
+                    <tr key={u?.id ?? i}>
+                      <td>{u ? unitLabel(u) : '(séance supprimée)'}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <span title={m.name} style={{ background: m.color, borderRadius: 6, padding: '1px 6px', fontWeight: 800 }}>
+                          {m.code}
+                        </span>
+                      </td>
+                      <td className="muted" style={{ whiteSpace: 'nowrap' }} title={`${n} critère(s) évalué(s)`}>
+                        {fr(note)}/{fr(total)} pts
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <span className="small muted">Aucune séance à restituer indiquée dans les barèmes (critères RES).</span>
+          )}
+        </div>
+        <div className="stack" style={{ gap: 4 }}>
+          <b className="small">Autres compétences</b>
+          {subs.length ? <SubCompetenceList subs={subs} /> : <span className="small muted">Pas encore de sous-compétence évaluée.</span>}
+        </div>
+      </div>
     </div>
   );
 }

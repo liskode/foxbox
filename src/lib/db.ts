@@ -374,6 +374,7 @@ export interface Criterion {
   points: number;
   cardIds?: string[]; // cartes FoxBox liées à ce critère
   competenceIds?: string[]; // compétences évaluées par ce critère (APP, ANA… ou sous-compétences)
+  unitIds?: string[]; // RES : séances ou séquences de la progression à restituer
 }
 export interface Evaluation {
   id: string;
