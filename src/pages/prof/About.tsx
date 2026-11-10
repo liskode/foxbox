@@ -92,6 +92,8 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'une colonne par niveau, thèmes du programme et « hors thème »',
       'plusieurs matières (physique-chimie, mathématiques…) avec leurs thèmes, et niveaux du lycée pour le soutien',
       'codes de séquence et de séance (431, 4311…)',
+      'physique-chimie de la 6e à la terminale (programme de spécialité de terminale)',
+      'en 2nde, 1re et terminale, une séance 0 « Prérequis » en tête de chaque séquence (2110, T110…) : révision des flashcards des niveaux précédents utiles pour la séquence, d’après leur point d’introduction',
       'durée de chaque séance',
       'descriptif et documents PDF téléchargeables par les élèves',
       'flashcards rattachées à chaque séance (au moment d’en ajouter, celles déjà dans la progression du niveau restent visibles, grisées, avec la séance où elles sont ; en soutien, celles déjà données à l’élève)',
