@@ -42,7 +42,7 @@ function CardLink({ c, onChange }: { c: Criterion; onChange: (ids: string[]) => 
             <div className="spread" style={{ position: 'sticky', top: -20, background: 'var(--bg)', zIndex: 3, padding: '8px 0' }}>
               <div>
                 <b>Flashcards liées à « {c.label || 'critère'} »</b>
-                <div className="small muted">Si un élève rate ce critère (≤ 25 %), ces flashcards pourront revenir en boîte 1 pour lui.</div>
+                <div className="small muted">Si un élève rate ce critère, ces flashcards pourront reculer pour lui : retour en boîte 1 à 0 %, une boîte en arrière à 40 %.</div>
               </div>
               <div className="row">
                 <button className="btn ghost" onClick={() => setOpen(false)}>
@@ -202,6 +202,20 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
                           await syncAllShares(next);
                         }}
                       />
+                      {ev.visibility.selfCheck && (
+                        <span className="row small" style={{ gap: 6, fontWeight: 700 }}>
+                          <input
+                            type="checkbox"
+                            checked={!!ev.returned?.[g.id]}
+                            onChange={async (e) => {
+                              const next = { ...ev, returned: { ...(ev.returned ?? {}), [g.id]: e.target.checked } };
+                              await update({ returned: next.returned });
+                              await syncAllShares(next);
+                            }}
+                          />
+                          Copies rendues
+                        </span>
+                      )}
                     </label>
                   ))}
               </div>
@@ -218,12 +232,13 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
                 ['appreciation', 'Appréciation'],
                 ['detail', 'Barème détaillé (critère par critère)'],
                 ['competences', 'Histogramme par compétence'],
+                ['selfCheck', 'Autocorrection'],
               ] as const
             ).map(([k, l]) => (
               <label key={k} className="row small" style={{ gap: 6, fontWeight: 700 }}>
                 <input
                   type="checkbox"
-                  checked={ev.visibility[k] ?? true}
+                  checked={ev.visibility[k] ?? k !== 'selfCheck'}
                   onChange={async (e) => {
                     const next = { ...ev, visibility: { ...ev.visibility, [k]: e.target.checked } };
                     await update({ visibility: next.visibility });
@@ -234,6 +249,12 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
               </label>
             ))}
           </div>
+          {ev.visibility.selfCheck && (
+            <span className="small muted">
+              Autocorrection : quand vous cochez « Copies rendues » pour sa classe, l'élève note lui-même sa copie critère par critère (copie sous les yeux).
+              Il ne voit les éléments cochés ci-dessus (note, appréciation…) qu'une fois son autocorrection terminée.
+            </span>
+          )}
         </div>
       </div>
 

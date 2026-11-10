@@ -6,7 +6,7 @@ import { absencesOf } from '../lib/absences';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Student } from '../lib/db';
-import { score, dateFor } from '../lib/grading';
+import { score, dateFor, FAIL_LEVEL } from '../lib/grading';
 import { frDate } from '../lib/dates';
 import { Icon } from './Icon';
 
@@ -34,7 +34,7 @@ export function StudentEvaluations({ student }: { student: Student }) {
             const s = score(ev!, r);
             const failed = ev!.criteria.filter((c) => {
               const l = r.levels[c.id];
-              return l !== null && l !== undefined && l <= 0.25;
+              return l !== null && l !== undefined && l <= FAIL_LEVEL;
             });
             return (
               <tr key={r.id}>

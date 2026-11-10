@@ -50,7 +50,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
   return (
     <div className="panel stack">
       <span className="small muted">
-        Même clavier que la correction copie par copie : <span className="code">/ 1 2 3 4</span>, <span className="code">0</span> pour une valeur
+        Même clavier que la correction copie par copie : <span className="code">1 2 3 4</span>, <span className="code">0</span> pour une valeur
         libre, flèches pour se déplacer (↑ ↓ question, ← → élève).
       </span>
       <div style={{ overflow: 'auto', maxHeight: '75vh' }}>

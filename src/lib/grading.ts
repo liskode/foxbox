@@ -13,11 +13,13 @@ async function groupOfStudent(ev: Evaluation, studentId: string) {
   const ms = await db.memberships.where('studentId').equals(studentId).toArray();
   return ms.find((m) => ev.groupIds.includes(m.groupId))?.groupId;
 }
-export const FAIL_LEVEL = 0.25; // critère raté : niveau ≤ 25 %
+export const FAIL_LEVEL = 0.4; // critère raté : niveau ≤ 40 %
 
-// Raccourcis clavier (rangée du haut d'un clavier canadien) : / 1 2 3 4
-export const LEVEL_KEYS: Record<string, number> = { '/': 0, '1': 0.25, '2': 0.5, '3': 0.75, '4': 1 };
-export const LEVELS = [0, 0.25, 0.5, 0.75, 1];
+// 4 niveaux (comme les 4 visages de l'autocorrection) : touches 1 2 3 4 = 0 · 40 · 80 · 100 %
+export const LEVEL_KEYS: Record<string, number> = { '1': 0, '2': 0.4, '3': 0.8, '4': 1 };
+export const LEVELS = [0, 0.4, 0.8, 1];
+// Niveau le plus proche parmi les 4 (pour l'afficher en visage) : 0 à 3
+export const faceOf = (l: number) => (l < 0.2 ? 0 : l < 0.6 ? 1 : l < 0.9 ? 2 : 3);
 
 export interface Score {
   note: number; // points obtenus
@@ -47,8 +49,8 @@ export const maxPoints = (ev: Evaluation) => round1(ev.criteria.reduce((a, c) =>
 
 export function levelColor(l: number | null | undefined) {
   if (l === null || l === undefined) return 'transparent';
-  if (l <= 0.25) return '#f6c9c3';
-  if (l < 0.75) return '#fcdcc0';
+  if (l < 0.3) return '#f6c9c3';
+  if (l < 0.7) return '#fcdcc0';
   return '#cfece4';
 }
 
@@ -72,26 +74,33 @@ export async function studentsOf(ev: Evaluation): Promise<{ student: Student; gr
 }
 
 // ----- Partage avec l'élève, selon les réglages de visibilité -----
-function shareOf(ev: Evaluation, r: Result, date: string, comps: Competence[]): ResultShare | null {
+// Autocorrection : l'élève n'a accès à rien avant que les copies de sa classe soient rendues ; il voit alors le barème
+// (sans ses résultats), et la correction du professeur une fois son autocorrection terminée.
+function shareOf(ev: Evaluation, r: Result, date: string, comps: Competence[], groupId?: string): ResultShare | null {
   const v = ev.visibility;
   const showComp = v.competences ?? true;
-  if (!v.note && !v.appreciation && !v.detail && !showComp) return null;
+  const self = !!v.selfCheck;
+  if (self && !(groupId && ev.returned?.[groupId])) return null;
+  if (!self && !v.note && !v.appreciation && !v.detail && !showComp) return null;
   const s = score(ev, r);
   if (!s && !r.absent && !r.appreciation) return null; // pas encore corrigé
-  const share: ResultShare = { id: r.id, evaluationId: ev.id, studentId: r.studentId, name: ev.name, date, absent: r.absent };
+  const share: ResultShare = { id: r.id, evaluationId: ev.id, studentId: r.studentId, name: ev.name, date, absent: r.absent, teacherId: ev.ownerId };
+  if (self && !r.absent) share.selfCheck = ev.criteria.map((c) => ({ id: c.id, label: c.label, points: c.points }));
   if (v.note && s) Object.assign(share, { note: s.note, total: s.total, note20: s.note20 });
   if (v.appreciation && r.appreciation?.trim()) share.appreciation = r.appreciation.trim();
   if (showComp && !r.absent) {
     const cs = competenceScores(comps, ev, r).map(({ c, note, total }) => ({ code: c.code, name: c.name, color: c.color, note, total }));
     if (cs.length) share.competences = cs;
   }
-  if (v.detail && !r.absent) share.detail = ev.criteria.map((c) => ({ label: c.label, points: c.points, level: r.levels[c.id] ?? null }));
+  if (v.detail && !r.absent) share.detail = ev.criteria.map((c) => ({ id: c.id, label: c.label, points: c.points, level: r.levels[c.id] ?? null }));
   return share;
 }
 
 export async function syncShare(ev: Evaluation, r: Result) {
   const teacherId = ev.ownerId ?? (await db.teachers.toCollection().first())?.id ?? '';
-  const share = ev.template ? null : shareOf(ev, r, dateFor(ev, await groupOfStudent(ev, r.studentId)), await loadCompetences(teacherId));
+  const gid = await groupOfStudent(ev, r.studentId);
+  const share = ev.template ? null : shareOf(ev, r, dateFor(ev, gid), await loadCompetences(teacherId), gid);
+  if (share && !share.teacherId) share.teacherId = teacherId;
   if (share) await db.resultShares.put(share);
   else if (await db.resultShares.get(r.id)) await db.resultShares.delete(r.id);
 }
@@ -111,7 +120,7 @@ export function emptyResult(ev: Evaluation, studentId: string): Result {
   return { id: `${ev.id}|${studentId}`, evaluationId: ev.id, studentId, levels: {}, updatedAt: Date.now() };
 }
 
-// ----- Lien avec les cartes : un critère raté remet ses cartes en boîte 1 pour l'élève -----
+// ----- Lien avec les cartes : critère à 0 % (ou presque) → ses flashcards reviennent en boîte 1 ; à 40 % → elles reculent d'une boîte -----
 export async function resetCardsForFailures(ev: Evaluation): Promise<{ students: number; cards: number }> {
   const rs = await db.results.where('evaluationId').equals(ev.id).toArray();
   const day = today();
@@ -119,21 +128,21 @@ export async function resetCardsForFailures(ev: Evaluation): Promise<{ students:
   let cards = 0;
   for (const r of rs) {
     if (r.absent) continue;
-    const ids = new Set<string>();
+    const back = new Map<string, boolean>(); // flashcard -> retour en boîte 1 (sinon : une boîte de moins)
     for (const c of ev.criteria) {
       const l = r.levels[c.id];
-      if (l !== null && l !== undefined && l <= FAIL_LEVEL) c.cardIds?.forEach((id) => ids.add(id));
+      if (l !== null && l !== undefined && l <= FAIL_LEVEL) c.cardIds?.forEach((id) => back.set(id, back.get(id) || l <= 0.25));
     }
-    if (!ids.size) continue;
+    if (!back.size) continue;
     students++;
-    for (const cardId of ids) {
+    for (const [cardId, toOne] of back) {
       const key = `${r.studentId}|${cardId}`;
       const prev = await db.studentCards.get(key);
       await db.studentCards.put({
         id: key,
         studentId: r.studentId,
         cardId,
-        box: 1,
+        box: toOne || !prev ? 1 : Math.max(1, prev.box - 1),
         due: day,
         reps: prev?.reps ?? 0,
         lapses: (prev?.lapses ?? 0) + 1,

@@ -379,7 +379,8 @@ export interface Evaluation {
   groupIds: string[];
   criteria: Criterion[];
   // Ce que voit l'élève dans son espace
-  visibility: { note: boolean; appreciation: boolean; detail: boolean; competences?: boolean }; // competences : visible par défaut
+  visibility: { note: boolean; appreciation: boolean; detail: boolean; competences?: boolean; selfCheck?: boolean }; // competences : visible par défaut ; selfCheck : l'élève s'autocorrige avant de voir la correction
+  returned?: Record<string, boolean>; // copies rendues, par classe (ouvre l'autocorrection)
   template?: boolean; // modèle réutilisable (sans classe)
   level?: string; // niveau (6e…3e)
   unitId?: string; // séance d'évaluation de la Progression (les variantes partagent la même séance)
@@ -408,8 +409,24 @@ export interface ResultShare {
   total?: number;
   note20?: number;
   appreciation?: string;
-  detail?: { label: string; points: number; level: number | null }[];
+  detail?: { id?: string; label: string; points: number; level: number | null }[];
   competences?: { code: string; name: string; color: string; note: number; total: number }[]; // histogramme par compétence
+  teacherId?: string;
+  selfCheck?: { id: string; label: string; points: number }[]; // autocorrection demandée : barème sans les résultats
+}
+// Autocorrection de l'élève (avant de voir la correction du professeur)
+export interface SelfCheck {
+  id: string; // evaluationId|studentId
+  evaluationId: string;
+  studentId: string;
+  teacherId: string;
+  feeling?: number; // ressenti global 0..3 (pas du tout réussi → très bien réussi)
+  comment?: string;
+  levels: Record<string, number>; // critère -> niveau estimé (0, 0,4, 0,8, 1)
+  doneAt?: number; // autocorrection terminée : la correction du professeur devient visible
+  before?: string; // bilan : ce que je n'avais pas compris
+  after?: string; // ce que maintenant j'ai compris
+  updatedAt: number;
 }
 export interface ParentMessage {
   id: string;
@@ -618,6 +635,7 @@ class FoxBoxDB extends Dexie {
   evaluations!: Table<Evaluation, string>;
   results!: Table<Result, string>;
   resultShares!: Table<ResultShare, string>;
+  selfChecks!: Table<SelfCheck, string>;
   parentMessages!: Table<ParentMessage, string>;
   todos!: Table<Todo, string>;
   meta!: Table<Meta, string>;
@@ -697,6 +715,7 @@ class FoxBoxDB extends Dexie {
       pfReviews: 'id, visitorId, cardId, date',
       pfMessages: 'id, visitorId',
     });
+    this.version(14).stores({ selfChecks: 'id, evaluationId, studentId' });
   }
 }
 

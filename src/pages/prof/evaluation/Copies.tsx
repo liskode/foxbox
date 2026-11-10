@@ -2,7 +2,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { type Evaluation } from '../../../lib/db';
-import { LEVELS, LEVEL_KEYS, emptyResult, levelColor, saveResult, score } from '../../../lib/grading';
+import { LEVELS, LEVEL_KEYS, emptyResult, faceOf, levelColor, saveResult, score } from '../../../lib/grading';
+import { FEELINGS, FoxFace, LevelFace } from '../../../components/Faces';
+import { selfScore, useSelfCheck } from '../../../components/SelfCheck';
 import { Avatar } from '../../../components/Avatar';
 import { Icon } from '../../../components/Icon';
 import { NoteButton } from '../../../components/StudentNote';
@@ -42,6 +44,8 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
   const shown = q.trim() ? list.filter(({ student }) => fold(`${student.firstName} ${student.lastName}`).includes(fold(q.trim()))) : list;
   const [appr, setAppr] = useState('');
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sc = useSelfCheck(`${ev.id}|${sid}`);
+  const selfDone = sc?.doneAt ? sc : undefined;
 
   useEffect(() => {
     setAppr(r?.appreciation ?? '');
@@ -221,7 +225,7 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
 
         <div className="panel stack" style={{ gap: 4, opacity: r.absent ? 0.4 : 1 }}>
           <div className="small muted" style={{ marginBottom: 4 }}>
-            Touches : <span className="code">/ 1 2 3 4</span> = 0 · 25 · 50 · 75 · 100 % (puis question suivante) · <span className="code">0</span> ou{' '}
+            Touches : <span className="code">1 2 3 4</span> = 0 · 40 · 80 · 100 % (puis question suivante) · <span className="code">0</span> ou{' '}
             <span className="code">,</span> = saisie libre (0,2…) · ↑ ↓ question · Effacer = non noté
           </div>
           {ev.criteria.map((c, i) => {
@@ -252,6 +256,11 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
                   {c.label || <i className="muted">(sans intitulé)</i>}
                   {c.cardIds?.length ? <span className="small muted"> · <Icon name="cards" size={13} />{c.cardIds.length}</span> : null}
                 </span>
+                {selfDone && selfDone.levels[c.id] !== undefined && (
+                  <span title={`Autocorrection de l'élève : ${pct(selfDone.levels[c.id])} %`} style={{ opacity: 0.85 }}>
+                    <LevelFace i={faceOf(selfDone.levels[c.id])} size={20} />
+                  </span>
+                )}
                 <span className="small muted" style={{ whiteSpace: 'nowrap' }}>
                   {c.points} pt
                 </span>
@@ -259,7 +268,7 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
                   {LEVELS.map((v, k) => (
                     <button
                       key={v}
-                      title={`Touche ${['/', '1', '2', '3', '4'][k]}`}
+                      title={`Touche ${k + 1}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setFocus(i);
@@ -307,6 +316,8 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
           })}
         </div>
 
+        {ev.visibility.selfCheck && <SelfCheckSummary ev={ev} sc={sc} name={cur.student.firstName} prof={score(ev, r)?.note20} />}
+
         {/* Appréciation vocale : l'élève l'écoute dans son espace, on voit s'il l'a écoutée, il peut répondre */}
         <div className="panel stack" style={{ gap: 8 }}>
           <h3 className="panel-title">
@@ -324,6 +335,59 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
           <span className="small muted">L’élève l’écoute dans son espace (onglet Évaluations) quand la copie est rendue, et peut répondre par écrit ou par un vocal.</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Autocorrection de l'élève : ressenti, note estimée face à la vôtre, bilan
+function SelfCheckSummary({ ev, sc, name, prof }: { ev: Evaluation; sc?: import('../../../lib/db').SelfCheck; name: string; prof?: number }) {
+  const mine = sc?.doneAt ? selfScore(ev.criteria, sc.levels) : null;
+  const gap = mine && prof !== undefined ? Math.round((mine.note20 - prof) * 10) / 10 : null;
+  return (
+    <div className="panel stack" style={{ gap: 8 }}>
+      <h3 className="panel-title">
+        <Icon name="user" size={16} /> Autocorrection de {name}
+      </h3>
+      {!sc ? (
+        <span className="small muted">Pas encore commencée{Object.values(ev.returned ?? {}).some(Boolean) ? '.' : ' (cochez « Copies rendues » pour sa classe dans le Barème).'}</span>
+      ) : (
+        <div className="row" style={{ gap: 16, alignItems: 'flex-start' }}>
+          {sc.feeling !== undefined && (
+            <span className="stack" style={{ alignItems: 'center', gap: 2, maxWidth: 110 }}>
+              <FoxFace mood={sc.feeling} size={52} />
+              <span className="small muted" style={{ textAlign: 'center' }}>
+                {FEELINGS[sc.feeling]}
+              </span>
+            </span>
+          )}
+          <div className="stack" style={{ gap: 4, flex: 1, minWidth: 200 }}>
+            {sc.doneAt ? (
+              <span>
+                Note estimée : <b>{mine ? `${mine.note20}/20` : '—'}</b>
+                {gap !== null && (
+                  <span className={'tag ' + (Math.abs(gap) < 2 ? 'ok' : 'warn')} style={{ marginLeft: 8 }}>
+                    {Math.abs(gap) < 2 ? 'proche de votre note' : gap > 0 ? `se surestime de ${gap} pt` : `se sous-estime de ${-gap} pt`}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span className="small muted">En cours (critères pas encore tous estimés).</span>
+            )}
+            {sc.comment && <span className="small">« {sc.comment} »</span>}
+            {sc.before && (
+              <span className="small">
+                <b>Ce que je n'avais pas compris :</b> {sc.before}
+              </span>
+            )}
+            {sc.after && (
+              <span className="small">
+                <b>Ce que maintenant j'ai compris :</b> {sc.after}
+              </span>
+            )}
+            {sc.doneAt && <span className="small muted">Son estimation apparaît en petit visage à côté de chaque critère.</span>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

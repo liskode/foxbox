@@ -68,15 +68,15 @@ export function ResultatsTab({ ev }: { ev: Evaluation }) {
             onClick={async () => {
               if (
                 !confirm(
-                  'Remettre en boîte 1 (à revoir dès aujourd’hui) les flashcards liées aux critères ratés (≤ 25 %), pour chaque élève concerné ?',
+                  'Faire reculer les flashcards des critères ratés, pour chaque élève concerné ? Critère à 0 % : retour en boîte 1 (à revoir dès aujourd’hui) ; à 40 % : une boîte en arrière.',
                 )
               )
                 return;
               const r = await resetCardsForFailures(ev);
-              setMsg(`${r.cards} flashcard(s) remise(s) en boîte 1 pour ${r.students} élève(s).`);
+              setMsg(`${r.cards} flashcard(s) reculée(s) pour ${r.students} élève(s).`);
             }}
           >
-            <Icon name="cards" /> Remettre en boîte 1 les flashcards des critères ratés
+            <Icon name="cards" /> Faire reculer les flashcards des critères ratés
           </button>
         )}
       </div>

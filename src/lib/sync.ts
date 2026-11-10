@@ -35,6 +35,7 @@ const SPECS: Record<string, TableSpec> = {
   evaluations: { remote: 'evaluations', cols: (e) => ({ owner_id: e.ownerId ?? me }) },
   results: { remote: 'results', cols: (r) => ({ student_id: r.studentId }) },
   resultShares: { remote: 'result_shares', cols: (r) => ({ student_id: r.studentId }) },
+  selfChecks: { remote: 'self_checks', cols: (s) => ({ student_id: s.studentId, teacher_id: s.teacherId }) },
   parentMessages: { remote: 'parent_messages', cols: (m) => ({ teacher_id: m.teacherId, student_id: m.studentId }) },
   todos: { remote: 'todos', cols: (t) => ({ teacher_id: t.teacherId }) },
   classNotes: { remote: 'class_notes', cols: (n) => ({ teacher_id: n.teacherId }) },
