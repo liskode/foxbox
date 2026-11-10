@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import { Loader } from './components/Loader';
 import { HashRouter, Navigate, NavLink, Route, Routes, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isClass, isTutoring, shortName } from './lib/db';
@@ -118,7 +119,7 @@ function SyncBadge() {
 // Page sans bandeau (ex. plan de classe projeté au tableau), réservée au rôle indiqué
 function Bare({ role, children }: { role: 'prof' | 'eleve'; children: ReactNode }) {
   const { session, ready } = useAuth();
-  if (!ready) return null;
+  if (!ready) return <Loader />;
   if (!session || session.role !== role) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
@@ -260,7 +261,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
     // Reprend la lecture des images interrompue (fermeture de l'onglet…)
     if (session?.role === 'prof') runOcr();
   }, [session]);
-  if (!ready) return null;
+  if (!ready) return <Loader />;
   if (!session) return <Navigate to="/" replace />;
   if (session.role !== role) return <Navigate to={homeOf(session.role)} replace />;
   const links =
@@ -366,7 +367,7 @@ export function App() {
       <ToastHost />
       <HashRouter>
         <UpdateBanner />
-        <Suspense fallback={<div className="page muted">Chargement…</div>}>
+        <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/inscription" element={<Signup />} />

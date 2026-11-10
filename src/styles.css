@@ -607,3 +607,6 @@ table.list tr.click:hover td { background: #faf7ef; }
 .voice-help-btn { padding-left: 10px; padding-right: 10px; font-weight: 900; }
 .voice-review { display: flex; flex-direction: column; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--calm); width: 100%; }
 .mic-help { position: absolute; z-index: 25; top: calc(100% + 8px); left: 0; width: min(380px, 86vw); text-align: left; }
+
+/* Écran de chargement (renard et sa queue) */
+.loader-screen { min-height: 60vh; display: grid; place-content: center; justify-items: center; gap: 8px; color: var(--muted, #55534e); font-weight: 700; }

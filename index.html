@@ -13,7 +13,38 @@
     <title>FoxBox</title>
   </head>
   <body>
-    <div id="root"><p style="font-family: sans-serif; text-align: center; margin-top: 30vh; color: #55534e">Chargement de FoxBox…</p></div>
+    <div id="root">
+      <div style="min-height: 90vh; display: grid; place-content: center; justify-items: center; gap: 8px; font-family: Nunito, sans-serif; font-weight: 700; color: #55534e">
+        <svg viewBox="20 20 456 470" width="200" aria-hidden="true">
+          <defs>
+            <mask id="boot-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="496" height="498">
+              <rect width="496" height="498" fill="#fff" />
+              <path id="boot-arc" fill="none" stroke="#000" stroke-width="50" />
+            </mask>
+          </defs>
+          <image href="./queue-renard.png" width="496" height="498" mask="url(#boot-mask)" />
+          <image href="./logo.png" x="231" y="98" width="130" height="188" preserveAspectRatio="xMidYMid meet" />
+        </svg>
+        Chargement de FoxBox…
+      </div>
+    </div>
+    <script>
+      // Queue du renard qui se trace autour du logo pendant le chargement (même dessin que src/components/Loader.tsx)
+      (function () {
+        var arc = document.getElementById('boot-arc');
+        if (!arc || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+        function pt(d) { return [296 + 134 * Math.cos((d * Math.PI) / 180), 191 + 134 * Math.sin((d * Math.PI) / 180)]; }
+        function loop(t) {
+          if (!document.getElementById('boot-arc')) return; // l'application a pris le relais
+          var k = (t % 2600) / 2600;
+          var grow = k < 0.82 ? 0.5 - 0.5 * Math.cos((k / 0.82) * Math.PI) : 1 - (k - 0.82) / 0.18;
+          var left = (1 - grow) * 359.9, a = pt(136 - 360 + left), b = pt(136 - 360);
+          arc.setAttribute('d', left < 0.5 ? '' : 'M ' + a[0] + ' ' + a[1] + ' A 134 134 0 ' + (left > 180 ? 1 : 0) + ' 0 ' + b[0] + ' ' + b[1]);
+          requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+      })();
+    </script>
     <script>
       // Après une mise à jour du site, une ancienne page gardée en mémoire peut réclamer des fichiers
       // qui n'existent plus : on recharge alors une seule fois la version à jour.
