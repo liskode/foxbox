@@ -1,6 +1,5 @@
 // Pastilles de compétences d'un critère : RES, ANA, REA, VAL, COM (et leurs sous-compétences)
 import { useState } from 'react';
-import { Icon } from './Icon';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../lib/auth';
 import { categories, childrenOf, DEFAULT_COMPETENCES, loadCompetences, type Competence } from '../lib/competences';
@@ -36,28 +35,19 @@ export function CompetenceChip({ c, on = true, onClick, small }: { c: Competence
 export function CompetencePicker({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) {
   const list = useCompetences();
   const [shown, setShown] = useState<string[]>([]); // catégories dépliées (toutes les sous-compétences visibles)
-  // Une sous-compétence cochée remplace la catégorie entière (sans double compte) ; sans sous-compétence, la catégorie reste cochée
-  const toggle = (cat: Competence, id: string) => {
-    const kids = childrenOf(list, cat.id).map((k) => k.id);
-    const next = (value.includes(id) ? value.filter((x) => x !== id) : [...value, id]).filter((x) => x !== cat.id);
-    onChange(next.some((x) => kids.includes(x)) ? next : [...next, cat.id]);
-  };
-  // Clic sur une pastille : la coche et déplie ses sous-compétences ; ensuite, un clic replie ou déplie la liste
-  // (sans décocher). Une pastille sans sous-compétence se coche / décoche directement.
-  const kidsOf = (cat: Competence) => childrenOf(list, cat.id).map((k) => k.id);
+  // Une compétence qui a des sous-compétences est définie par celles qui sont cochées : décocher la dernière la retire
+  const toggle = (cat: Competence, id: string) =>
+    onChange((value.includes(id) ? value.filter((x) => x !== id) : [...value, id]).filter((x) => x !== cat.id));
+  // Clic sur une pastille : déplie ses sous-compétences ; un second clic replie (en gardant les choix). Repliée sans
+  // sous-compétence cochée, elle est retirée. Une pastille sans sous-compétence se coche / décoche directement.
   const toggleCat = (cat: Competence) => {
-    const kids = kidsOf(cat);
-    const open = value.includes(cat.id) || kids.some((k) => value.includes(k));
-    if (open && kids.length) return setShown(shown.includes(cat.id) ? [] : [cat.id]);
-    onChange(open ? value.filter((x) => x !== cat.id) : [...value, cat.id]);
-    setShown(open || !kids.length ? [] : [cat.id]);
-  };
-  const removeCat = (cat: Competence) => {
-    const kids = kidsOf(cat);
-    onChange(value.filter((x) => x !== cat.id && !kids.includes(x)));
+    const kids = childrenOf(list, cat.id).map((k) => k.id);
+    if (!kids.length) return onChange(value.includes(cat.id) ? value.filter((x) => x !== cat.id) : [...value, cat.id]);
+    if (!shown.includes(cat.id)) return setShown([cat.id]);
     setShown([]);
+    if (!kids.some((k) => value.includes(k)) && value.includes(cat.id)) onChange(value.filter((x) => x !== cat.id));
   };
-  const opened = categories(list).filter((cat) => value.includes(cat.id) || childrenOf(list, cat.id).some((k) => value.includes(k.id)));
+  const opened = categories(list).filter((cat) => shown.includes(cat.id) || value.includes(cat.id) || childrenOf(list, cat.id).some((k) => value.includes(k.id)));
   return (
     <div className="stack" style={{ gap: 4, marginTop: 4 }}>
       <div className="row" style={{ gap: 3 }}>
@@ -79,11 +69,6 @@ export function CompetencePicker({ value, onChange }: { value: string[]; onChang
                 </span>
               </label>
             ))}
-            {all && (
-              <button type="button" className="btn small ghost" style={{ alignSelf: 'flex-start', padding: '0 6px' }} onClick={() => removeCat(cat)}>
-                <Icon name="x" size={12} /> retirer {cat.code} de ce critère
-              </button>
-            )}
           </div>
         );
       })}
