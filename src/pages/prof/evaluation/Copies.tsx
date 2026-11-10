@@ -228,19 +228,28 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
             Touches : <span className="code">1 2 3 4</span> = 0 · 40 · 80 · 100 % (puis question suivante) · <span className="code">0</span> ou{' '}
             <span className="code">,</span> = saisie libre (0,2…) · ↑ ↓ question · Effacer = non noté
           </div>
+          {selfDone && (
+            <div className="row" style={{ justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
+              <b className="small muted" title="Autocorrection" style={{ width: 28, textAlign: 'center', cursor: 'help' }}>
+                A.C.
+              </b>
+            </div>
+          )}
           {ev.criteria.map((c, i) => {
             const l = r.levels[c.id];
             const active = i === focus;
             return (
+              <div key={c.id} className="row" style={{ gap: 6, flexWrap: 'nowrap' }}>
               <div
-                key={c.id}
                 ref={(el) => {
                   rowRefs.current[i] = el;
                 }}
                 onClick={() => setFocus(i)}
                 className="row"
                 style={{
-                  flexWrap: 'nowrap',
+                  flex: 1,
+                  minWidth: 0,
+                  flexWrap: 'wrap', // téléphone : les boutons passent sous l'intitulé
                   gap: 10,
                   padding: '6px 8px',
                   borderRadius: 10,
@@ -252,15 +261,10 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
                 <span className="muted small" style={{ width: 22 }}>
                   {i + 1}
                 </span>
-                <span style={{ flex: 1, fontWeight: 600 }}>
+                <span style={{ flex: 1, minWidth: 90, fontWeight: 600 }}>
                   {c.label || <i className="muted">(sans intitulé)</i>}
                   {c.cardIds?.length ? <span className="small muted"> · <Icon name="cards" size={13} />{c.cardIds.length}</span> : null}
                 </span>
-                {selfDone && selfDone.levels[c.id] !== undefined && (
-                  <span title={`Autocorrection de l'élève : ${pct(selfDone.levels[c.id])} %`} style={{ opacity: 0.85 }}>
-                    <LevelFace i={faceOf(selfDone.levels[c.id])} size={20} />
-                  </span>
-                )}
                 <span className="small muted" style={{ whiteSpace: 'nowrap' }}>
                   {c.points} pt
                 </span>
@@ -311,6 +315,15 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
                 ) : (
                   <span style={{ width: 64, textAlign: 'right', fontWeight: 900 }}>{l === null || l === undefined ? '' : `${pct(l)} %`}</span>
                 )}
+              </div>
+              {selfDone && (
+                <span
+                  style={{ width: 28, display: 'grid', placeItems: 'center', flex: 'none' }}
+                  title={selfDone.levels[c.id] !== undefined ? `Autocorrection : ${pct(selfDone.levels[c.id])} %` : 'Autocorrection'}
+                >
+                  {selfDone.levels[c.id] !== undefined && <LevelFace i={faceOf(selfDone.levels[c.id])} size={22} />}
+                </span>
+              )}
               </div>
             );
           })}
