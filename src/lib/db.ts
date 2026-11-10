@@ -16,6 +16,7 @@ export interface Card {
   subject: string;
   level?: string; // ex. "4e"
   theme?: string; // ex. "Matière"
+  introUnitId?: string; // point d'introduction : séquence où la flashcard est vue pour la première fois (validé par le professeur)
   tags: string[];
   front: string; // HTML ; images référencées par src="media:ID"
   back: string;

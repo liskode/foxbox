@@ -1,4 +1,4 @@
-// Flashcards : liste (recherche, création), import et, pour l'administrateur de Physifox, flashcards rédigées à valider.
+// Flashcards : liste (recherche, création), point d'introduction, import et, pour l'administrateur de Physifox, flashcards rédigées à valider.
 // Les statistiques sont dans chaque classe (onglet Flashcards).
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -6,12 +6,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Cards } from './Cards';
 import { ImportPage } from './Import';
 import { ValidationTab } from './Physifox';
+import { IntroTab } from './IntroPoints';
 import { TabBar } from '../../components/TabBar';
 import { db } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { usePfAdmin } from '../../lib/physifoxAdmin';
 
-type Tab = 'cartes' | 'validation' | 'import';
+type Tab = 'cartes' | 'introduction' | 'validation' | 'import';
 
 export function Flashcards() {
   const [params, setParams] = useSearchParams();
@@ -20,7 +21,7 @@ export function Flashcards() {
   const admin = usePfAdmin(session?.id);
   const pending = useLiveQuery(() => db.cardDrafts.where('status').equals('attente').count(), [], 0);
   const tabs = useMemo(
-    () => [['cartes', 'Liste'], ...(admin ? [['validation', pending ? `À valider (${pending})` : 'À valider']] : []), ['import', 'Import']] as [Tab, string][],
+    () => [['cartes', 'Liste'], ['introduction', 'Introduction'], ...(admin ? [['validation', pending ? `À valider (${pending})` : 'À valider']] : []), ['import', 'Import']] as [Tab, string][],
     [admin, pending],
   );
 
@@ -33,6 +34,7 @@ export function Flashcards() {
         <TabBar tabs={tabs} current={tab} onChange={(k) => setParams({ onglet: k }, { replace: true })} />
       </div>
       {tab === 'cartes' && <Cards embedded />}
+      {tab === 'introduction' && <IntroTab />}
       {tab === 'validation' && admin && <ValidationTab />}
       {tab === 'import' && <ImportPage embedded />}
     </div>
