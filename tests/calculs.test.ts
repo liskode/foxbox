@@ -155,3 +155,15 @@ describe('Dates', () => {
     expect(diffDays('2026-11-10', '2026-10-10')).toBe(31);
   });
 });
+
+describe('niveau déduit du nom de la classe', () => {
+  it('reconnaît le collège et le lycée', async () => {
+    const { levelOfName } = await import('../src/lib/units');
+    expect(levelOfName('4A_2627')).toBe('4e');
+    expect(levelOfName('2B')).toBe('2nde');
+    expect(levelOfName('1G3')).toBe('1re');
+    expect(levelOfName('TG1')).toBe('Tle');
+    expect(levelOfName('Tle A')).toBe('Tle');
+    expect(levelOfName('Test')).toBeUndefined();
+  });
+});

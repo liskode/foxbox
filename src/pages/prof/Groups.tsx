@@ -7,7 +7,7 @@ import { useAuth } from '../../lib/auth';
 import { ClassOverview, ClassEvaluations } from '../../components/ClassOverview';
 import { Progression } from '../../components/Progression';
 import { Trombi } from './Trombi';
-import { levelOfName, levelColors, applyLevelColors, setLevelColor, LEVELS } from '../../lib/units';
+import { levelOfName, levelColors, applyLevelColors, setLevelColor, LEVELS, LYCEE } from '../../lib/units';
 import { StatsTab } from './groups/StatsTab';
 import { StudentsTab } from './groups/StudentsTab';
 import { TeachersTab } from './groups/SettingsTab';
@@ -80,10 +80,10 @@ export function Groups({ embedded = false }: { embedded?: boolean }) {
       </div>
       <div className="panel stack">
         <h3 style={{ margin: 0 }}>Couleurs des niveaux</h3>
-        <span className="small muted">Toutes les classes d'un même niveau (déduit du début du nom : « 4A… » → 4e) prennent sa couleur.</span>
-        {LEVELS.map((l) => (
+        <span className="small muted">Toutes les classes d'un même niveau (déduit du début du nom : « 4A… » → 4e, « 2B… » → 2nde, « 1G… » → 1re, « TG… » ou « Tle… » → Tle) prennent sa couleur.</span>
+        {[...LEVELS, ...LYCEE].map((l) => (
           <div key={l} className="row" style={{ gap: 8 }}>
-            <b style={{ width: 34 }}>{l}</b>
+            <b style={{ width: 44 }}>{l}</b>
             {CLASS_COLORS.map((c) => (
               <button
                 key={c.value}

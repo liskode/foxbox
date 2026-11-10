@@ -76,11 +76,18 @@ export const DEFAULT_LEVEL_COLORS: Record<string, string> = {
   '5e': '#fbe7b0', // Moutarde
   '4e': '#d3eaf5', // Ciel
   '3e': '#f9d3cd', // Saumon
+  '2nde': '#e0dbf1', // Lavande
+  '1re': '#cfece4', // Turquoise
+  Tle: '#f4d8e2', // Rose
 };
 
-// Niveau déduit du nom de la classe (« 4A_2627 » → 4e)
+// Niveau déduit du nom de la classe (« 4A_2627 » → 4e, « 2B » → 2nde, « 1G3 » → 1re, « TG1 » ou « Tle A » → Tle)
 export const levelOfName = (name: string) => {
-  const m = name.match(/^\s*(\d)/);
+  const n = name.trim();
+  if (/^(tle|tale|term)/i.test(n) || /^T(?![a-zà-ÿ])/.test(n)) return 'Tle';
+  if (/^(2|seconde)/i.test(n)) return '2nde';
+  if (/^(1|premi)/i.test(n)) return '1re';
+  const m = n.match(/^(\d)/);
   return m ? `${m[1]}e` : undefined;
 };
 

@@ -286,7 +286,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'messages : votre photo ou logo, interlocuteurs de la famille et leur code (Mère M, Père P, Grand-mère GM…)',
       'notification par e-mail des nouveaux messages (professeur, élève, parents : chacun choisit)',
       'origines des flashcards (ER, MM…)',
-      'classes : création, couleurs des niveaux, archivage',
+      'classes : création, couleurs des niveaux (de la 6e à la terminale), archivage',
       'compte',
     ],
   },
