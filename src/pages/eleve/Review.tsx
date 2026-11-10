@@ -14,6 +14,7 @@ export function ReviewSession() {
   const [i, setI] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const flippedAt = useRef(0);
+  const busy = useRef(false);
   const [tally, setTally] = useState({ easy: 0, hard: 0, forgot: 0 });
 
   useEffect(() => {
@@ -32,25 +33,32 @@ export function ReviewSession() {
   }, []);
 
   const answer = useCallback(
-    async (r: Rating) => {
-      // Évite qu'un double appui sur « Voir la réponse » enregistre une réponse par erreur
-      if (!queue || !flipped || Date.now() - flippedAt.current < 500) return;
-      await recordAnswer(session!.id, queue[i].id, subject, r);
-      setTally((t) => ({ ...t, [r]: t[r] + 1 }));
-      setFlipped(false);
-      setI((n) => n + 1);
+    async (r: Rating, byKey = false) => {
+      // Évite qu'un double appui à l'écran sur « Voir la réponse » enregistre une réponse par erreur
+      // (pas au clavier : Espace puis 3 enchaînés vite est voulu)
+      if (!queue || !flipped || busy.current || (!byKey && Date.now() - flippedAt.current < 500)) return;
+      busy.current = true; // une seule réponse par flashcard, même en appuyant deux fois très vite
+      try {
+        await recordAnswer(session!.id, queue[i].id, subject, r);
+        setTally((t) => ({ ...t, [r]: t[r] + 1 }));
+        setFlipped(false);
+        setI((n) => n + 1);
+      } finally {
+        busy.current = false;
+      }
     },
     [queue, i, flipped, session, subject],
   );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return; // touche maintenue : un seul appui
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         flip();
-      } else if (e.key === '1') answer('forgot');
-      else if (e.key === '2') answer('hard');
-      else if (e.key === '3') answer('easy');
+      } else if (e.key === '1') answer('forgot', true);
+      else if (e.key === '2') answer('hard', true);
+      else if (e.key === '3') answer('easy', true);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

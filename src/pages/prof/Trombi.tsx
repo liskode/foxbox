@@ -40,6 +40,7 @@ function Session({ entries, teacherId, onEnd, free = false }: { entries: Entry[]
   const [i, setI] = useState(0);
   const [shown, setShown] = useState(false);
   const shownAt = useRef(0);
+  const busy = useRef(false);
 
   // La file est construite une seule fois : une mise à jour de la liste ne doit pas relancer la séance
   const started = useRef(false);
@@ -69,36 +70,43 @@ function Session({ entries, teacherId, onEnd, free = false }: { entries: Entry[]
   }, []);
 
   const answer = useCallback(
-    async (r: Rating) => {
-      if (!queue || !shown || Date.now() - shownAt.current < 500) return;
-      const e = queue[i];
-      const id = `${teacherId}|${e.student.id}`;
-      const prev = await db.trombi.get(id);
-      if (free && prev && r !== 'forgot') {
-        // Entraînement libre : un visage reconnu garde sa boîte et sa date de révision
+    async (r: Rating, byKey = false) => {
+      // Double appui à l'écran sur « Voir » : on ignore une réponse trop rapide (pas au clavier)
+      if (!queue || !shown || busy.current || (!byKey && Date.now() - shownAt.current < 500)) return;
+      busy.current = true; // une seule réponse par visage, même en appuyant deux fois très vite
+      try {
+        const e = queue[i];
+        const id = `${teacherId}|${e.student.id}`;
+        const prev = await db.trombi.get(id);
+        if (free && prev && r !== 'forgot') {
+          // Entraînement libre : un visage reconnu garde sa boîte et sa date de révision
+          setShown(false);
+          setI((n) => n + 1);
+          return;
+        }
+        const box = nextBox(prev?.box ?? 0, r, 'strict');
+        const card: TrombiCard = { id, teacherId, studentId: e.student.id, box, due: addDays(today(), INTERVALS[box]) };
+        await db.trombi.put(card);
+        // Un visage oublié revient en fin de séance
+        if (r === 'forgot') setQueue((q) => [...q!, e]);
         setShown(false);
         setI((n) => n + 1);
-        return;
+      } finally {
+        busy.current = false;
       }
-      const box = nextBox(prev?.box ?? 0, r, 'strict');
-      const card: TrombiCard = { id, teacherId, studentId: e.student.id, box, due: addDays(today(), INTERVALS[box]) };
-      await db.trombi.put(card);
-      // Un visage oublié revient en fin de séance
-      if (r === 'forgot') setQueue((q) => [...q!, e]);
-      setShown(false);
-      setI((n) => n + 1);
     },
     [queue, i, shown, teacherId, free],
   );
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
+      if (ev.repeat) return; // touche maintenue : un seul appui
       if (ev.key === ' ' || ev.key === 'Enter') {
         ev.preventDefault();
         show();
-      } else if (ev.key === '1') answer('forgot');
-      else if (ev.key === '2') answer('hard');
-      else if (ev.key === '3') answer('easy');
+      } else if (ev.key === '1') answer('forgot', true);
+      else if (ev.key === '2') answer('hard', true);
+      else if (ev.key === '3') answer('easy', true);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
