@@ -7,7 +7,6 @@ export const LYCEE = ['2nde', '1re', 'Tle'];
 // Après le bac (BTS…)
 export const POSTBAC = ['1re année', '2e année'];
 export const ALL_LEVELS = [...LEVELS, ...LYCEE, ...POSTBAC];
-export const byLevel = (a: string, b: string) => ALL_LEVELS.indexOf(a) - ALL_LEVELS.indexOf(b);
 
 // Thèmes du programme de cycle 4 (5e, 4e, 3e)
 export const THEME_NAMES: Record<string, string> = {

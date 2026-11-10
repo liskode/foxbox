@@ -733,6 +733,15 @@ export const db = new FoxBoxDB();
 
 export const uid = () => crypto.randomUUID();
 
+// Tri des élèves par nom puis prénom
+export const byName = (a: Student, b: Student) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName);
+
+// Élèves d'une classe ou d'un groupe (dans l'ordre d'inscription : trier avec byName si besoin)
+export async function groupStudents(groupId: string): Promise<Student[]> {
+  const ms = await db.memberships.where('groupId').equals(groupId).toArray();
+  return (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[];
+}
+
 export const SUBJECTS = ['Physique-Chimie', 'SVT', 'Technologie', 'Mathématiques', 'BTS CPI'];
 
 // Compte professeur de démonstration (à remplacer par Supabase Auth en production)

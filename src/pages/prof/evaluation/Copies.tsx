@@ -174,7 +174,7 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
                   {replies.get(student.id)}
                 </span>
               )}
-              <span style={{ fontSize: '0.8rem' }}>{rr?.absent ? 'ABS' : done ? '✓' : ''}</span>
+              <span style={{ fontSize: '0.8rem' }}>{rr?.absent ? 'ABS' : done ? <Icon name="check" size={14} /> : ''}</span>
             </button>
           );
         })}
@@ -203,7 +203,7 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
               </div>
               <CompetenceBadges ev={ev} r={r} />
               <button className={'btn small' + (r.absent ? ' danger' : ' ghost')} onClick={() => saveResult(ev, { ...r, absent: !r.absent })}>
-                {r.absent ? 'Absent ✓' : 'Absent (A)'}
+                {r.absent ? <>Absent <Icon name="check" size={14} /></> : 'Absent (A)'}
               </button>
               <NoteButton student={cur.student} />
             </div>

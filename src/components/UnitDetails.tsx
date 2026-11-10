@@ -1,4 +1,5 @@
 // Descriptif d'une séquence ou d'une séance, et ses documents (PDF) téléchargeables par les élèves.
+import { alertBox, confirmBox } from './Dialog';
 import { useEffect, useState } from 'react';
 import { db, fileBlob, type Unit } from '../lib/db';
 import { mediaUrl } from './CardFace';
@@ -9,7 +10,7 @@ export const sizeLabel = (n: number) => (n > 1048576 ? `${(n / 1048576).toFixed(
 
 export async function openDocument(mediaId: string, name: string) {
   const url = await mediaUrl(mediaId);
-  if (!url) return alert('Document introuvable (vérifiez la connexion).');
+  if (!url) return alertBox('Document introuvable (vérifiez la connexion).');
   const a = document.createElement('a');
   a.href = url;
   a.download = name;
@@ -42,7 +43,7 @@ export function UnitDetails({ unit }: { unit: Unit }) {
     const added = [];
     for (const f of [...files]) {
       if (f.size > MAX_MB * 1048576) {
-        alert(`« ${f.name} » dépasse ${MAX_MB} Mo.`);
+        alertBox(`« ${f.name} » dépasse ${MAX_MB} Mo.`);
         continue;
       }
       setBusy(`Ajout de ${f.name}…`);
@@ -55,7 +56,7 @@ export function UnitDetails({ unit }: { unit: Unit }) {
   }
 
   async function remove(mediaId: string, name: string) {
-    if (!confirm(`Retirer le document « ${name} » ?`)) return;
+    if (!(await confirmBox(`Retirer le document « ${name} » ?`))) return;
     await db.units.update(unit.id, { documents: docs.filter((d) => d.mediaId !== mediaId) });
     await db.media.delete(mediaId);
   }
@@ -85,7 +86,7 @@ export function UnitDetails({ unit }: { unit: Unit }) {
           </button>
           <span className="small muted">{sizeLabel(d.size)}</span>
           <button className="btn small ghost" onClick={() => remove(d.mediaId, d.name)} title="Retirer">
-            ✕
+            <Icon name="x" size={14} />
           </button>
         </div>
       ))}
@@ -105,7 +106,7 @@ export function DocumentsEditor({ docs, onChange, label = 'Documents' }: { docs:
     const added = [];
     for (const f of [...files]) {
       if (f.size > MAX_MB * 1048576) {
-        alert(`« ${f.name} » dépasse ${MAX_MB} Mo.`);
+        alertBox(`« ${f.name} » dépasse ${MAX_MB} Mo.`);
         continue;
       }
       setBusy(`Ajout de ${f.name}…`);
@@ -117,7 +118,7 @@ export function DocumentsEditor({ docs, onChange, label = 'Documents' }: { docs:
     setBusy('');
   }
   async function remove(mediaId: string, name: string) {
-    if (!confirm(`Retirer le document « ${name} » ?`)) return;
+    if (!(await confirmBox(`Retirer le document « ${name} » ?`))) return;
     await onChange(docs.filter((d) => d.mediaId !== mediaId));
     await db.media.delete(mediaId);
   }
@@ -140,7 +141,7 @@ export function DocumentsEditor({ docs, onChange, label = 'Documents' }: { docs:
           </button>
           <span className="small muted">{sizeLabel(d.size)}</span>
           <button className="btn small ghost" onClick={() => remove(d.mediaId, d.name)} title="Retirer">
-            ✕
+            <Icon name="x" size={14} />
           </button>
         </div>
       ))}

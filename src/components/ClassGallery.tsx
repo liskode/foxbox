@@ -1,19 +1,16 @@
 // Galerie des élèves d'une classe (photo et prénom, autant de lignes que nécessaire) et sous-groupes (demi-groupes, îlots…).
 // Un sous-groupe choisi comme « pinceau » : un clic sur un élève l'y affecte (ou l'en retire).
-import { ask } from './Dialog';
+import { ask, confirmBox } from './Dialog';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, SUBGROUP_COLORS, type Group, type Student, type Subgroup } from '../lib/db';
+import { db, byName, groupStudents, uid, SUBGROUP_COLORS, type Group, type Student, type Subgroup } from '../lib/db';
 import { Avatar } from './Avatar';
 import { FlagBadges, useAllFlags } from './StudentNote';
 
 export function useClassStudents(groupId: string) {
   return useLiveQuery(async () => {
-    const ms = await db.memberships.where('groupId').equals(groupId).toArray();
-    return ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort(
-      (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName),
-    );
+    return (await groupStudents(groupId)).sort(byName);
   }, [groupId], [] as Student[]);
 }
 
@@ -82,8 +79,8 @@ export function ClassGallery({ group }: { group: Group }) {
             </button>
             <button
               className="btn small danger"
-              onClick={() => {
-                if (!confirm(`Supprimer le sous-groupe « ${active.name} » ?`)) return;
+              onClick={async () => {
+                if (!(await confirmBox(`Supprimer le sous-groupe « ${active.name} » ?`))) return;
                 save(subs.filter((s) => s.id !== active.id));
                 setBrush(null);
               }}

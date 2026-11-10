@@ -1,8 +1,9 @@
 // Compétences : référentiel (RES, ANA, REA, VAL, COM et sous-compétences) et niveau atteint par les élèves d'une classe.
-import { ask } from '../../components/Dialog';
+import { Icon } from '../../components/Icon';
+import { ask, confirmBox } from '../../components/Dialog';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, isClass, type Student, shortName } from '../../lib/db';
+import { db, byName, groupStudents, isClass, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import {
   MASTERY,
@@ -75,9 +76,9 @@ function Referential({ list, selected, onSelect }: { list: Competence[]; selecte
                 className="btn small ghost"
                 style={{ padding: '0 6px' }}
                 title="Supprimer"
-                onClick={() => confirm(`Supprimer « ${k.code} ${k.name} » ? Les critères qui l'utilisent ne seront plus rattachés.`) && save(list.filter((x) => x.id !== k.id))}
+                onClick={async () => (await confirmBox(`Supprimer « ${k.code} ${k.name} » ? Les critères qui l'utilisent ne seront plus rattachés.`)) && save(list.filter((x) => x.id !== k.id))}
               >
-                ✕
+                <Icon name="x" size={14} />
               </button>
             </div>
           ))}
@@ -107,10 +108,7 @@ export function Competences() {
 
   const data = useLiveQuery(async () => {
     if (!gid) return null;
-    const ms = await db.memberships.where('groupId').equals(gid).toArray();
-    const students = ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort(
-      (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName),
-    );
+    const students = (await groupStudents(gid)).sort(byName);
     return { students, obs: await observations([gid]) };
   }, [gid]);
 

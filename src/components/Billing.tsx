@@ -1,4 +1,5 @@
 // Soutien scolaire : tarifs, règlements, relevé mensuel et attestation annuelle.
+import { alertBox } from './Dialog';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -56,7 +57,7 @@ export function BillingPanel({ teacherId, student, showName }: { teacherId: stri
   async function addPayment() {
     if (!pay) return;
     const amount = Number(pay.amount.replace(',', '.'));
-    if (!(amount > 0)) return alert('Montant invalide.');
+    if (!(amount > 0)) return alertBox('Montant invalide.');
     const p = { id: uid(), teacherId, studentId: student.id, date: pay.date, amount, method: pay.method, label: pay.label.trim() || undefined, createdAt: Date.now() };
     await db.payments.put(p);
     setPay(null);

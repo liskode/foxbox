@@ -125,7 +125,7 @@ function TodoRow({ t, showGroup }: { t: Todo; showGroup: boolean }) {
       )}
       {t.due && <span className="small muted" style={{ whiteSpace: 'nowrap' }}>{frDate(t.due)}</span>}
       <button className="btn small ghost" title="Supprimer" onClick={() => db.todos.delete(t.id)}>
-        ✕
+        <Icon name="x" size={14} />
       </button>
     </div>
   );

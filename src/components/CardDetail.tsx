@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ask } from './Dialog';
+import { ask, alertBox, confirmBox } from './Dialog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, fileBlob, SUBJECTS, type Card } from '../lib/db';
 import { cardCode, codePrefix, loadOrigins, rememberOrigin, DEFAULT_ORIGINS } from '../lib/cardCodes';
@@ -55,7 +55,7 @@ export function FaceEditor({
   async function addImageUrl() {
     const url = (await ask("Insérer une image par lien", { label: "Adresse de l'image (clic droit sur l'image › « Copier l'adresse de l'image »)", placeholder: 'https://…' }))?.trim();
     if (!url) return;
-    if (!/^https?:\/\//i.test(url)) return alert("L'adresse doit commencer par http:// ou https://");
+    if (!/^https?:\/\//i.test(url)) return alertBox("L'adresse doit commencer par http:// ou https://");
     let tag = `<img src="${url.replace(/"/g, '%22')}">`;
     try {
       const r = await fetch(url);
@@ -268,7 +268,7 @@ export function CardDetail({
 
   // La flashcard est seulement marquée supprimée : ses images restent (une autre flashcard peut les utiliser)
   async function remove() {
-    if (!confirm(`Supprimer la flashcard ${card!.code} ? Elle disparaîtra des révisions des élèves (leur historique est conservé).`)) return;
+    if (!(await confirmBox(`Supprimer la flashcard ${card!.code} ? Elle disparaîtra des révisions des élèves (leur historique est conservé).`))) return;
     await db.cards.update(card!.id, { deleted: true, updatedAt: Date.now() });
     onClose();
   }
@@ -288,13 +288,13 @@ export function CardDetail({
             {siblings && siblings.length > 1 && idx >= 0 && (
               <span className="row" style={{ gap: 4 }}>
                 <button className="btn small ghost" disabled={idx === 0} onClick={() => go(-1)} title="Flashcard précédente (←)">
-                  ◀
+                  <Icon name="arrowLeft" size={14} />
                 </button>
                 <span className="small muted">
                   {idx + 1}/{siblings.length}
                 </span>
                 <button className="btn small ghost" disabled={idx === siblings.length - 1} onClick={() => go(1)} title="Flashcard suivante (→)">
-                  ▶
+                  <Icon name="arrowRight" size={14} />
                 </button>
               </span>
             )}

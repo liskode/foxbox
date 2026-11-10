@@ -1,3 +1,5 @@
+import { Icon } from '../../components/Icon';
+import { confirmBox } from '../../components/Dialog';
 import { useEffect, useState } from 'react';
 import { DEFAULT_ORIGINS, defaultOrigin, loadOrigins, rememberOrigin } from '../../lib/cardCodes';
 import { useAuth } from '../../lib/auth';
@@ -19,7 +21,7 @@ function History() {
     const warn = reviews
       ? `\n\nAttention : les élèves ont déjà fait ${reviews} révision(s) sur ces flashcards. Leur historique est conservé, mais les flashcards supprimées disparaîtront de leurs révisions.`
       : '';
-    if (!confirm(`Annuler l'import « ${name} » ?\n\n• ${added} flashcard(s) ajoutée(s) seront supprimées\n• ${updated} flashcard(s) mise(s) à jour reprendront leur contenu d'avant${warn}`)) return;
+    if (!(await confirmBox(`Annuler l'import « ${name} » ?\n\n• ${added} flashcard(s) ajoutée(s) seront supprimées\n• ${updated} flashcard(s) mise(s) à jour reprendront leur contenu d'avant${warn}`))) return;
     setBusy(id);
     await undoImport(id);
     setBusy('');
@@ -204,7 +206,7 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
               Lancer la lecture ({ocrPending} flashcard(s))
             </button>
           ) : (
-            <span className="muted">{cardCount ? '✓ Toutes les flashcards sont lues.' : 'Aucune flashcard pour le moment.'}</span>
+            <span className="muted">{cardCount ? <><Icon name="check" size={14} /> Toutes les flashcards sont lues.</> : 'Aucune flashcard pour le moment.'}</span>
           )}
         </div>
       </div>
@@ -218,11 +220,11 @@ export function ImportPage({ embedded = false }: { embedded?: boolean }) {
         </p>
         <div className="row">
           <button className="btn primary" onClick={demoData} disabled={!cardCount || !!demo || !!busy}>
-            {demo ? '✓ Données de démo créées' : 'Générer les données de démo'}
+            {demo ? <><Icon name="check" size={14} /> Données de démo créées</> : 'Générer les données de démo'}
           </button>
           <button
             className="btn danger"
-            onClick={() => confirm('Effacer toutes les données de FoxBox dans ce navigateur ?') && resetAll()}
+            onClick={async () => (await confirmBox('Effacer toutes les données de FoxBox dans ce navigateur ?')) && resetAll()}
           >
             Tout effacer
           </button>

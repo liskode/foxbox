@@ -1,5 +1,6 @@
 // Case « classe × séance » : date prévisionnelle (grise) ou date où la séance a été faite (noire).
 // Un clic ouvre un petit choix : faite lors de l'un des derniers cours, à une autre date, ou décocher.
+import { Icon } from './Icon';
 import { db, shortName } from '../lib/db';
 import { toast } from './Toast';
 import { unitLabel } from '../lib/units';
@@ -101,7 +102,7 @@ export function DoneCell({
         }}
       >
         {showName && <span style={{ color: 'var(--ink)', fontWeight: 800 }}>{g.name.replace(/_.*/, '')} </span>}
-        {done ? `✓ ${dm(done)}` : planned ? dm(planned) : '—'}
+        {done ? <><Icon name="check" size={14} /> {dm(done)}</> : planned ? dm(planned) : '—'}
       </button>
       {open &&
         createPortal(

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth, homeOf } from '../lib/auth';
 import { db, DEMO_TEACHER } from '../lib/db';
@@ -7,7 +7,6 @@ import { ONLINE } from '../lib/supabase';
 
 export function Login() {
   const { session, ready, login } = useAuth();
-  const nav = useNavigate();
   const [l, setL] = useState('');
   const [p, setP] = useState('');
   const [err, setErr] = useState('');

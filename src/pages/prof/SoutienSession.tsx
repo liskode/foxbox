@@ -3,18 +3,17 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type Group, type SessionNoteKind, type Student, type TutoringSession, type Unit } from '../../lib/db';
+import { db, groupStudents, uid, type Group, type SessionNoteKind, type Student, type TutoringSession, type Unit } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { deleteSession, durationLabel, syncPublications, trackLabel } from '../../lib/tutoring';
 import { byProgression, unitLabel, unitSubject } from '../../lib/units';
 import { themesOf } from '../../lib/themes';
 import { cardCode, defaultOrigin } from '../../lib/cardCodes';
-import { FileList, HomeworkTag, UploadButton, dayName, whenLabel } from '../../components/Soutien';
+import { FileList, HomeworkTag, UploadButton, whenLabel } from '../../components/Soutien';
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
 import { CardFace, RichText } from '../../components/CardFace';
 import { themeColor } from '../../components/widgets';
-import { frDate } from '../../lib/dates';
 import { toast } from '../../components/Toast';
 import { LineTag } from '../../components/Billing';
 import { markFilesSeen } from '../../components/TutoringTile';
@@ -32,8 +31,7 @@ export function SoutienSession() {
   const s = useLiveQuery(async () => (await db.tutoringSessions.get(sid!)) ?? null, [sid]);
   const students = useLiveQuery(
     async () => {
-      const ms = await db.memberships.where('groupId').equals(id!).toArray();
-      return ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort((a, b) => a.firstName.localeCompare(b.firstName));
+      return (await groupStudents(id!)).sort((a, b) => a.firstName.localeCompare(b.firstName));
     },
     [id],
     [],

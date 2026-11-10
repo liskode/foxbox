@@ -15,6 +15,7 @@ interface Request {
   message?: string;
   fields: Field[];
   ok?: string;
+  cancel?: boolean; // bouton Annuler même sans champ (demande de confirmation)
   resolve: (v: Record<string, string> | null) => void;
 }
 
@@ -35,6 +36,17 @@ export async function showInfo(title: string, message: string) {
   });
 }
 
+// Demande de confirmation (remplace confirm() du navigateur) : true si l'utilisateur valide
+export function confirmBox(message: string, ok = 'Confirmer'): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!open) return resolve(window.confirm(message));
+    open({ title: '', message, fields: [], ok, cancel: true, resolve: (v) => resolve(!!v) });
+  });
+}
+
+// Message d'information ou d'erreur (remplace alert() du navigateur)
+export const alertBox = (message: string) => showInfo('', message);
+
 // Une seule valeur (texte, ou choix si options) ; null si annulé
 export async function ask(title: string, field: Omit<Field, 'key' | 'label'> & { label?: string } = {}): Promise<string | null> {
   const r = await askForm(title, [{ key: 'v', label: field.label ?? '', ...field }]);
@@ -45,6 +57,7 @@ export function DialogHost() {
   const [req, setReq] = useState<Request | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const first = useRef<HTMLInputElement>(null);
+  const okBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     open = (r) => {
       setValues(Object.fromEntries(r.fields.map((f) => [f.key, f.value ?? f.options?.[0]?.value ?? ''])));
@@ -55,7 +68,7 @@ export function DialogHost() {
     };
   }, []);
   useEffect(() => {
-    if (req) setTimeout(() => first.current?.focus(), 30);
+    if (req) setTimeout(() => (first.current ?? okBtn.current)?.focus(), 30);
   }, [req]);
   if (!req) return null;
 
@@ -78,7 +91,7 @@ export function DialogHost() {
           else if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') submit();
         }}
       >
-        <b style={{ fontSize: '1.05rem' }}>{req.title}</b>
+        {req.title && <b style={{ fontSize: '1.05rem' }}>{req.title}</b>}
         {req.message && <div style={{ whiteSpace: 'pre-wrap', fontSize: '1.05rem' }}>{req.message}</div>}
         {req.fields.map((f) => {
           const isFirst = !f.options && firstText;
@@ -112,12 +125,12 @@ export function DialogHost() {
           );
         })}
         <div className="row" style={{ justifyContent: 'flex-end' }}>
-          {req.fields.length > 0 && (
+          {(req.fields.length > 0 || req.cancel) && (
             <button className="btn ghost" onClick={() => done(null)}>
               Annuler
             </button>
           )}
-          <button className="btn primary" disabled={!valid} onClick={submit}>
+          <button ref={okBtn} className="btn primary" disabled={!valid} onClick={submit}>
             {req.ok}
           </button>
         </div>

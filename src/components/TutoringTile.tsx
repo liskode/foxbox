@@ -2,7 +2,7 @@
 // solde des règlements, régularité et boîtes des flashcards). Un clic ouvre le suivi ; chaque indicateur ouvre son onglet.
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Group, type Student } from '../lib/db';
+import { db, groupStudents, type Group } from '../lib/db';
 import { durationLabel, isUpcoming, trackLabel } from '../lib/tutoring';
 import { unreadIn } from '../lib/messages';
 import { loadLedger, money } from '../lib/billing';
@@ -37,8 +37,7 @@ function Badge({ n }: { n: number }) {
 export function TutoringTile({ group, teacherId }: { group: Group; teacherId: string }) {
   const nav = useNavigate();
   const d = useLiveQuery(async () => {
-    const ms = await db.memberships.where('groupId').equals(group.id).toArray();
-    const students = ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort((a, b) => a.firstName.localeCompare(b.firstName));
+    const students = (await groupStudents(group.id)).sort((a, b) => a.firstName.localeCompare(b.firstName));
     const sessions = await db.tutoringSessions.where('groupId').equals(group.id).toArray();
     const seen = (await db.messageReads.get(filesSeenId(teacherId, group.id)))?.at ?? 0;
     const files = await db.tutoringFiles.where('groupId').equals(group.id).filter((f) => f.byStudent && f.createdAt > seen).count();

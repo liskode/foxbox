@@ -1,10 +1,10 @@
 // Classe : onglet Élèves (import CSV, photos, identifiants, objectifs, aménagements).
-import { showInfo } from '../../../components/Dialog';
+import { showInfo, alertBox, confirmBox } from '../../../components/Dialog';
 import { useState } from 'react';
 import { askForm } from '../../../components/Dialog';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Group, type Rule } from '../../../lib/db';
+import { db, byName, groupStudents, type Group, type Rule } from '../../../lib/db';
 import { parseCsv, importStudents, resetPassword, deleteStudent, type ParsedRow } from '../../../lib/students';
 import { DEFAULT_GOAL } from '../../../lib/leitner';
 import { Avatar } from '../../../components/Avatar';
@@ -16,12 +16,7 @@ import { Icon } from '../../../components/Icon';
 export function StudentsTab({ group }: { group: Group }) {
   const students = useLiveQuery(
     async () => {
-      const ms = await db.memberships.where('groupId').equals(group.id).toArray();
-      const s = await db.students.bulkGet(ms.map((m) => m.studentId));
-      return s
-        .filter(Boolean)
-        .map((x) => x!)
-        .sort((a, b) => a.lastName.localeCompare(b.lastName));
+      return (await groupStudents(group.id)).sort(byName);
     },
     [group.id],
     [],
@@ -207,13 +202,13 @@ export function StudentsTab({ group }: { group: Group }) {
                     className="btn small ghost"
                     title="Nouveau mot de passe"
                     onClick={async () => {
-                      if (!confirm(`Nouveau mot de passe pour ${s.firstName} ?`)) return;
+                      if (!(await confirmBox(`Nouveau mot de passe pour ${s.firstName} ?`))) return;
                       try {
                         await resetPassword(s.id);
                         const s2 = await db.students.get(s.id);
                         await showInfo(`Nouveau mot de passe de ${s.firstName} ${s.lastName}`, `Identifiant : ${s.login}\nMot de passe : ${s2?.password ?? '?'}`);
                       } catch (e) {
-                        alert((e as Error).message);
+                        alertBox((e as Error).message);
                       }
                     }}
                   >
@@ -222,20 +217,20 @@ export function StudentsTab({ group }: { group: Group }) {
                   <button
                     className="btn small ghost"
                     title="Retirer de la classe (le compte et les flashcards sont conservés)"
-                    onClick={() =>
-                      confirm(`Retirer ${s.firstName} ${s.lastName} de ${group.name} ? (son compte et ses flashcards sont conservés)`) &&
+                    onClick={async () =>
+                      (await confirmBox(`Retirer ${s.firstName} ${s.lastName} de ${group.name} ? (son compte et ses flashcards sont conservés)`)) &&
                       db.memberships.delete(`${group.id}|${s.id}`)
                     }
                   >
-                    ⤴
+                    <Icon name="door" size={14} />
                   </button>{' '}
                   <button
                     className="btn small danger"
                     title="Supprimer définitivement l'élève"
-                    onClick={() =>
-                      confirm(
+                    onClick={async () =>
+                      (await confirmBox(
                         `Supprimer définitivement ${s.firstName} ${s.lastName} ?\n\nSon compte, sa photo, sa progression et son historique seront effacés, dans toutes ses classes. Cette action est irréversible.`,
-                      ) && deleteStudent(s.id).catch((e) => alert(e.message))
+                      )) && deleteStudent(s.id).catch((e) => alertBox(e.message))
                     }
                   >
                     <Icon name="trash" size={16} />

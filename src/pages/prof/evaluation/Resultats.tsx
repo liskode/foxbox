@@ -1,4 +1,5 @@
 // Évaluation : résultats par classe (moyennes, compétences, critères, notes, export).
+import { confirmBox } from '../../../components/Dialog';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -67,9 +68,9 @@ export function ResultatsTab({ ev }: { ev: Evaluation }) {
             className="btn primary"
             onClick={async () => {
               if (
-                !confirm(
+                !(await confirmBox(
                   'Faire reculer les flashcards des critères ratés, pour chaque élève concerné ? Critère à 0 % : retour en boîte 1 (à revoir dès aujourd’hui) ; à 40 % : une boîte en arrière.',
-                )
+                ))
               )
                 return;
               const r = await resetCardsForFailures(ev);

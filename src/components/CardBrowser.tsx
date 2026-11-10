@@ -1,3 +1,4 @@
+import { Icon } from './Icon';
 import { useMemo, useState } from 'react';
 import { ALL_LEVELS, LEVELS } from '../lib/units';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -188,7 +189,7 @@ export function CardBrowser({
             onMouseLeave={onToggle ? () => setHover(null) : undefined}
           >
             <div className="bar" style={{ background: themeColor(c.theme) }} />
-            {onToggle && <div className="check">{selected?.has(c.id) || exclude?.has(c.id) ? '✓' : ''}</div>}
+            {onToggle && <div className="check">{selected?.has(c.id) || exclude?.has(c.id) ? <Icon name="check" size={14} /> : ''}</div>}
             {exclude?.has(c.id) && <span className="linked-tag">{(exclude instanceof Map && exclude.get(c.id)) || 'déjà attribuée'}</span>}
             <div className="face">
               <CardFace html={hover === c.id ? c.back : c.front} />

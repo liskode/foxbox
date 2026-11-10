@@ -1,6 +1,6 @@
 // Progression : outils communs (préférence « masquer ce qui est terminé », calcul partagé, création de séquence).
 import { useState } from 'react';
-import { askForm } from '../../../components/Dialog';
+import { askForm, alertBox } from '../../../components/Dialog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, SUBJECTS, type Unit } from '../../../lib/db';
 import { nextSequenceCode, themesFor } from '../../../lib/units';
@@ -102,7 +102,7 @@ export async function createSequence(level: string, units: Unit[], subject = SUB
   try {
     code = await nextSequenceCode(level, theme, subject);
   } catch (e) {
-    alert((e as Error).message);
+    alertBox((e as Error).message);
     return;
   }
   const order = Math.max(0, ...units.filter((x) => x.kind === 'sequence' && x.level === level && (x.subject || SUBJECTS[0]) === subject).map((x) => x.order)) + 1;

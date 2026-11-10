@@ -12,7 +12,7 @@ import { ONLINE } from './lib/supabase';
 import { unreadTotal } from './lib/messages';
 import { trackVisits } from './lib/visits';
 import { UpdateBanner } from './components/UpdateBanner';
-import { DialogHost } from './components/Dialog';
+import { DialogHost, confirmBox } from './components/Dialog';
 import { ToastHost } from './components/Toast';
 import { Icon } from './components/Icon';
 import { isDemo } from './lib/demoMode';
@@ -96,8 +96,8 @@ function SyncBadge() {
         className="tag bad"
         style={{ border: 'none', cursor: 'pointer', font: 'inherit', fontWeight: 800, fontSize: '0.8rem' }}
         title={s.error}
-        onClick={() => {
-          if (confirm(`Problème d'enregistrement en ligne :\n\n${s.error}\n\nRéessayer maintenant ?`)) retryFailed();
+        onClick={async () => {
+          if (await confirmBox(`Problème d'enregistrement en ligne :\n\n${s.error}\n\nRéessayer maintenant ?`)) retryFailed();
         }}
       >
         <Icon name="alert" size={14} /> {s.failed ? `${s.failed} non enregistré(s)` : 'Hors ligne'}

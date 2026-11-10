@@ -1,4 +1,4 @@
-import { db, isClass, type Review, type StudentCard, type Student } from './db';
+import { db, groupStudents, isClass, type Review, type StudentCard, type Student } from './db';
 import { addDays, diffDays, studyDay } from './dates';
 import { availableCards, studentDay } from './leitner';
 
@@ -94,8 +94,7 @@ export interface StudentRow {
 export async function groupOverview(groupId: string) {
   const group = await db.groups.get(groupId);
   if (!group) return null;
-  const ms = await db.memberships.where('groupId').equals(groupId).toArray();
-  const students = (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[];
+  const students = (await groupStudents(groupId));
   const allReviews: Review[] = [];
   const rows: StudentRow[] = [];
   for (const s of students) {

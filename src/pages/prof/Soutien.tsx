@@ -7,9 +7,8 @@ import { TutoringTile } from '../../components/TutoringTile';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isTutoring, SUBJECTS, type Track } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
-import { createTutoring, durationLabel, trackLabel } from '../../lib/tutoring';
+import { createTutoring } from '../../lib/tutoring';
 import { ALL_LEVELS } from '../../lib/units';
-import { frDate } from '../../lib/dates';
 import { Icon } from '../../components/Icon';
 
 export function Soutien() {

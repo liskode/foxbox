@@ -2,6 +2,7 @@
 // Un groupe de soutien est une ligne de `groups` (kind = 'soutien') : élèves, flashcards et règles d'accès
 // fonctionnent comme pour une classe. Les points du programme travaillés en séance sont « publiés » pour le groupe
 // (table `publications`, à la date de la séance) : l'élève reçoit leurs flashcards et leurs documents.
+import { alertBox } from '../components/Dialog';
 import { db, uid, fileBlob, isTutoring, receives, type Group, type Track, type TutoringSession, type Unit, type UnitStatus } from './db';
 import { importStudents } from './students';
 import { shareTeacherProfile } from './relations';
@@ -129,7 +130,7 @@ export async function addFiles(groupId: string, sessionId: string | undefined, f
   let n = 0;
   for (const f of [...files]) {
     if (f.size > MAX_MB * 1048576) {
-      alert(`« ${f.name} » dépasse ${MAX_MB} Mo.`);
+      alertBox(`« ${f.name} » dépasse ${MAX_MB} Mo.`);
       continue;
     }
     const mediaId = `sout/${groupId}/${uid()}`;

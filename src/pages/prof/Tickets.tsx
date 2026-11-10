@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../lib/db';
+import { db, byName, groupStudents } from '../../lib/db';
 import { Avatar } from '../../components/Avatar';
 import { Icon } from '../../components/Icon';
 
@@ -8,9 +8,7 @@ export function Tickets() {
   const { id } = useParams();
   const group = useLiveQuery(() => db.groups.get(id!), [id]);
   const students = useLiveQuery(async () => {
-    const ms = await db.memberships.where('groupId').equals(id!).toArray();
-    const s = await db.students.bulkGet(ms.map((m) => m.studentId));
-    return s.filter(Boolean).map((x) => x!).sort((a, b) => a.lastName.localeCompare(b.lastName));
+    return (await groupStudents(id!)).sort(byName);
   }, [id], []);
   const url = location.origin + location.pathname;
 

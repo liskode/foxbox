@@ -10,11 +10,6 @@ import { push } from './sync';
 export const readId = (userId: string, teacherId: string, studentId: string) => `${userId}|${teacherId}|${studentId}|conv`;
 
 // Destinataires d'un message (les plus anciens n'en ont pas : on les déduit de leur fil)
-export async function recipientsOf(m: Message): Promise<string[]> {
-  if (m.recipients) return m.recipients;
-  if (m.thread === 'eleve') return [m.studentId];
-  return (await db.parents.where('studentIds').equals(m.studentId).primaryKeys()) as string[];
-}
 const recipientsSync = (m: Message, parentIds: string[]) => m.recipients ?? (m.thread === 'eleve' ? [m.studentId] : parentIds);
 
 // Messages d'une conversation visibles par `userId` (le professeur voit tout)

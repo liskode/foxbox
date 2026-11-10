@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, isClass, isTutoring, type Group, type Student, shortName } from '../lib/db';
+import { db, byName, isClass, isTutoring, type Group, type Student, shortName } from '../lib/db';
 import { StudentName } from './Avatar';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -17,9 +17,7 @@ export function useAllStudents() {
     const ms = await db.memberships.toArray();
     const byStudent = new Map<string, Group>();
     for (const g of all) for (const m of ms) if (m.groupId === g.id && !byStudent.has(m.studentId)) byStudent.set(m.studentId, g);
-    const students = ((await db.students.bulkGet([...byStudent.keys()])).filter(Boolean) as Student[]).sort(
-      (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName),
-    );
+    const students = ((await db.students.bulkGet([...byStudent.keys()])).filter(Boolean) as Student[]).sort(byName);
     return { groups, students: students.map((s) => ({ student: s, group: byStudent.get(s.id)! })) };
   }, []);
 }

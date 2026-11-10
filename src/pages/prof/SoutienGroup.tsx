@@ -2,11 +2,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, isTutoring, type Group, type Student, type Track } from '../../lib/db';
+import { db, groupStudents, isTutoring, type Group, type Student, type Track } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { addStudents, durationLabel, lastSeen, missedSessions, newSession, sendMissedSessions, setUnitStatus, STATES, trackLabel, unitState } from '../../lib/tutoring';
 import { byProgression, themeLabel, unitLabel, unitSubject } from '../../lib/units';
-import { frDate, today } from '../../lib/dates';
+import { today } from '../../lib/dates';
 import { resetPassword } from '../../lib/students';
 import { TabBar } from '../../components/TabBar';
 import { RichText } from '../../components/CardFace';
@@ -14,7 +14,7 @@ import { Avatar } from '../../components/Avatar';
 import { StudentReport } from '../../components/StudentReport';
 import { useNote } from '../../components/StudentNote';
 import { FileList, UploadButton, homeworkOf, isUpcoming, placeLabel, whenLabel } from '../../components/Soutien';
-import { showInfo } from '../../components/Dialog';
+import { showInfo, confirmBox } from '../../components/Dialog';
 import { toast } from '../../components/Toast';
 import { Icon } from '../../components/Icon';
 import { TracksEditor } from './Soutien';
@@ -32,8 +32,7 @@ export function SoutienGroup() {
   const group = useLiveQuery(async () => (await db.groups.get(id!)) ?? null, [id]);
   const students = useLiveQuery(
     async () => {
-      const ms = await db.memberships.where('groupId').equals(id!).toArray();
-      return ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort((a, b) => a.firstName.localeCompare(b.firstName));
+      return (await groupStudents(id!)).sort((a, b) => a.firstName.localeCompare(b.firstName));
     },
     [id],
     [],
@@ -382,7 +381,7 @@ function StudentCardPanel({ student, group }: { student: Student; group: Group }
           <button
             className="btn small ghost"
             onClick={async () => {
-              if (!confirm(`Donner un nouveau mot de passe à ${student.firstName} ?`)) return;
+              if (!(await confirmBox(`Donner un nouveau mot de passe à ${student.firstName} ?`))) return;
               await resetPassword(student.id);
               const s = await db.students.get(student.id);
               await showInfo('Nouveau mot de passe', `${student.firstName} se connecte avec ${s?.login} / ${s?.password}`);
@@ -435,7 +434,7 @@ export function ParentAccesses({ student }: { student: Student }) {
           <button
             className="btn small ghost"
             onClick={async () => {
-              if (!confirm(`Donner un nouveau mot de passe à ${p.name} ?`)) return;
+              if (!(await confirmBox(`Donner un nouveau mot de passe à ${p.name} ?`))) return;
               await resetParentPassword(p.id);
               const n = await db.parents.get(p.id);
               await showInfo('Nouveau mot de passe', `${p.name} se connecte avec ${n?.login} / ${n?.password}`);
@@ -446,7 +445,7 @@ export function ParentAccesses({ student }: { student: Student }) {
           <button
             className="btn small ghost"
             onClick={async () => {
-              if (!confirm(`Retirer l'accès de ${p.name} au suivi de ${student.firstName} ?`)) return;
+              if (!(await confirmBox(`Retirer l'accès de ${p.name} au suivi de ${student.firstName} ?`))) return;
               await removeParentAccess(p.id, student.id);
               toast('Accès retiré');
             }}

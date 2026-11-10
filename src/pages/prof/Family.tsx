@@ -5,7 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, isTutoring, type FamilyContact, type Parent, type ParentMessage, shortName } from '../../lib/db';
 import { createParentAccess } from '../../lib/parents';
 import { DEFAULT_RELATIONS } from '../../lib/relations';
-import { showInfo } from '../../components/Dialog';
+import { showInfo, alertBox, confirmBox } from '../../components/Dialog';
 import { useAuth } from '../../lib/auth';
 import { score } from '../../lib/grading';
 import { frDate, today } from '../../lib/dates';
@@ -144,14 +144,14 @@ export function Family() {
             <button
               className="btn small ghost"
               title="Retirer ce contact"
-              onClick={() => {
-                if (!confirm(`Retirer le contact « ${c.person || c.name || c.email || c.phone} » ?`)) return;
+              onClick={async () => {
+                if (!(await confirmBox(`Retirer le contact « ${c.person || c.name || c.email || c.phone} » ?`))) return;
                 const cs = contacts.filter((x) => x.id !== c.id);
                 setContacts(cs);
                 persist(cs);
               }}
             >
-              ✕
+              <Icon name="x" size={14} />
             </button>
           </div>
         ))}
@@ -276,8 +276,8 @@ export function Family() {
                   </details>
                 )}
               </div>
-              <button className="btn small ghost" onClick={() => confirm('Supprimer cette entrée ?') && db.parentMessages.delete(m.id)}>
-                ✕
+              <button className="btn small ghost" onClick={async () => (await confirmBox('Supprimer cette entrée ?')) && db.parentMessages.delete(m.id)}>
+                <Icon name="x" size={14} />
               </button>
             </div>
           );
@@ -302,7 +302,7 @@ function ParentAccessButton({ studentId, contact, parents, onBeforeCreate }: { s
       className="btn small"
       title="Créer un compte pour ce parent : il suit les séances, les règlements et peut vous écrire"
       onClick={async () => {
-        if (!contact.name.trim() && !contact.person?.trim()) return alert('Indiquez d’abord le lien (Mère, Père…) ou le nom du parent.');
+        if (!contact.name.trim() && !contact.person?.trim()) return alertBox('Indiquez d’abord le lien (Mère, Père…) ou le nom du parent.');
         await onBeforeCreate();
         try {
           const r = await createParentAccess(studentId, contact);
@@ -313,7 +313,7 @@ function ParentAccessButton({ studentId, contact, parents, onBeforeCreate }: { s
               : `Identifiant : ${r.login}\nMot de passe : ${r.password}\n\nÀ transmettre au parent. Connexion sur foxbox.physifox.fr.`,
           );
         } catch (e) {
-          alert('Erreur : ' + (e as Error).message);
+          alertBox('Erreur : ' + (e as Error).message);
         }
       }}
     >

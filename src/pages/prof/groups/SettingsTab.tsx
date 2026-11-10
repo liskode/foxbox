@@ -1,4 +1,5 @@
 // Classe : onglet Réglages (co-enseignants, archivage, suppression).
+import { alertBox, confirmBox } from '../../../components/Dialog';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -12,11 +13,11 @@ export function DeleteGroup({ group }: { group: Group }) {
   const [orphans, setOrphans] = useState(true);
   const [busy, setBusy] = useState('');
   async function go() {
-    if (!confirm(`Supprimer définitivement la classe « ${group.name} » ?`)) return;
+    if (!(await confirmBox(`Supprimer définitivement la classe « ${group.name} » ?`))) return;
     setBusy('Suppression…');
     try {
       const n = await deleteGroup(group.id, orphans);
-      alert(`Classe supprimée${n ? `, ainsi que ${n} élève(s)` : ''}.`);
+      alertBox(`Classe supprimée${n ? `, ainsi que ${n} élève(s)` : ''}.`);
       nav('/prof/reglages');
     } catch (e) {
       setBusy('Erreur : ' + (e as Error).message);
@@ -85,8 +86,8 @@ export function TeachersTab({ group }: { group: Group }) {
       <div>
         <button
           className="btn ghost"
-          onClick={() =>
-            confirm(group.archived ? 'Réactiver cette classe ?' : 'Archiver cette classe ? Les élèves gardent leurs comptes et leurs flashcards.') &&
+          onClick={async () =>
+            (await confirmBox(group.archived ? 'Réactiver cette classe ?' : 'Archiver cette classe ? Les élèves gardent leurs comptes et leurs flashcards.')) &&
             db.groups.update(group.id, { archived: !group.archived })
           }
         >

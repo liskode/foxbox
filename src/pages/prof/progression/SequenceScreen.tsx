@@ -1,6 +1,6 @@
 // Progression : écran d'une séquence (liste du niveau, descriptif, avancement des classes, flashcards).
 import { useEffect, useState } from 'react';
-import { ask } from '../../../components/Dialog';
+import { ask, confirmBox } from '../../../components/Dialog';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { unitSubject } from '../../../lib/units';
@@ -115,7 +115,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
   }
 
   async function remove(u: Unit) {
-    if (!confirm(`Supprimer « ${u.name} » ? Les flashcards elles-mêmes ne sont pas supprimées.`)) return;
+    if (!(await confirmBox(`Supprimer « ${u.name} » ? Les flashcards elles-mêmes ne sont pas supprimées.`))) return;
     const ids = [u.id, ...units.filter((x) => x.parentId === u.id).map((x) => x.id)];
     await db.unitCards.where('unitId').anyOf(ids).delete();
     await db.publications.where('unitId').anyOf(ids).delete();
@@ -455,7 +455,7 @@ export function ClassBilan({ g, plan }: { g: Group; plan?: ClassPlan }) {
     );
   return (
     <div className="small">
-      {name} : {plan.end ? <>fin prévue le {dm(plan.end)} ✓</> : 'tout est fait ✓'}
+      {name} : {plan.end ? <>fin prévue le {dm(plan.end)} <Icon name="check" size={14} /></> : <>tout est fait <Icon name="check" size={14} /></>}
     </div>
   );
 }

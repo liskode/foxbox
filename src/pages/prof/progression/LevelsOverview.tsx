@@ -1,4 +1,5 @@
 // Progression : vue d'ensemble, une colonne par niveau.
+import { Icon } from '../../../components/Icon';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { unitLabel, themeLabel, levelColors } from '../../../lib/units';
@@ -99,7 +100,7 @@ export function LevelsOverview() {
                                 color: n ? 'var(--ink)' : '#9a968d',
                               }}
                             >
-                              {g.name.replace(/_.*/, '')} {all ? '✓' : n ? `${n} sur ${items.length}` : next ? dm(next) : ''}
+                              {g.name.replace(/_.*/, '')} {all ? <Icon name="check" size={14} /> : n ? `${n} sur ${items.length}` : next ? dm(next) : ''}
                               {!all && n > 0 && next && <span style={{ fontWeight: 500, color: '#9a968d' }}> · {dm(next)}</span>}
                             </span>
                           );

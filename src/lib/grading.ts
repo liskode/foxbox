@@ -1,5 +1,5 @@
 // Calculs de l'onglet Correction : notes, statistiques, partage avec l'élève, lien avec les cartes.
-import { db, isClass, uid, SUBJECTS, type Evaluation, type Group, type Result, type ResultShare, type Student, type Unit } from './db';
+import { db, byName, groupStudents, isClass, uid, SUBJECTS, type Evaluation, type Group, type Result, type ResultShare, type Student, type Unit } from './db';
 import { levelOfName, nextSeanceCode } from './units';
 import { competenceScores, loadCompetences, type Competence } from './competences';
 import { today } from './dates';
@@ -65,9 +65,8 @@ export async function studentsOf(ev: Evaluation): Promise<{ student: Student; gr
   const out: { student: Student; groupId: string }[] = [];
   const seen = new Set<string>();
   for (const gid of ev.groupIds) {
-    const ms = await db.memberships.where('groupId').equals(gid).toArray();
-    const ss = (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[];
-    ss.sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName));
+    const ss = await groupStudents(gid);
+    ss.sort(byName);
     for (const s of ss) if (!seen.has(s.id)) (seen.add(s.id), out.push({ student: s, groupId: gid }));
   }
   return out;

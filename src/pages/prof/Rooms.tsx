@@ -1,5 +1,5 @@
 // Salles : on coche les cases d'un quadrillage pour placer les places (des cases voisines forment une table).
-import { ask } from '../../components/Dialog';
+import { ask, confirmBox } from '../../components/Dialog';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -130,12 +130,12 @@ export function Rooms() {
               <b>{sel.seats.filter((k) => +k.split('-')[0] < sel.rows && +k.split('-')[1] < sel.cols).length} places</b>
             </div>
             <div className="row">
-              <button className="btn small ghost" onClick={() => confirm('Effacer toutes les places ?') && update({ seats: [] })}>
+              <button className="btn small ghost" onClick={async () => (await confirmBox('Effacer toutes les places ?')) && update({ seats: [] })}>
                 Tout effacer
               </button>
               <button
                 className="btn small danger"
-                onClick={() => confirm(`Supprimer la salle ${sel.name} ? Les plans de classe qui l'utilisent ne s'afficheront plus.`) && save(rooms.filter((r) => r.id !== sel.id))}
+                onClick={async () => (await confirmBox(`Supprimer la salle ${sel.name} ? Les plans de classe qui l'utilisent ne s'afficheront plus.`)) && save(rooms.filter((r) => r.id !== sel.id))}
               >
                 Supprimer la salle
               </button>

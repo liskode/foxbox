@@ -50,7 +50,7 @@ function NextSession({ group }: { group: Group }) {
       </div>
       {lastDone && (
         <div className="small muted">
-          ✓ Dernière faite : {unitLabel(lastDone.unit)} ({dm(doneDate(plan, lastDone)!)})
+          <Icon name="check" size={14} /> Dernière faite : {unitLabel(lastDone.unit)} ({dm(doneDate(plan, lastDone)!)})
         </div>
       )}
       {items.map((it) => (
@@ -131,7 +131,7 @@ export function ClassOverview({ group, goTab }: { group: Group; goTab: (t: strin
                 </div>
                 {summary.last && (
                   <div>
-                    ✓ Dernière : <b>{summary.last.name}</b> <span className="small muted">({frDate(summary.last.date)})</span>
+                    <Icon name="check" size={14} /> Dernière : <b>{summary.last.name}</b> <span className="small muted">({frDate(summary.last.date)})</span>
                   </div>
                 )}
                 {summary.next && (

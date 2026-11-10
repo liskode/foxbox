@@ -1,6 +1,6 @@
 // Salles et plans de classe. Une salle est un quadrillage dont les cases cochées sont des places ;
 // des places voisines forment une table, une case vide sépare les tables. Le tableau est en haut.
-import { db, uid, type Group, type Student } from './db';
+import { db, byName, uid, type Group, type Student } from './db';
 import { loadTimetable, matchGroup } from './timetable';
 
 export interface Room {
@@ -70,7 +70,7 @@ export const orderedSeats = (room: Room) =>
   });
 
 export function autoPlace(room: Room, students: Student[], mode: 'alpha' | 'random'): Record<string, string> {
-  const list = mode === 'random' ? shuffle(students) : [...students].sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName));
+  const list = mode === 'random' ? shuffle(students) : [...students].sort(byName);
   const seats = orderedSeats(room);
   const out: Record<string, string> = {};
   list.slice(0, seats.length).forEach((s, i) => (out[seats[i]] = s.id));

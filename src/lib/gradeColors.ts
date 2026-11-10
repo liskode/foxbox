@@ -17,8 +17,6 @@ export const DEFAULT_GRADE_COLORS: GradeColors = {
   },
 };
 
-export const OVERALL_NAMES = ['rouge', 'rouge clair', 'orange', 'jaune', 'vert clair', 'vert'];
-
 // Rang d'une valeur (0..1) parmi des seuils en % : 0 = sous le premier seuil
 const rank = (v: number, thresholds: number[]) => thresholds.filter((t) => v * 100 >= t).length;
 

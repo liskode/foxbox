@@ -137,7 +137,7 @@ export async function importApkg(
     }
     const ext = name.split('.').pop()?.toLowerCase() ?? '';
     const id = uid();
-    await db.media.put({ id, name, blob: new Blob([bytes], { type: MIME[ext] ?? 'application/octet-stream' }) });
+    await db.media.put({ id, name, blob: new Blob([bytes as BlobPart], { type: MIME[ext] ?? 'application/octet-stream' }) });
     mediaIds.set(name, id);
     report.media++;
     return id;

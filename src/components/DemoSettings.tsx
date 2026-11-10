@@ -1,7 +1,7 @@
 // Réglages › Démo : lien public en lecture seule, profils proposés (de vrais comptes choisis ici), texte d'accueil.
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, isClass, isTutoring, type Student } from '../lib/db';
+import { db, byName, isClass, isTutoring, type Student } from '../lib/db';
 import { supabase, ONLINE } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { isDemo } from '../lib/demoMode';
@@ -16,8 +16,6 @@ interface DemoData {
   soutien?: string;
   parent?: string;
 }
-
-const byName = (a: Student, b: Student) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName);
 
 export function DemoSettings() {
   const { session } = useAuth();

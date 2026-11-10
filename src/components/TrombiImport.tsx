@@ -4,7 +4,7 @@ import type { Group, Student } from '../lib/db';
 import { readTrombiPdf, matchFace, type Face } from '../lib/trombiPdf';
 import { setPhoto } from '../lib/photos';
 import { importStudents } from '../lib/students';
-import { db } from '../lib/db';
+import { byName, groupStudents } from '../lib/db';
 import { isStaleVersionError } from './UpdateBanner';
 
 const CREATE = '__create__';
@@ -55,8 +55,7 @@ export function TrombiImport({ group, students, onClose }: { group: Group; stude
           group.id,
           group.subject,
         );
-        const ms = await db.memberships.where('groupId').equals(group.id).toArray();
-        list = (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[];
+        list = await groupStudents(group.id);
       }
       // 2. Photos
       let n = 0;
@@ -129,7 +128,7 @@ export function TrombiImport({ group, students, onClose }: { group: Group; stude
                     <option value={SKIP}>— ignorer —</option>
                     {students
                       .slice()
-                      .sort((a, b) => a.lastName.localeCompare(b.lastName))
+                      .sort(byName)
                       .map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.lastName} {s.firstName}

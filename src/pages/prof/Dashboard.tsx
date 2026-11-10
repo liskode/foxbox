@@ -99,7 +99,7 @@ export function Dashboard() {
           {steps.map((s, i) => (
             <Link key={i} to={s.to} className="row" style={{ textDecoration: 'none', gap: 10 }}>
               <span className="chip" style={{ background: s.done ? 'var(--easy)' : 'var(--paper)', color: s.done ? '#fff' : undefined }}>
-                {s.done ? '✓' : i + 1}
+                {s.done ? <Icon name="check" size={14} /> : i + 1}
               </span>
               <span style={{ textDecoration: s.done ? 'line-through' : 'none', fontWeight: 700 }}>{s.label}</span>
             </Link>

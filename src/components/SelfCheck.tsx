@@ -1,5 +1,6 @@
 // Autocorrection d'une copie par l'élève : 1. ressenti global (têtes de renard) ; 2. chaque critère du barème (4 visages) ;
 // 3. sa note estimée, puis ce que le professeur a rendu visible, en face.
+import { confirmBox } from './Dialog';
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type ResultShare, type SelfCheck } from '../lib/db';
@@ -146,7 +147,7 @@ export function SelfCheckPanel({ share, sc }: { share: ResultShare; sc?: SelfChe
         <button
           className="btn primary"
           disabled={answered < criteria.length}
-          onClick={() => confirm('Valider ton autocorrection ? Tu ne pourras plus la modifier, et tu verras la correction de ton professeur.') && save({ doneAt: Date.now() })}
+          onClick={async () => (await confirmBox('Valider ton autocorrection ? Tu ne pourras plus la modifier, et tu verras la correction de ton professeur.')) && save({ doneAt: Date.now() })}
         >
           Voir ma note
         </button>

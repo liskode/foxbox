@@ -55,7 +55,7 @@ export function Progression({ group }: { group: Group }) {
         {plan.overflowWeeks ? (
           <b style={{ color: 'var(--forgot)' }}>Au rythme prévu, le programme dépasse de {plan.overflowWeeks} semaine(s).</b>
         ) : plan.end ? (
-          <b>Fin du programme prévue le {dm(plan.end)} ✓</b>
+          <b>Fin du programme prévue le {dm(plan.end)} <Icon name="check" size={14} /></b>
         ) : null}
       </div>
       {!seqs.length && (

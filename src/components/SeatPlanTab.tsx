@@ -3,12 +3,12 @@
 import { absenceId, toggleAbsence } from '../lib/absences';
 import { LazyInput } from './LazyInput';
 import { today } from '../lib/dates';
-import { ask } from './Dialog';
+import { ask, confirmBox } from './Dialog';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, uid, type Group, type Student, shortName } from '../lib/db';
+import { db, byName, groupStudents, uid, type Group, type Student, shortName } from '../lib/db';
 import { useAuth } from '../lib/auth';
 import { autoPlace, loadRooms, savePlans, seatKey, timetableRooms, type Room, type SeatPlan } from '../lib/rooms';
 import { Avatar } from './Avatar';
@@ -134,10 +134,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
   const usual = useLiveQuery(async () => (await timetableRooms(session!.id, group, await db.groups.toArray())).usual, [session?.id, group.id]);
   const allStudents = useLiveQuery(
     async () => {
-      const ms = await db.memberships.where('groupId').equals(group.id).toArray();
-      return ((await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[]).sort(
-        (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName),
-      );
+      return (await groupStudents(group.id)).sort(byName);
     },
     [group.id],
     [] as Student[],
@@ -317,8 +314,8 @@ export function SeatPlanTab({ group }: { group: Group }) {
             </button>
             <button
               className="btn small danger"
-              onClick={() =>
-                confirm(`Supprimer le plan « ${plan.name} » ?`) &&
+              onClick={async () =>
+                (await confirmBox(`Supprimer le plan « ${plan.name} » ?`)) &&
                 savePlans(
                   group,
                   plans.filter((p) => p.id !== plan.id),
@@ -425,7 +422,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
                     background: appel ? 'var(--forgot)' : 'var(--easy)',
                   }}
                 >
-                  {appel ? '✕' : '✓'}
+                  {appel ? <Icon name="x" size={14} /> : <Icon name="check" size={14} />}
                 </button>
               </div>
               {(appel || absentToday.size > 0) && (
@@ -457,17 +454,17 @@ export function SeatPlanTab({ group }: { group: Group }) {
               <div className="row" style={{ gap: 4 }}>
                 <button
                   className="btn small"
-                  onClick={() => confirm('Placer toute la classe par ordre alphabétique ?') && setSeats(autoPlace(room, students, 'alpha'))}
+                  onClick={async () => (await confirmBox('Placer toute la classe par ordre alphabétique ?')) && setSeats(autoPlace(room, students, 'alpha'))}
                 >
                   A → Z
                 </button>
                 <button
                   className="btn small"
-                  onClick={() => confirm('Placer toute la classe au hasard ?') && setSeats(autoPlace(room, students, 'random'))}
+                  onClick={async () => (await confirmBox('Placer toute la classe au hasard ?')) && setSeats(autoPlace(room, students, 'random'))}
                 >
                   <Icon name="dice" size={16} /> Au hasard
                 </button>
-                <button className="btn small ghost" onClick={() => confirm('Retirer tous les élèves du plan ?') && setSeats({})}>
+                <button className="btn small ghost" onClick={async () => (await confirmBox('Retirer tous les élèves du plan ?')) && setSeats({})}>
                   Vider
                 </button>
               </div>
@@ -515,7 +512,7 @@ export function SeatPlanTab({ group }: { group: Group }) {
                   </button>
                 );
               })}
-              {!unplaced.length && <span className="small">✓ Tout le monde est placé.</span>}
+              {!unplaced.length && <span className="small"><Icon name="check" size={14} /> Tout le monde est placé.</span>}
             </div>
             <SavedPlans group={group} plans={plans} plan={plan} />
           </div>
@@ -597,16 +594,16 @@ function SavedPlans({ group, plans, plan }: { group: Group; plans: SeatPlan[]; p
               <button
                 className="btn small ghost"
                 title="Remettre les élèves aux places de cette version"
-                onClick={() => confirm(`Remettre le plan tel qu'il était le ${when(v.at)} ?`) && update({ seats: { ...v.seats } })}
+                onClick={async () => (await confirmBox(`Remettre le plan tel qu'il était le ${when(v.at)} ?`)) && update({ seats: { ...v.seats } })}
               >
                 Restaurer
               </button>
               <button
                 className="btn small ghost"
                 title="Supprimer cette sauvegarde"
-                onClick={() => confirm('Supprimer cette sauvegarde ?') && update({ saved: saved.filter((x) => x.id !== v.id) })}
+                onClick={async () => (await confirmBox('Supprimer cette sauvegarde ?')) && update({ saved: saved.filter((x) => x.id !== v.id) })}
               >
-                ✕
+                <Icon name="x" size={14} />
               </button>
             </span>
           </div>

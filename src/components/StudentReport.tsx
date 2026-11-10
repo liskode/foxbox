@@ -71,7 +71,7 @@ export function StudentReport({
       const started = new Set(scs.map((sc) => sc.cardId));
       const waiting = availList.filter((a) => !started.has(a.cardId)).sort((a, b) => a.pubDate.localeCompare(b.pubDate) || a.order - b.order);
       const wc = await db.cards.bulkGet(waiting.map((a) => a.cardId));
-      waiting.forEach((a, i) => {
+      waiting.forEach((_, i) => {
         const c = wc[i];
         if (c && !c.deleted) byBox[0].push({ card: c, due: '' });
       });

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, isClass, type Rating, type Student, type TrombiCard, shortName } from '../../lib/db';
+import { db, byName, groupStudents, isClass, type Rating, type Student, type TrombiCard, shortName } from '../../lib/db';
 import { INTERVALS, nextBox } from '../../lib/leitner';
 import { addDays, frDate, today } from '../../lib/dates';
 import { useFixedPhoto } from '../../components/Avatar';
@@ -129,7 +129,7 @@ function Session({ entries, teacherId, onEnd, free = false }: { entries: Entry[]
     <div className="review">
       <div className="spread">
         <a href="#" className="small muted" onClick={(ev) => (ev.preventDefault(), onEnd())}>
-          ✕ Arrêter
+          <Icon name="x" size={14} /> Arrêter
         </a>
         <span className="small muted">
           {i + 1} / {queue.length}
@@ -191,16 +191,13 @@ export function Trombi({ groupId }: { groupId?: string } = {}) {
   const entries = useLiveQuery(async () => {
     const map = new Map<string, Entry>();
     for (const g of groups.filter((x) => sel.has(x.id))) {
-      const ms = await db.memberships.where('groupId').equals(g.id).toArray();
-      const students = await db.students.bulkGet(ms.map((m) => m.studentId));
-      for (const s of students) {
-        if (!s) continue;
+      for (const s of await groupStudents(g.id)) {
         const e = map.get(s.id) ?? { student: s, groups: [] };
         e.groups.push(g.name);
         map.set(s.id, e);
       }
     }
-    return [...map.values()].sort((a, b) => a.student.lastName.localeCompare(b.student.lastName));
+    return [...map.values()].sort((a, b) => byName(a.student, b.student));
   }, [groups, [...sel].join()], []);
   const withPhoto = useMemo(() => entries.filter((e) => e.student.photoId), [entries]);
   const missing = entries.length - withPhoto.length;

@@ -1,5 +1,5 @@
 // Réglages : ce qu'on modifie rarement (emploi du temps, classes et élèves, couleurs, compétences, compte).
-import { askForm } from '../../components/Dialog';
+import { askForm, alertBox } from '../../components/Dialog';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
@@ -88,8 +88,8 @@ function OriginsPanel() {
             ]);
             if (!r) return;
             const code = r.code.toUpperCase();
-            if (!/^[A-Z]{2}$/.test(code)) return alert('Le code doit faire exactement 2 lettres.');
-            if (origins.some((o) => o.code === code)) return alert('Ce code existe déjà.');
+            if (!/^[A-Z]{2}$/.test(code)) return alertBox('Le code doit faire exactement 2 lettres.');
+            if (origins.some((o) => o.code === code)) return alertBox('Ce code existe déjà.');
             save([...origins, { code, name: r.name }]);
           }}
         >

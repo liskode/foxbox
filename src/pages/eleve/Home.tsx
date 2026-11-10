@@ -55,7 +55,7 @@ export function StudentHome() {
                     )}
                   </>
                 ) : (
-                  <b>✓ Rien à revoir aujourd'hui.</b>
+                  <b><Icon name="check" size={14} /> Rien à revoir aujourd'hui.</b>
                 )}
                 <div className="row small" style={{ gap: 8 }}>
                   Mon objectif :

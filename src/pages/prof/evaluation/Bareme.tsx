@@ -1,4 +1,5 @@
 // Évaluation : onglet Barème et réglages (critères, compétences, flashcards liées, classes, visibilité).
+import { alertBox, confirmBox } from '../../../components/Dialog';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -213,7 +214,7 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
                       style={{ background: g.color ?? 'var(--paper)' }}
                       onClick={() => assignClass(ev, g.id, !on)}
                     >
-                      {on ? '✓ ' : ''}
+                      {on && <><Icon name="check" size={14} /> </>}
                       {shortName(g.name)}
                     </button>
                   );
@@ -346,9 +347,9 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
                   </button>{' '}
                   <button
                     className="btn small ghost"
-                    onClick={() => confirm(`Supprimer le critère « ${c.label} » ?`) && update({ criteria: ev.criteria.filter((x) => x.id !== c.id) })}
+                    onClick={async () => (await confirmBox(`Supprimer le critère « ${c.label} » ?`)) && update({ criteria: ev.criteria.filter((x) => x.id !== c.id) })}
                   >
-                    ✕
+                    <Icon name="x" size={14} />
                   </button>
                 </td>
               </tr>
@@ -393,7 +394,7 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
             onClick={async () => {
               const t = { ...duplicate(ev), template: true, groupIds: [], groupDates: {}, unitId: undefined, name: ev.name };
               await db.evaluations.put(t);
-              alert('Modèle enregistré : il apparaît dans la liste des modèles de l’onglet Correction.');
+              alertBox('Modèle enregistré : il apparaît dans la liste des modèles de l’onglet Correction.');
             }}
           >
             Enregistrer comme modèle
@@ -402,7 +403,7 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
         <button
           className="btn danger"
           onClick={async () => {
-            if (!confirm(`Supprimer « ${ev.name} » et toutes ses corrections ?`)) return;
+            if (!(await confirmBox(`Supprimer « ${ev.name} » et toutes ses corrections ?`))) return;
             const rs = await db.results.where('evaluationId').equals(ev.id).primaryKeys();
             await db.resultShares.bulkDelete(rs);
             await db.results.bulkDelete(rs);

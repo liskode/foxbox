@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { showInfo } from '../../components/Dialog';
+import { showInfo, alertBox, confirmBox } from '../../components/Dialog';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { renameStudent, deleteStudent, resetPassword } from '../../lib/students';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Rule } from '../../lib/db';
+import { db, byName, groupStudents, type Rule } from '../../lib/db';
 import { StudentReport } from '../../components/StudentReport';
 import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar } from '../../components/Avatar';
@@ -33,9 +33,7 @@ export function StudentPage() {
   const order = useLiveQuery(
     async () => {
       if (!classe) return [];
-      const ms = await db.memberships.where('groupId').equals(classe).toArray();
-      const list = (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean).map((x) => x!);
-      return list.sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName)).map((x) => x.id);
+      return (await groupStudents(classe)).sort(byName).map((x) => x.id);
     },
     [classe],
     [] as string[],
@@ -85,13 +83,13 @@ export function StudentPage() {
               {pos >= 0 && order.length > 1 && (
                 <span className="row" style={{ gap: 6 }}>
                   <button className="btn small ghost" disabled={pos === 0} onClick={() => go(-1)} title="Élève précédent (flèche gauche)">
-                    ◀
+                    <Icon name="arrowLeft" size={14} />
                   </button>
                   <span className="muted">
                     {pos + 1} / {order.length}
                   </span>
                   <button className="btn small ghost" disabled={pos === order.length - 1} onClick={() => go(1)} title="Élève suivant (flèche droite)">
-                    ▶
+                    <Icon name="arrowRight" size={14} />
                   </button>
                   <span className="muted">(flèches ← → du clavier)</span>
                 </span>
@@ -135,7 +133,7 @@ export function StudentPage() {
                     })
                   }
                 >
-                  ✎ Corriger le nom
+                  <Icon name="edit" size={14} /> Corriger le nom
                 </button>
               </h1>
             )}
@@ -153,13 +151,13 @@ export function StudentPage() {
                 className="btn small ghost"
                 title="Nouveau mot de passe, si l'ancien est oublié ou a été divulgué"
                 onClick={async () => {
-                  if (!confirm(`Créer un nouveau mot de passe pour ${student.firstName} ? L'ancien ne fonctionnera plus.`)) return;
+                  if (!(await confirmBox(`Créer un nouveau mot de passe pour ${student.firstName} ? L'ancien ne fonctionnera plus.`))) return;
                   try {
                     await resetPassword(student.id);
                     const s2 = await db.students.get(student.id);
                     await showInfo(`Nouveau mot de passe de ${student.firstName} ${student.lastName}`, `Identifiant : ${student.login}\nMot de passe : ${s2?.password ?? '?'}`);
                   } catch (e) {
-                    alert((e as Error).message);
+                    alertBox((e as Error).message);
                   }
                 }}
               >
@@ -232,16 +230,16 @@ export function StudentPage() {
           className="btn danger"
           onClick={async () => {
             if (
-              !confirm(
+              !(await confirmBox(
                 `Supprimer définitivement ${student.firstName} ${student.lastName} ?\n\nSon compte, sa photo, sa progression et son historique seront effacés, dans toutes ses classes. Cette action est irréversible.`,
-              )
+              ))
             )
               return;
             try {
               await deleteStudent(student.id);
               nav(-1);
             } catch (e) {
-              alert((e as Error).message);
+              alertBox((e as Error).message);
             }
           }}
         >

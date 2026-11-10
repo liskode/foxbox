@@ -1,5 +1,6 @@
 // Emploi du temps : import des PDF Pronote (semaine A et B), correction des cours, jours de présence,
 // calendrier de l'année (semaines A / B, vacances, jours fériés).
+import { confirmBox } from '../../components/Dialog';
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { uid, shortName } from '../../lib/db';
@@ -201,7 +202,7 @@ function CalendarPanel({ tt, save }: { tt: TT; save: (t: TT) => Promise<void> })
     let weeks = { ...tt.weeks };
     if (next) weeks[m] = next;
     else delete weeks[m];
-    if (next && Object.keys(weeks).some((k) => k > m) && confirm('Faire alterner aussi les semaines suivantes à partir de celle-ci ?'))
+    if (next && Object.keys(weeks).some((k) => k > m) && (await confirmBox('Faire alterner aussi les semaines suivantes à partir de celle-ci ?')))
       weeks = realternate({ ...tt, weeks }, m);
     await save({ ...tt, weeks });
   }
@@ -212,8 +213,8 @@ function CalendarPanel({ tt, save }: { tt: TT; save: (t: TT) => Promise<void> })
         <h2 style={{ margin: 0 }}>Calendrier de l'année</h2>
         <button
           className="btn small"
-          onClick={() =>
-            (!Object.keys(tt.weeks).length || confirm('Remplacer le calendrier actuel ?')) &&
+          onClick={async () =>
+            (!Object.keys(tt.weeks).length || (await confirmBox('Remplacer le calendrier actuel ?'))) &&
             save({ ...tt, weeks: AUDIN_2026.weeks, off: AUDIN_2026.off })
           }
         >
@@ -263,7 +264,7 @@ function CalendarPanel({ tt, save }: { tt: TT; save: (t: TT) => Promise<void> })
             <span key={d} className="chip">
               {fromISO(d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}{' '}
               <button className="btn small ghost" style={{ padding: '0 6px' }} onClick={() => save({ ...tt, off: tt.off.filter((x) => x !== d) })}>
-                ✕
+                <Icon name="x" size={14} />
               </button>
             </span>
           ))}

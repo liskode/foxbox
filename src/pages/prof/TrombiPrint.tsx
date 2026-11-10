@@ -1,7 +1,7 @@
 // Trombinoscope imprimable d'une classe, tenant sur une page A4 (Imprimer › Enregistrer au format PDF).
 import { Link, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Student, shortName } from '../../lib/db';
+import { db, byName, groupStudents, type Student, shortName } from '../../lib/db';
 import { useFixedPhoto } from '../../components/Avatar';
 import { Icon } from '../../components/Icon';
 
@@ -21,9 +21,8 @@ export function TrombiPrint() {
   const { id } = useParams();
   const group = useLiveQuery(() => db.groups.get(id!), [id]);
   const students = useLiveQuery(async () => {
-    const ms = await db.memberships.where('groupId').equals(id!).toArray();
-    const s = (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[];
-    return s.sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName));
+    const s = (await groupStudents(id!));
+    return s.sort(byName);
   }, [id]);
   if (!group || !students) return null;
 

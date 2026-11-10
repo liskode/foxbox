@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, shortName, type Student } from '../../lib/db';
+import { db, groupStudents, shortName, type Student } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { loadRooms } from '../../lib/rooms';
 import { PlanGrid, printCell } from '../../components/SeatPlanTab';
@@ -16,8 +16,7 @@ export function PlanScreen() {
   const group = useLiveQuery(() => db.groups.get(groupId!), [groupId]);
   const rooms = useLiveQuery(() => loadRooms(session!.id), [session?.id], []);
   const students = useLiveQuery(async () => {
-    const ms = await db.memberships.where('groupId').equals(groupId!).toArray();
-    return (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[];
+    return (await groupStudents(groupId!));
   }, [groupId], [] as Student[]);
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   useEffect(() => {
