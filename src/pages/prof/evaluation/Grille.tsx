@@ -7,7 +7,7 @@ import { LEVEL_KEYS, emptyResult, levelColor, round1, saveResult, score } from '
 import { Avatar } from '../../../components/Avatar';
 import { Icon } from '../../../components/Icon';
 import { useCompetences } from '../../../components/CompetencePicker';
-import { competenceScores, evalCategories, masteryOf } from '../../../lib/competences';
+import { childrenOf, competenceScores, evalCategories, masteryOf, type Competence } from '../../../lib/competences';
 
 import { pct, isTyping, parseLevel, useResults } from './shared';
 
@@ -30,6 +30,22 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
   const byGroup = groups.map((g) => ({ g, items: list.map((x, si) => ({ ...x, si })).filter((x) => x.groupId === g.id) }));
   const visible = byGroup.flatMap(({ g, items }) => (folded.has(g.id) ? [] : items.map((x) => x.si)));
   const cats = evalCategories(comps, ev);
+  // Lignes de compétences : chaque catégorie, puis ses sous-compétences utilisées dans le barème
+  const used = new Set(ev.criteria.flatMap((c) => c.competenceIds ?? []));
+  const rows = cats.flatMap((cat) => [{ c: cat, sub: false }, ...childrenOf(comps, cat.id).filter((k) => used.has(k.id)).map((k) => ({ c: k, sub: true }))]);
+  // Réussite d'une copie sur une catégorie (barème pondéré) ou une sous-compétence (critères qui la portent)
+  const scoreOf = (r: Result, k: Competence) => {
+    if (!k.parentId) return competenceScores(comps, ev, r).find((x) => x.c.id === k.id);
+    let note = 0;
+    let total = 0;
+    for (const cr of ev.criteria) {
+      const l = r.levels[cr.id];
+      if (!cr.competenceIds?.includes(k.id) || l === null || l === undefined) continue;
+      note += l * cr.points;
+      total += cr.points;
+    }
+    return total ? { note, total, value: note / total } : undefined;
+  };
 
   const setLevel = async (ci: number, si: number, level: number | null) => {
     const st = list[si]?.student;
@@ -69,11 +85,9 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
   const present = (rs: (Result | undefined)[]) => rs.filter((r): r is Result => !!r && !r.absent);
   const rsOf = (items: { student: { id: string } }[]) => present(items.map((x) => results.get(x.student.id)));
   const all = rsOf(list);
-  // Moyennes (en %) d'un critère, de la note /20 et d'une compétence, sur un ensemble de copies
+  // Moyennes (en %) d'un critère et de la note /20, sur un ensemble de copies
   const critMean = (rs: Result[], cid: string) => mean(rs.map((r) => r.levels[cid]).filter((l): l is number => l !== null && l !== undefined));
   const noteMean = (rs: Result[]) => mean(rs.map((r) => score(ev, r)?.note20).filter((n): n is number => n !== undefined));
-  const compMean = (rs: Result[], catId: string) =>
-    mean(rs.map((r) => competenceScores(comps, ev, r).find((x) => x.c.id === catId)?.value).filter((v): v is number => v !== undefined));
 
   const sticky = { position: 'sticky' as const, background: 'var(--paper)' };
   // Colonne de moyennes (« Tous » ou une classe)
@@ -104,7 +118,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
         <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem' }}>
           <thead>
             <tr>
-              <th style={{ ...sticky, left: 0, top: 0, zIndex: 3, minWidth: 220, verticalAlign: 'bottom', textAlign: 'right', padding: '2px 8px 4px' }}>
+              <th style={{ ...sticky, left: 0, top: 0, zIndex: 3, minWidth: 420, verticalAlign: 'bottom', textAlign: 'right', padding: '2px 8px 4px' }}>
                 <b>Note /20</b>
               </th>
               <th style={{ ...sticky, top: 0, zIndex: 2, padding: '2px 4px', width: 52 }} title="Moyenne de tous les élèves">
@@ -230,26 +244,31 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                 ))}
               </tr>
             ))}
-            {cats.map((cat) => {
+            {rows.map(({ c: k, sub }) => {
               const tone = (v: number | null) => (v === null ? undefined : masteryOf(v).color);
+              const mAll = mean(present(list.map((x) => results.get(x.student.id))).map((r) => scoreOf(r, k)?.value).filter((v): v is number => v !== undefined));
               return (
-                <tr key={cat.id}>
-                  <td style={{ ...sticky, left: 0, padding: '4px 6px', fontWeight: 800 }} title={cat.name}>
-                    <span style={{ background: cat.color, borderRadius: 6, padding: '0 6px' }}>{cat.code}</span> %
+                <tr key={k.id}>
+                  <td
+                    style={{ ...sticky, left: 0, padding: sub ? '2px 6px 2px 24px' : '4px 6px', fontWeight: sub ? 500 : 800, borderTop: sub ? undefined : '1px solid var(--muted-line)' }}
+                    title={k.name}
+                  >
+                    <span style={{ background: k.color, borderRadius: 6, padding: '0 6px', fontWeight: 800 }}>{k.code}</span> {sub ? k.name : `${k.name} (%)`}
                   </td>
-                  <SumCell v={compMean(all, cat.id)} color={tone(compMean(all, cat.id))} bold />
+                  <SumCell v={mAll} color={tone(mAll)} bold />
                   {byGroup.map(({ g, items }) => {
-                    const m = compMean(rsOf(items), cat.id);
+                    const m = mean(rsOf(items).map((r) => scoreOf(r, k)?.value).filter((v): v is number => v !== undefined));
                     return (
                       <Fragment key={g.id}>
                         <SumCell v={m} color={tone(m)} />
                         {!folded.has(g.id) &&
                           items.map(({ student }) => {
-                            const sc = competenceScores(comps, ev, results.get(student.id)).find((x) => x.c.id === cat.id);
+                            const r = results.get(student.id);
+                            const sc = r && !r.absent ? scoreOf(r, k) : undefined;
                             return (
                               <td
                                 key={student.id}
-                                title={sc ? `${cat.name} : ${sc.note}/${sc.total} pts · ${masteryOf(sc.value).name}` : undefined}
+                                title={sc ? `${k.code} ${k.name} : ${round1(sc.note)}/${round1(sc.total)} pts · ${masteryOf(sc.value).name}` : undefined}
                                 style={{ textAlign: 'center', fontWeight: 500, fontSize: '0.8rem', background: sc ? masteryOf(sc.value).color : undefined }}
                               >
                                 {sc ? Math.round(sc.value * 100) : ''}
