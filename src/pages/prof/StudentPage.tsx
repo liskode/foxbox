@@ -176,11 +176,13 @@ export function StudentPage() {
         <NoteEditor key={student.id} studentId={student.id} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16, alignItems: 'start' }}>
-        <StudentEvaluations student={student} />
+        <div className="stack">
+          <StudentEvaluations student={student} />
+          <StudentAbsences student={student} />
+          <StudentVisits student={student} />
+        </div>
         <StudentCompetenceHisto student={student} />
       </div>
-      <StudentAbsences student={student} />
-      <StudentVisits student={student} />
       <section className="stack" style={{ gap: 12, borderTop: '3px solid var(--line)', paddingTop: 12 }}>
         <h2 className="row" style={{ margin: 0, gap: 8 }}><Icon name="cards" size={20} /> Flashcards</h2>
         <StudentReport
