@@ -44,6 +44,21 @@ async function load() {
   return { rows, seqs, byId };
 }
 
+// Recto entier (image réduite) ; un clic affiche aussi le verso
+function Preview({ card }: { card: Card }) {
+  const [back, setBack] = useState(false);
+  return (
+    <div className="intro-prev" title={back ? 'Masquer le verso' : 'Voir le verso'} onClick={() => setBack(!back)} style={{ cursor: 'pointer' }}>
+      <CardFace html={card.front} />
+      {back && (
+        <div style={{ borderTop: '1px dashed var(--muted-line)', marginTop: 4 }}>
+          <CardFace html={card.back} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function IntroTab() {
   const { session } = useAuth();
   const data = useLiveQuery(load, []);
@@ -167,9 +182,7 @@ export function IntroTab() {
                     <b>{r.card.code}</b>
                     {r.source && <span className={'tag ' + (r.source === 'séance' ? 'ok' : 'warn')}>{r.source === 'séance' ? 'd’après sa séance' : 'd’après son contenu'}</span>}
                   </div>
-                  <div style={{ maxHeight: 110, overflow: 'hidden', fontSize: '0.85rem' }}>
-                    <CardFace html={r.card.front} />
-                  </div>
+                  <Preview card={r.card} />
                   {select(r)}
                 </div>
               ))}

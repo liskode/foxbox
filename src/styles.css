@@ -575,6 +575,8 @@ table.list tr.click:hover td { background: #faf7ef; }
 .pf-row:last-child { border-bottom: 0; }
 .pf-sel { background: var(--calm); }
 .pf-pick { align-items: center; }
+.intro-prev .cardface { font-size: .9rem; }
+.intro-prev .cardface img { max-height: 200px; margin: 4px auto; }
 .pf-pick .cardface { font-size: .9rem; text-align: left; flex: 1; }
 .pf-pick .cardface img { max-height: 80px; margin: 0; }
 .pf-sc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 312px; gap: 16px; align-items: center; padding-top: 8px; border-top: 1px solid var(--soft-line); }
