@@ -1,4 +1,5 @@
-// Pastilles de compétences d'un critère : APP, ANA, REA, VAL, COM (et leurs sous-compétences)
+// Pastilles de compétences d'un critère : RES, ANA, REA, VAL, COM (et leurs sous-compétences)
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../lib/auth';
 import { categories, childrenOf, DEFAULT_COMPETENCES, loadCompetences, type Competence } from '../lib/competences';
@@ -30,19 +31,54 @@ export function CompetenceChip({ c, on = true, onClick, small }: { c: Competence
   );
 }
 
+// Pastilles des catégories ; une catégorie cochée affiche ses sous-compétences avec leur intitulé, à cocher si besoin
 export function CompetencePicker({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) {
   const list = useCompetences();
-  const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+  const [shown, setShown] = useState<string[]>([]); // catégories dépliées (toutes les sous-compétences visibles)
+  // Une sous-compétence cochée remplace la catégorie entière (sans double compte) ; sans sous-compétence, la catégorie reste cochée
+  const toggle = (cat: Competence, id: string) => {
+    const kids = childrenOf(list, cat.id).map((k) => k.id);
+    const next = (value.includes(id) ? value.filter((x) => x !== id) : [...value, id]).filter((x) => x !== cat.id);
+    onChange(next.some((x) => kids.includes(x)) ? next : [...next, cat.id]);
+  };
+  // Décocher une catégorie retire aussi ses sous-compétences
+  const toggleCat = (cat: Competence) => {
+    const kids = childrenOf(list, cat.id).map((k) => k.id);
+    const open = value.includes(cat.id) || kids.some((k) => value.includes(k));
+    onChange(open ? value.filter((x) => x !== cat.id && !kids.includes(x)) : [...value, cat.id]);
+    setShown(open ? shown.filter((x) => x !== cat.id) : [...shown, cat.id]);
+  };
+  const opened = categories(list).filter((cat) => value.includes(cat.id) || childrenOf(list, cat.id).some((k) => value.includes(k.id)));
   return (
-    <div className="row" style={{ gap: 3, marginTop: 4 }}>
-      {categories(list).map((cat) => {
+    <div className="stack" style={{ gap: 4, marginTop: 4 }}>
+      <div className="row" style={{ gap: 3 }}>
+        {categories(list).map((cat) => (
+          <CompetenceChip key={cat.id} c={cat} on={opened.includes(cat)} onClick={() => toggleCat(cat)} />
+        ))}
+      </div>
+      {opened.map((cat) => {
         const kids = childrenOf(list, cat.id);
-        const open = value.includes(cat.id) || kids.some((k) => value.includes(k.id));
+        if (!kids.length) return null;
+        const all = shown.includes(cat.id);
         return (
-          <span key={cat.id} className="row" style={{ gap: 2, flexWrap: 'nowrap' }}>
-            <CompetenceChip c={cat} on={value.includes(cat.id)} onClick={() => toggle(cat.id)} />
-            {open && kids.map((k) => <CompetenceChip key={k.id} c={k} small on={value.includes(k.id)} onClick={() => toggle(k.id)} />)}
-          </span>
+          <div key={cat.id} className="stack" style={{ gap: 2, paddingLeft: 8, borderLeft: `3px solid ${cat.color}` }}>
+            {kids.filter((k) => all || value.includes(k.id)).map((k) => (
+              <label key={k.id} className="row small" style={{ gap: 6, flexWrap: 'nowrap', alignItems: 'flex-start', cursor: 'pointer', fontWeight: value.includes(k.id) ? 700 : 400 }}>
+                <input type="checkbox" checked={value.includes(k.id)} onChange={() => toggle(cat, k.id)} style={{ marginTop: 3 }} />
+                <span>
+                  <span className="muted">{k.code}</span> {k.name}
+                </span>
+              </label>
+            ))}
+            <button
+              type="button"
+              className="btn small ghost"
+              style={{ alignSelf: 'flex-start', padding: '0 6px' }}
+              onClick={() => setShown(all ? shown.filter((x) => x !== cat.id) : [...shown, cat.id])}
+            >
+              {all ? 'replier' : kids.some((k) => value.includes(k.id)) ? `modifier les sous-compétences ${cat.code}` : `préciser les sous-compétences ${cat.code}`}
+            </button>
+          </div>
         );
       })}
     </div>

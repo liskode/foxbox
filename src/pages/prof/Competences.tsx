@@ -1,4 +1,4 @@
-// Compétences : référentiel (APP, ANA, REA, VAL, COM et sous-compétences) et niveau atteint par les élèves d'une classe.
+// Compétences : référentiel (RES, ANA, REA, VAL, COM et sous-compétences) et niveau atteint par les élèves d'une classe.
 import { ask } from '../../components/Dialog';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -45,7 +45,7 @@ function Referential({ list, selected, onSelect }: { list: Competence[]; selecte
             <CompetenceChip c={cat} />
             <button
               className={'btn small' + (selected === cat.id ? ' primary' : ' ghost')}
-              style={{ flex: 1, justifyContent: 'flex-start' }}
+              style={{ flex: 1, minWidth: 0, justifyContent: 'flex-start', whiteSpace: 'normal', textAlign: 'left' }}
               onClick={() => onSelect(cat.id)}
               title="Voir le détail de cette catégorie"
             >
@@ -116,7 +116,9 @@ export function Competences() {
 
   const cat = list.find((c) => c.id === selected);
   // Colonnes : les 5 catégories, ou une catégorie et ses sous-compétences
-  const cols = cat ? [cat, ...childrenOf(list, cat.id)] : categories(list);
+  // (sous-compétences : seulement celles déjà évaluées dans la classe)
+  const seen = new Set(data?.obs.map((o) => o.competenceId));
+  const cols = cat ? [cat, ...childrenOf(list, cat.id).filter((k) => seen.has(k.id))] : categories(list);
   const ids = new Set(cols.flatMap((c) => [c.id, ...childrenOf(list, c.id).map((k) => k.id)]));
   const evals = data ? [...new Map(data.obs.filter((o) => ids.has(o.competenceId)).map((o) => [o.evaluation.id, o.evaluation])).values()] : [];
 
@@ -139,7 +141,7 @@ export function Competences() {
           ))}
         </div>
       </div>
-      <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 280px) 1fr', gap: 18, alignItems: 'start' }}>
+      <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 280px) minmax(0, 1fr)', gap: 18, alignItems: 'start' }}>
         <Referential list={list} selected={selected} onSelect={(id) => set({ c: id })} />
         <div className="stack">
           <div className="panel" style={{ overflowX: 'auto' }}>
@@ -150,7 +152,7 @@ export function Competences() {
                   {cols.map((c) => (
                     <th key={c.id} style={{ textAlign: 'center' }}>
                       <CompetenceChip c={c} onClick={!c.parentId && !cat ? () => set({ c: c.id }) : undefined} />
-                      <div className="small muted" style={{ fontWeight: 600 }}>
+                      <div className="small muted" style={{ fontWeight: 600, maxWidth: 170, minWidth: 110, margin: '0 auto', whiteSpace: 'normal', textTransform: 'none', letterSpacing: 0 }}>
                         {c.parentId ? c.name : cat ? 'ensemble' : c.name}
                       </div>
                     </th>
@@ -172,6 +174,23 @@ export function Competences() {
                     ))}
                   </tr>
                 ))}
+                {data && data.students.length > 0 && (
+                  <tr>
+                    <td>
+                      <b>Classe</b>
+                      <div className="small muted">part des élèves en MS ou TBM</div>
+                    </td>
+                    {cols.map((c) => {
+                      const lvs = data.students.map((s) => levelFor(list, data.obs, s.id, c.id)).filter((x) => !!x);
+                      const ok = lvs.filter((l) => l!.value >= 0.625).length;
+                      return (
+                        <td key={c.id} style={{ textAlign: 'center', fontWeight: 800 }} title={lvs.length ? `${ok} élève(s) sur ${lvs.length} évalué(s)` : undefined}>
+                          {lvs.length ? `${Math.round((ok / lvs.length) * 100)} %` : <span className="muted small">—</span>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                )}
               </tbody>
             </table>
             {data && !data.students.length && <span className="muted">Aucun élève dans cette classe.</span>}
@@ -201,7 +220,7 @@ export function Competences() {
             ))}
             {!evals.length && (
               <span className="small muted">
-                Aucune pour l'instant : dans le barème d'une évaluation, cliquez sur les pastilles APP, ANA, REA, VAL, COM sous chaque critère.
+                Aucune pour l'instant : dans le barème d'une évaluation, cliquez sur les pastilles RES, ANA, REA, VAL, COM sous chaque critère.
               </span>
             )}
           </div>

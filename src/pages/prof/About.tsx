@@ -127,9 +127,12 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
   },
   {
     title: 'Compétences',
-    text: 'Suivre les compétences APP, ANA, REA, VAL, COM (et leurs sous-compétences) à partir des critères des évaluations.',
+    text: 'Suivre les compétences RES, ANA, REA, VAL, COM (et leurs sous-compétences) à partir des critères des évaluations.',
     details: [
-      'référentiel modifiable',
+      'référentiel collège R2026 : RES, ANA, REA, VAL, COM et leurs 20 sous-compétences, modifiable',
+      'dans le barème, une pastille cochée propose ses sous-compétences avec leur intitulé, à cocher si besoin',
+      'fiche élève : détail des sous-compétences évaluées (niveau et points)',
+      'tableau de la classe par sous-compétence, avec la part des élèves en MS ou TBM',
       'niveaux du LSU (MI, MF, MS, TBM)',
       'tableau élèves × compétences par classe',
       'histogramme par compétence pondéré par le barème (correction, résultats, fiche élève, espace élève)',

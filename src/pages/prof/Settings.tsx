@@ -17,7 +17,7 @@ export function Settings() {
   const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
   const links = [
     ['/prof/edt', 'Emploi du temps et calendrier', 'calendar', 'PDF Pronote, semaines A / B, vacances, jours de présence, cours hors progression'],
-    ['/prof/competences', 'Référentiel de compétences', 'target', 'APP, ANA, REA, VAL, COM et leurs sous-compétences'],
+    ['/prof/competences', 'Référentiel de compétences', 'target', 'RES, ANA, REA, VAL, COM et leurs sous-compétences'],
     ['/prof/salles', 'Salles', 'seat', 'Disposition des places, pour les plans de classe'],
   ];
   return (

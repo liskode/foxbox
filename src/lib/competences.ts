@@ -1,26 +1,62 @@
-// Compétences : référentiel du professeur (catégories APP, ANA, REA, VAL, COM et leurs sous-compétences),
+// Compétences : référentiel du professeur (catégories RES, ANA, REA, VAL, COM et leurs sous-compétences),
 // critères d'évaluation rattachés, niveau atteint par élève (échelle du LSU).
 import { db, uid, type Evaluation, type Result } from './db';
 import { dateFor } from './grading';
 
 export interface Competence {
   id: string;
-  code: string; // APP, ANA… ; sous-compétence : APP.1, APP.2…
+  code: string; // RES, ANA… ; sous-compétence : ANA.1, ANA.2…
   name: string;
   color: string;
   parentId?: string; // sous-compétence d'une catégorie
 }
 
+// Référentiel collège R2026 (démarche scientifique, cycle 4). « RES » garde l'identifiant de l'ancienne
+// catégorie APP : les critères déjà rattachés à APP passent ainsi en RES.
+const CAT = (id: string, code: string, name: string, color: string): Competence => ({ id, code, name, color });
+const SUBS: [string, string, string[]][] = [
+  ['ANA', '#c3a6e3', [
+    'Observer et décrire un phénomène, par exemple en réalisant un schéma de situation',
+    "Identifier les grandeurs physiques utiles à l'analyse d'une situation",
+    "Rechercher, extraire et organiser l'information pour résoudre un problème scientifique",
+    'Mobiliser ses connaissances pour élaborer des hypothèses fondées qui peuvent être éprouvées',
+    'Proposer une stratégie pour résoudre un problème scientifique',
+    'Choisir ou proposer un dispositif expérimental ou un protocole simple pour répondre à une question scientifique',
+  ]],
+  ['REA', '#f4a261', [
+    'Mettre en œuvre une stratégie pour résoudre un problème scientifique',
+    'Utiliser des modes de représentation conventionnels (modèle moléculaire, circuit électrique…)',
+    'Mettre en œuvre un protocole avec un équipement adapté, en respectant les règles de sécurité',
+    'Mesurer des grandeurs physiques',
+    'Effectuer des calculs',
+    'Représenter des données',
+  ]],
+  ['VAL', '#7fcdbb', [
+    'Exploiter des observations, des mesures en tenant compte de leur variabilité',
+    'Valider ou invalider une hypothèse, une information',
+    "Vérifier la vraisemblance du résultat d'un calcul ou d'une mesure",
+    "Vérifier la vraisemblance d'une affirmation (connaissances, sources fiables)",
+  ]],
+  ['COM', '#e3a6b8', [
+    "Utiliser les codes de la communication scientifique à l'écrit ou à l'oral",
+    'Présenter les étapes de son travail de manière synthétique, organisée et compréhensible',
+    "Interagir à l'oral lors d'un travail de groupe",
+    "Argumenter dans le cadre d'un débat scientifique",
+  ]],
+];
 export const DEFAULT_COMPETENCES: Competence[] = [
-  { id: 'APP', code: 'APP', name: "S'approprier", color: '#8dc9e3' },
-  { id: 'ANA', code: 'ANA', name: 'Analyser', color: '#c3a6e3' },
-  { id: 'REA', code: 'REA', name: 'Réaliser', color: '#f4a261' },
-  { id: 'VAL', code: 'VAL', name: 'Valider', color: '#7fcdbb' },
-  { id: 'COM', code: 'COM', name: 'Communiquer', color: '#e3a6b8' },
+  CAT('APP', 'RES', 'Restituer ses connaissances', '#8dc9e3'),
+  CAT('ANA', 'ANA', 'Analyser / Raisonner', '#c3a6e3'),
+  CAT('REA', 'REA', 'Réaliser', '#f4a261'),
+  CAT('VAL', 'VAL', 'Valider', '#7fcdbb'),
+  CAT('COM', 'COM', 'Communiquer', '#e3a6b8'),
+  ...SUBS.flatMap(([cat, color, names]) => names.map((name, i) => ({ id: `${cat}.${i + 1}`, code: `${cat}.${i + 1}`, name, color, parentId: cat }))),
 ];
 
 export async function loadCompetences(teacherId: string): Promise<Competence[]> {
-  return (await db.teachers.get(teacherId))?.competences ?? DEFAULT_COMPETENCES;
+  const saved = (await db.teachers.get(teacherId))?.competences;
+  // Référentiel enregistré avant R2026 : APP devient RES
+  return saved?.map((c) => (c.id === 'APP' && c.code === 'APP' ? { ...c, code: 'RES', name: 'Restituer ses connaissances' } : c)) ?? DEFAULT_COMPETENCES;
 }
 export async function saveCompetences(teacherId: string, list: Competence[]) {
   await db.teachers.update(teacherId, { competences: list });
@@ -127,4 +163,27 @@ export function competenceScores(list: Competence[], ev: Evaluation, r?: Result)
     if (total) out.push({ c: cat, note: Math.round(note * 10) / 10, total: Math.round(total * 10) / 10, value: note / total });
   }
   return out;
+}
+
+// Détail par sous-compétence d'un élève, sur plusieurs copies : points obtenus / points des critères qui la portent
+export function subCompetenceScores(list: Competence[], copies: { ev: Evaluation; r: Result }[]) {
+  const out = new Map<string, CompetenceScore & { n: number }>();
+  for (const { ev, r } of copies) {
+    if (r.absent) continue;
+    for (const cr of ev.criteria) {
+      const l = r.levels[cr.id];
+      if (l === null || l === undefined) continue;
+      for (const k of cr.competenceIds ?? []) {
+        const c = list.find((x) => x.id === k);
+        if (!c?.parentId) continue;
+        const cur = out.get(k) ?? { c, note: 0, total: 0, value: 0, n: 0 };
+        cur.note += l * cr.points;
+        cur.total += cr.points;
+        cur.n++;
+        cur.value = cur.total ? cur.note / cur.total : 0;
+        out.set(k, cur);
+      }
+    }
+  }
+  return list.filter((c) => out.has(c.id)).map((c) => out.get(c.id)!);
 }

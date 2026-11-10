@@ -1,7 +1,7 @@
 // Fiche élève (professeur) : ses évaluations, et le suivi des messages envoyés aux parents.
 import { useCompetences } from './CompetencePicker';
 import { CompetenceHisto } from './CompetenceHisto';
-import { categories, competenceScores, type Competence } from '../lib/competences';
+import { categories, competenceScores, masteryOf, subCompetenceScores, type Competence } from '../lib/competences';
 import { absencesOf } from '../lib/absences';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -62,6 +62,37 @@ export function StudentEvaluations({ student }: { student: Student }) {
   );
 }
 
+// Détail des sous-compétences évaluées : niveau (échelle du LSU) et points obtenus
+const fr = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
+export function SubCompetenceList({ subs }: { subs: ReturnType<typeof subCompetenceScores> }) {
+  if (!subs.length) return null;
+  return (
+    <table className="list small" style={{ marginTop: 4 }}>
+      <tbody>
+        {subs.map(({ c, note, total, n, value }) => {
+          const m = masteryOf(value);
+          return (
+            <tr key={c.id}>
+              <td style={{ whiteSpace: 'nowrap' }}>
+                <span style={{ background: c.color, borderRadius: 5, padding: '0 4px', fontWeight: 800 }}>{c.code}</span>
+              </td>
+              <td>{c.name}</td>
+              <td style={{ whiteSpace: 'nowrap' }}>
+                <span title={m.name} style={{ background: m.color, borderRadius: 6, padding: '1px 6px', fontWeight: 800 }}>
+                  {m.code}
+                </span>
+              </td>
+              <td className="muted" style={{ whiteSpace: 'nowrap' }} title={`${n} critère(s) évalué(s)`}>
+                {fr(note)}/{fr(total)} pts
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 // Compétences de l'élève sur toutes ses évaluations : histogramme (hauteur = points du barème, vert = réussi)
 export function StudentCompetenceHisto({ student }: { student: Student }) {
   const list = useStudentEvals(student.id);
@@ -78,6 +109,7 @@ export function StudentCompetenceHisto({ student }: { student: Student }) {
   const bars = categories(comps)
     .map((c) => sums.get(c.id))
     .filter((x): x is NonNullable<typeof x> => !!x);
+  const subs = subCompetenceScores(comps, list.map(({ ev, r }) => ({ ev: ev!, r })));
   return (
     <div className="panel stack" style={{ gap: 8 }}>
       <div className="spread">
@@ -90,6 +122,7 @@ export function StudentCompetenceHisto({ student }: { student: Student }) {
         <>
           <CompetenceHisto bars={bars} height={110} />
           <span className="small muted">Toutes évaluations confondues · hauteur : points du barème · vert : réussi.</span>
+          <SubCompetenceList subs={subs} />
         </>
       ) : (
         <span className="muted small">Pas encore de critère rattaché à une compétence.</span>
