@@ -41,12 +41,13 @@ export function CompetencePicker({ value, onChange }: { value: string[]; onChang
     const next = (value.includes(id) ? value.filter((x) => x !== id) : [...value, id]).filter((x) => x !== cat.id);
     onChange(next.some((x) => kids.includes(x)) ? next : [...next, cat.id]);
   };
-  // Décocher une catégorie retire aussi ses sous-compétences
+  // Clic sur une pastille : la coche et déplie ses sous-compétences ; repliée, la déplie à nouveau ; dépliée, la décoche (avec ses sous-compétences)
   const toggleCat = (cat: Competence) => {
     const kids = childrenOf(list, cat.id).map((k) => k.id);
     const open = value.includes(cat.id) || kids.some((k) => value.includes(k));
+    if (open && kids.length && !shown.includes(cat.id)) return setShown([cat.id]);
     onChange(open ? value.filter((x) => x !== cat.id && !kids.includes(x)) : [...value, cat.id]);
-    setShown(open ? shown.filter((x) => x !== cat.id) : [...shown, cat.id]);
+    setShown(open ? [] : [cat.id]);
   };
   const opened = categories(list).filter((cat) => value.includes(cat.id) || childrenOf(list, cat.id).some((k) => value.includes(k.id)));
   return (
@@ -58,8 +59,8 @@ export function CompetencePicker({ value, onChange }: { value: string[]; onChang
       </div>
       {opened.map((cat) => {
         const kids = childrenOf(list, cat.id);
-        if (!kids.length) return null;
         const all = shown.includes(cat.id);
+        if (!kids.some((k) => all || value.includes(k.id))) return null;
         return (
           <div key={cat.id} className="stack" style={{ gap: 2, paddingLeft: 8, borderLeft: `3px solid ${cat.color}` }}>
             {kids.filter((k) => all || value.includes(k.id)).map((k) => (
@@ -70,14 +71,6 @@ export function CompetencePicker({ value, onChange }: { value: string[]; onChang
                 </span>
               </label>
             ))}
-            <button
-              type="button"
-              className="btn small ghost"
-              style={{ alignSelf: 'flex-start', padding: '0 6px' }}
-              onClick={() => setShown(all ? shown.filter((x) => x !== cat.id) : [...shown, cat.id])}
-            >
-              {all ? 'replier' : kids.some((k) => value.includes(k.id)) ? `modifier les sous-compétences ${cat.code}` : `préciser les sous-compétences ${cat.code}`}
-            </button>
           </div>
         );
       })}
