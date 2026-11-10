@@ -114,7 +114,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'sujet et corrigé en PDF',
       'variantes selon les classes',
       'modèles réutilisables',
-      'grille façon tableur',
+      'grille façon tableur, élèves rangés par classe : colonne « Tous » (réussite moyenne par question), puis pour chaque classe sa colonne de moyennes et ses élèves, repliables',
       'résultats : moyenne, répartition, réussite par critère et par compétence',
       'appréciations',
       'appréciation vocale de chaque copie, réécoutée avant envoi (« Recommencer » possible) : l’élève l’écoute dans son espace, on voit s’il l’a écoutée (date et heure), il peut répondre par écrit ou par un vocal ; nouvelles réponses signalées dans la liste des copies',
