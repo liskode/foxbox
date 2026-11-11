@@ -111,7 +111,8 @@ export function Correction() {
   }
 
   return (
-    <div className="page stack">
+    // Toute la largeur de l'écran, niveaux côte à côte (défilement horizontal si besoin), comme la Progression
+    <div className="page wide stack">
       <div className="spread">
         <h1 className="title" style={{ margin: 0 }}>Évaluations</h1>
         <Link to="/prof/competences" className="btn">
@@ -119,7 +120,7 @@ export function Correction() {
         </Link>
 
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(220px, 320px)', gap: 14, alignItems: 'start', overflowX: 'auto', paddingBottom: 8 }}>
         {columns.map((level) => {
           const list = rows.filter((r) => (r.level ?? '') === level);
           return (
