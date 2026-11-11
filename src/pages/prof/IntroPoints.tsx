@@ -122,8 +122,8 @@ export function IntroTab() {
       <div className="panel stack" style={{ gap: 8 }}>
         <h3 className="panel-title">Point d'introduction des flashcards de physique-chimie</h3>
         <span className="small muted">
-          Pour chaque flashcard, la séquence où elle est vue pour la première fois. Il sert à remplir les séances 0 de révision (prérequis) et à entourer
-          la flashcard de la couleur de son niveau pendant les révisions. Les propositions viennent de la séance à laquelle la flashcard est rattachée,
+          Pour chaque flashcard, la séquence où elle est vue pour la première fois. Il sert à remplir les séances 0 de révision (prérequis) et à colorer
+          le bas de la flashcard à la couleur de son niveau, y compris pendant les révisions. Les propositions viennent de la séance à laquelle la flashcard est rattachée,
           sinon de son contenu.
         </span>
         <div className="row" style={{ gap: 8 }}>

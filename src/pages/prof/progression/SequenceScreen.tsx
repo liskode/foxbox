@@ -11,7 +11,7 @@ import { themesOf } from '../../../lib/themes';
 import { CardBrowser } from '../../../components/CardBrowser';
 import { CardDetail } from '../../../components/CardDetail';
 import { CardFace } from '../../../components/CardFace';
-import { themeColor } from '../../../components/widgets';
+import { useCardBand } from '../../../lib/cardLevel';
 import { unitLabel, nextSeanceCode, themeLabel, levelColors, moveUnit, canMove } from '../../../lib/units';
 import { sequencesOf, finishedByAll, doneDate, durationOf, dm, type ClassPlan, type LevelPlan } from '../../../lib/forecast';
 import type { Timetable } from '../../../lib/timetable';
@@ -40,6 +40,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
   const [siblings, setSiblings] = useState<string[]>([]);
   const [editNext, setEditNext] = useState<string | null>(null);
   const unit = units.find((u) => u.id === sel);
+  const band = useCardBand();
 
   const cardsInUnit = useLiveQuery(async () => {
     if (!unit) return [];
@@ -380,11 +381,11 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                   <div className="cardgrid">
                     {cardsInUnit?.map(({ card, own, suspended }) => (
                       <div key={card.id} className={'thumb' + (suspended ? ' suspended' : '')} onClick={() => (setSiblings(cardsInUnit?.map((x) => x.card.id) ?? []), setOpen(card.id))}>
-                        <div className="bar" style={{ background: themeColor(card.theme) }} />
                         <div className="face">
                           <CardFace html={card.front} />
                         </div>
-                        <div className="meta">
+                        <div className="meta" style={{ background: band(card).color }}>
+                          <span className="band-label">{band(card).label}</span>
                           <span className="code">{card.code}</span>
                           {own ? (
                             <span className="row" style={{ gap: 4 }}>

@@ -5,6 +5,7 @@ import { db, type Card, type Rating } from '../../lib/db';
 import { recordAnswer, todaySession } from '../../lib/leitner';
 import { CardFace } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
+import { useCardBand } from '../../lib/cardLevel';
 
 export function ReviewSession() {
   const { session } = useAuth();
@@ -16,6 +17,7 @@ export function ReviewSession() {
   const flippedAt = useRef(0);
   const busy = useRef(false);
   const [tally, setTally] = useState({ easy: 0, hard: 0, forgot: 0 });
+  const band = useCardBand();
 
   useEffect(() => {
     (async () => {
@@ -103,8 +105,13 @@ export function ReviewSession() {
             </div>
           </div>
         </div>
-        <div className="flip" onClick={flip} style={{ cursor: flipped ? 'default' : 'pointer' }}>
+        <div className="flip banded" onClick={flip} style={{ cursor: flipped ? 'default' : 'pointer' }}>
           <CardFace html={flipped ? card.back : card.front} full />
+          {/* couleur du niveau où la flashcard a été vue pour la première fois */}
+          <div className="flip-band" style={{ background: band(card).color }}>
+            <span className="band-label">{band(card).label}</span>
+            <span className="code">{card.code}</span>
+          </div>
         </div>
         {/* Sur téléphone, les boutons restent en bas de l'écran, sous le pouce */}
         <div className="review-actions">

@@ -156,6 +156,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'recherche par mot, code ou joker (43MM*, ??ER*)',
       'filtres par niveau, thème, tag et séquence',
       'point d’introduction de chaque flashcard de physique-chimie (séquence où elle est vue pour la première fois) : onglet « Introduction », propositions d’après sa séance ou son contenu, validées par lot ou corrigées une à une',
+      'bas de chaque flashcard à la couleur de son niveau d’introduction (sinon de son niveau), avec la matière, le thème et le code en petit, chez le professeur comme dans les révisions des élèves',
       'éditeur avec le code à gauche et le rendu à droite',
       'gras (**mot**), italique, souligné',
       'formules LaTeX entre $ … $',

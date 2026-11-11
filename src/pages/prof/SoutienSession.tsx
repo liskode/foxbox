@@ -13,7 +13,7 @@ import { FileList, HomeworkTag, UploadButton, whenLabel } from '../../components
 import { CardBrowser } from '../../components/CardBrowser';
 import { CardDetail } from '../../components/CardDetail';
 import { CardFace, RichText } from '../../components/CardFace';
-import { themeColor } from '../../components/widgets';
+import { useCardBand } from '../../lib/cardLevel';
 import { toast } from '../../components/Toast';
 import { LineTag } from '../../components/Billing';
 import { markFilesSeen } from '../../components/TutoringTile';
@@ -448,6 +448,7 @@ function ProgrammePicker({ group, s }: { group: Group; s: TutoringSession }) {
 }
 
 function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
+  const band = useCardBand();
   const cards = useLiveQuery(async () => (await db.cards.bulkGet(s.cardIds)).filter((c) => c && !c.deleted).map((c) => c!), [s.cardIds], []);
   // Flashcards déjà données à l'élève (séances du suivi, points de la progression faits) : grisées dans le choix
   const given = useLiveQuery(
@@ -514,11 +515,11 @@ function CardsPanel({ group, s }: { group: Group; s: TutoringSession }) {
         <div className="cardgrid">
           {cards.map((c) => (
             <div key={c.id} className="thumb" onClick={() => setOpen({ id: c.id, edit: false, ids: cards.map((x) => x.id) })}>
-              <div className="bar" style={{ background: themeColor(c.theme) }} />
               <div className="face">
                 <CardFace html={c.front} />
               </div>
-              <div className="meta">
+              <div className="meta" style={{ background: band(c).color }}>
+                <span className="band-label">{band(c).label}</span>
                 <span className="code">{c.code}</span>
                 <span
                   className="small"

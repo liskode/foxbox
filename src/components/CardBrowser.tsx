@@ -4,7 +4,8 @@ import { ALL_LEVELS, LEVELS } from '../lib/units';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Card } from '../lib/db';
 import { CardFace } from './CardFace';
-import { themeClass, themeColor } from './widgets';
+import { themeClass } from './widgets';
+import { useCardBand } from '../lib/cardLevel';
 import { normalize } from '../lib/students';
 import { ALL_THEMES } from '../lib/themes';
 
@@ -71,6 +72,7 @@ export function CardBrowser({
   const [showAlready, setShowAlready] = useState(true);
   const [extra, setExtra] = useState(false);
   const [hover, setHover] = useState<string | null>(null); // écran de choix : verso au survol
+  const band = useCardBand();
 
   const allThemes = useMemo(
     () => ALL_THEMES.map(([, t]) => t).filter((t) => cards.some((c) => c.theme === t)),
@@ -210,14 +212,14 @@ export function CardBrowser({
             onMouseEnter={onToggle ? () => setHover(c.id) : undefined}
             onMouseLeave={onToggle ? () => setHover(null) : undefined}
           >
-            <div className="bar" style={{ background: themeColor(c.theme) }} />
             {onToggle && <div className="check">{selected?.has(c.id) || exclude?.has(c.id) ? <Icon name="check" size={14} /> : ''}</div>}
             {exclude?.has(c.id) && <span className="linked-tag">{(exclude instanceof Map && exclude.get(c.id)) || 'déjà attribuée'}</span>}
             {!exclude?.has(c.id) && already?.has(c.id) && <span className="linked-tag">{already.get(c.id)}</span>}
             <div className="face">
               <CardFace html={hover === c.id ? c.back : c.front} />
             </div>
-            <div className="meta">
+            <div className="meta" style={{ background: band(c).color }}>
+              <span className="band-label">{band(c).label}</span>
               <span className="code">{c.code}</span>
               <span className="muted small">{c.sourceRef}</span>
               {onToggle && onOpen && (
