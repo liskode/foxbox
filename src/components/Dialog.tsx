@@ -68,7 +68,8 @@ export function DialogHost() {
     };
   }, []);
   useEffect(() => {
-    if (req) setTimeout(() => (first.current ?? okBtn.current)?.focus(), 30);
+    // valeur déjà remplie (ex. renommer) : sélectionnée, la frappe la remplace
+    if (req) setTimeout(() => (first.current ? (first.current.focus(), first.current.select()) : okBtn.current?.focus()), 30);
   }, [req]);
   if (!req) return null;
 

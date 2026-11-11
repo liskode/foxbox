@@ -1,11 +1,13 @@
-// Classe : onglet Réglages (co-enseignants, archivage, suppression).
-import { alertBox, confirmBox } from '../../../components/Dialog';
+// Classe : onglet Réglages (nom, co-enseignants, archivage, suppression).
+import { alertBox, ask, confirmBox } from '../../../components/Dialog';
+import { toast } from '../../../components/Toast';
+import { useAuth } from '../../../lib/auth';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Group } from '../../../lib/db';
 import { deleteGroup } from '../../../lib/students';
-import { levelOfName } from '../../../lib/units';
+import { levelColors, levelOfName } from '../../../lib/units';
 
 export function DeleteGroup({ group }: { group: Group }) {
   const nav = useNavigate();
@@ -18,7 +20,7 @@ export function DeleteGroup({ group }: { group: Group }) {
     try {
       const n = await deleteGroup(group.id, orphans);
       alertBox(`Classe supprimée${n ? `, ainsi que ${n} élève(s)` : ''}.`);
-      nav('/prof/reglages');
+      nav('/prof/eleves');
     } catch (e) {
       setBusy('Erreur : ' + (e as Error).message);
     }
@@ -56,8 +58,27 @@ export function DeleteGroup({ group }: { group: Group }) {
 
 export function TeachersTab({ group }: { group: Group }) {
   const teachers = useLiveQuery(() => db.teachers.toArray(), [], []);
+  const { session } = useAuth();
+  // Renommer : la classe reprend la couleur de son niveau (déduit du nouveau nom)
+  async function rename() {
+    const name = (await ask('Renommer la classe', { label: 'Nom', value: group.name }))?.trim();
+    if (!name || name === group.name) return;
+    const before = { name: group.name, color: group.color };
+    const lvl = levelOfName(name);
+    const color = lvl ? (await levelColors(session!.id))[lvl] : group.color;
+    await db.groups.update(group.id, { name, color });
+    toast(`Classe renommée « ${name} »`, { undo: () => db.groups.update(group.id, before) });
+  }
   return (
     <div className="panel stack">
+      <div className="row" style={{ gap: 8 }}>
+        <span>
+          Nom : <b>{group.name}</b>
+        </span>
+        <button className="btn small" onClick={rename}>
+          Renommer
+        </button>
+      </div>
       <div className="small">
         Couleur : celle du niveau{' '}
         <span className="chip" style={{ background: group.color ?? 'var(--paper)' }}>

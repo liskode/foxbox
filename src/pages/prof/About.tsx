@@ -294,7 +294,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'messages : votre photo ou logo, interlocuteurs de la famille et leur code (Mère M, Père P, Grand-mère GM…)',
       'notification par e-mail des nouveaux messages (professeur, élève, parents : chacun choisit)',
       'origines des flashcards (ER, MM…)',
-      'classes : couleurs des niveaux (de la 6e à la terminale) et archivage dans les Réglages ; page Élèves : une tuile compacte par classe (couleur du niveau, nombre d’élèves) et une tuile « + » pour en créer une',
+      'classes : couleurs des niveaux (de la 6e à la terminale) dans les Réglages ; renommage, archivage et suppression dans l’onglet Réglages de la classe (la couleur suit le niveau du nouveau nom) ; page Élèves : une tuile compacte par classe (couleur du niveau, nombre d’élèves) et une tuile « + » pour en créer une',
       'choix des couleurs dans une palette standard (couleurs vives, gris, 12 teintes du foncé au pâle)',
       'compte',
     ],
