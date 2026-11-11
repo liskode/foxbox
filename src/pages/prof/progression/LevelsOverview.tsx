@@ -22,7 +22,8 @@ export function LevelsOverview() {
   const { units } = data;
 
   return (
-    <div className="page stack">
+    // Toute la largeur de l'écran : sur un grand écran, tous les niveaux tiennent côte à côte
+    <div className="page wide stack">
       <div className="spread">
         <h1 className="title" style={{ margin: 0 }}>
           Progression
@@ -38,7 +39,7 @@ export function LevelsOverview() {
         )}
         <HideDoneToggle value={hideDone} onChange={setHideDone} />
       </div>
-      <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(230px, 1fr)', gap: 14, alignItems: 'start', overflowX: 'auto', paddingBottom: 8 }}>
+      <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(220px, 320px)', gap: 14, alignItems: 'start', overflowX: 'auto', paddingBottom: 8 }}>
         {data.levels.map((lp) => {
           const seqs = sequencesOf(units, lp.level, current);
           return (
