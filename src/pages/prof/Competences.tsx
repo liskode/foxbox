@@ -6,7 +6,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, byName, groupStudents, isClass, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import {
-  MASTERY,
   RECENT,
   categories,
   childrenOf,
@@ -18,15 +17,18 @@ import {
 } from '../../lib/competences';
 import { CompetenceChip, useCompetences } from '../../components/CompetencePicker';
 import { StudentName } from '../../components/Avatar';
+import { useGradeColors } from '../../components/GradeColorsEditor';
+import { levelCategory, levelCellColor, type GradeColors } from '../../lib/gradeColors';
 
-export function MasteryCell({ lv }: { lv: ReturnType<typeof levelFor> }) {
+// Niveau d'un élève : pourcentage arrondi, aux couleurs des « critères de réussite » (Réglages › Évaluations)
+export function MasteryCell({ lv, gc }: { lv: ReturnType<typeof levelFor>; gc: GradeColors }) {
   if (!lv) return <span className="muted small">—</span>;
   return (
     <span
-      title={`${lv.mastery.name} · ${Math.round(lv.value * 100)} % (${lv.evals} évaluation(s), ${lv.n} critère(s) ; niveau retenu : ${RECENT} plus récentes)`}
-      style={{ background: lv.mastery.color, borderRadius: 6, padding: '1px 6px', fontWeight: 800, fontSize: '0.8rem' }}
+      title={`${lv.mastery.name} · ${lv.evals} évaluation(s), ${lv.n} critère(s) ; niveau retenu : ${RECENT} plus récentes`}
+      style={{ background: levelCellColor(lv.value, gc), borderRadius: 6, padding: '1px 6px', fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap' }}
     >
-      {lv.mastery.code}
+      {Math.round(lv.value * 100)} %
     </span>
   );
 }
@@ -63,8 +65,12 @@ function Referential({ list, selected, onSelect }: { list: Competence[]; selecte
               +
             </button>
           </div>
-          {childrenOf(list, cat.id).map((k) => (
-            <div key={k.id} className="row small" style={{ gap: 6, paddingLeft: 22, flexWrap: 'nowrap' }}>
+          {childrenOf(list, cat.id).map((k, i) => (
+            <div
+              key={k.id}
+              className="row small"
+              style={{ gap: 6, marginLeft: 22, paddingTop: 3, flexWrap: 'nowrap', borderTop: i ? '1px solid var(--soft-line)' : undefined }}
+            >
               <CompetenceChip c={k} small />
               <span style={{ flex: 1, cursor: 'pointer' }} title="Cliquer pour renommer" onClick={async () => {
                 const name = await ask('Renommer la sous-compétence', { label: 'Intitulé', value: k.name });
@@ -91,6 +97,7 @@ function Referential({ list, selected, onSelect }: { list: Competence[]; selecte
 
 export function Competences() {
   const list = useCompetences();
+  const gc = useGradeColors();
   const [params, setParams] = useSearchParams();
   const groups = useLiveQuery(
     async () => (await db.groups.filter((g) => !g.archived && isClass(g)).toArray()).sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true })),
@@ -139,20 +146,18 @@ export function Competences() {
           ))}
         </div>
       </div>
-      <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 280px) minmax(0, 1fr)', gap: 18, alignItems: 'start' }}>
+      <div className="stack-phone" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 420px) minmax(0, 1fr)', gap: 18, alignItems: 'start' }}>
         <Referential list={list} selected={selected} onSelect={(id) => set({ c: id })} />
         <div className="stack">
           <div className="panel" style={{ overflowX: 'auto' }}>
-            <table className="list">
+            <table className="list" style={{ width: 'auto' }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left' }}>Élève</th>
+                  <th style={{ textAlign: 'left', minWidth: 220 }}>Élève</th>
+                  {/* colonnes étroites : l'intitulé est dans le référentiel à gauche (et au survol) */}
                   {cols.map((c) => (
-                    <th key={c.id} style={{ textAlign: 'center' }}>
+                    <th key={c.id} style={{ textAlign: 'center', width: 64 }} title={c.parentId || !cat ? c.name : `${c.name} (ensemble)`}>
                       <CompetenceChip c={c} onClick={!c.parentId && !cat ? () => set({ c: c.id }) : undefined} />
-                      <div className="small muted" style={{ fontWeight: 600, maxWidth: 170, minWidth: 110, margin: '0 auto', whiteSpace: 'normal', textTransform: 'none', letterSpacing: 0 }}>
-                        {c.parentId ? c.name : cat ? 'ensemble' : c.name}
-                      </div>
                     </th>
                   ))}
                 </tr>
@@ -167,7 +172,7 @@ export function Competences() {
                     </td>
                     {cols.map((c) => (
                       <td key={c.id} style={{ textAlign: 'center' }}>
-                        <MasteryCell lv={levelFor(list, data.obs, s.id, c.id)} />
+                        <MasteryCell lv={levelFor(list, data.obs, s.id, c.id)} gc={gc} />
                       </td>
                     ))}
                   </tr>
@@ -176,11 +181,11 @@ export function Competences() {
                   <tr>
                     <td>
                       <b>Classe</b>
-                      <div className="small muted">part des élèves en MS ou TBM</div>
+                      <div className="small muted">part des élèves à {gc.levels.thresholds[1]} % ou plus</div>
                     </td>
                     {cols.map((c) => {
                       const lvs = data.students.map((s) => levelFor(list, data.obs, s.id, c.id)).filter((x) => !!x);
-                      const ok = lvs.filter((l) => l!.value >= 0.625).length;
+                      const ok = lvs.filter((l) => levelCategory(l!.value, gc) >= 2).length;
                       return (
                         <td key={c.id} style={{ textAlign: 'center', fontWeight: 800 }} title={lvs.length ? `${ok} élève(s) sur ${lvs.length} évalué(s)` : undefined}>
                           {lvs.length ? `${Math.round((ok / lvs.length) * 100)} %` : <span className="muted small">—</span>}
@@ -194,11 +199,13 @@ export function Competences() {
             {data && !data.students.length && <span className="muted">Aucun élève dans cette classe.</span>}
           </div>
           <div className="row small" style={{ gap: 8 }}>
-            {MASTERY.map((m) => (
-              <span key={m.code}>
-                <span style={{ background: m.color, borderRadius: 6, padding: '0 6px', fontWeight: 800 }}>{m.code}</span> {m.name}
+            {gc.levels.colors.map((color, i) => (
+              <span key={i}>
+                <span style={{ background: color, borderRadius: 6, padding: '0 6px', fontWeight: 800 }}>{i + 1}</span>{' '}
+                {i === 0 ? `moins de ${gc.levels.thresholds[0]} %` : i === 3 ? `${gc.levels.thresholds[2]} % et plus` : `${gc.levels.thresholds[i - 1]} à ${gc.levels.thresholds[i]} %`}
               </span>
             ))}
+            <span className="muted">· seuils et couleurs réglables dans Réglages › Évaluations</span>
           </div>
           <div className="panel stack" style={{ gap: 6 }}>
             <h3 style={{ margin: 0 }}>Évaluations qui mobilisent {cat ? `${cat.code} – ${cat.name}` : 'ces compétences'}</h3>

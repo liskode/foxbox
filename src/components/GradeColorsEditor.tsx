@@ -55,7 +55,7 @@ export function GradeColorsEditor() {
           <Scale colors={cur.overall.colors} thresholds={cur.overall.thresholds} onChange={(colors, thresholds) => save({ ...cur, overall: { colors, thresholds } })} />
         </div>
         <div className="stack" style={{ gap: 4 }}>
-          <b>Seuil et code couleur pour les critères de réussite (raccourcis clavier 1, 2, 3 et 4)</b>
+          <b>Seuil et code couleur pour les critères de réussite et pour la grille des compétences</b>
           <Scale
             colors={cur.levels.colors}
             thresholds={cur.levels.thresholds}
