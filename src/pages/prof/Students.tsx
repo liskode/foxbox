@@ -1,5 +1,5 @@
 // Élèves : recherche rapide et accès directs par classe (vue d'ensemble, trombis, plans de classe, fiches identifiants).
-import { shortName } from '../../lib/db';
+import { db, shortName } from '../../lib/db';
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createClass } from './Groups';
@@ -34,32 +34,45 @@ export function Students() {
   const { session } = useAuth();
   const rooms = useLiveQuery(() => loadRooms(session!.id), [session?.id], []);
   const nav = useNavigate();
+  const counts = useLiveQuery(
+    async () => {
+      const m = new Map<string, number>();
+      for (const x of await db.memberships.toArray()) m.set(x.groupId, (m.get(x.groupId) ?? 0) + 1);
+      return m;
+    },
+    [],
+    new Map<string, number>(),
+  );
 
   return (
     <div className="page stack" style={{ gap: 12 }}>
       <h1 className="title" style={{ margin: 0 }}>
         Élèves
       </h1>
-      <div className="panel row" style={{ gap: 16, alignItems: 'flex-start', padding: '12px 16px' }}>
-        <div style={{ flex: 1, minWidth: 260, maxWidth: 480 }}>
-          <StudentSearch autoFocus max={12} />
-        </div>
-        <div className="row" style={{ gap: 6, flex: 1 }}>
-          <span className="small muted">Classes :</span>
-          {groups.map((g) => (
-            <Chip key={g.id} g={g} to={`/prof/classes/${g.id}?onglet=apercu`} />
-          ))}
-          <button
-            className="btn ghost small"
-            title="Nouvelle classe"
-            onClick={async () => {
-              const id = await createClass(session!.id);
-              if (id) nav(`/prof/classes/${id}`);
-            }}
-          >
-            <Icon name="plus" size={15} />
-          </button>
-        </div>
+      <div className="panel" style={{ padding: '12px 16px', maxWidth: 520 }}>
+        <StudentSearch autoFocus max={12} />
+      </div>
+      {/* Classes : une tuile compacte par classe (couleur du niveau), et « + » pour en créer une */}
+      <div className="class-tiles">
+        {groups.map((g) => (
+          <Link key={g.id} to={`/prof/classes/${g.id}?onglet=apercu`} className="class-tile" title={`${g.subject} · ${g.schoolYear}`} style={{ background: g.color ?? 'var(--paper)' }}>
+            <b>{shortName(g.name)}</b>
+            <span className="small muted">
+              {new Set(groups.map((x) => x.subject)).size > 1 && `${g.subject} · `}
+              {counts.get(g.id) ?? 0} élèves
+            </span>
+          </Link>
+        ))}
+        <button
+          className="class-tile add"
+          title="Nouvelle classe"
+          onClick={async () => {
+            const id = await createClass(session!.id);
+            if (id) nav(`/prof/classes/${id}`);
+          }}
+        >
+          <Icon name="plus" size={20} />
+        </button>
       </div>
       <Line title={<><Icon name="camera" size={16} /> Trombis</>}>
         {groups.map((g) => (

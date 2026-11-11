@@ -169,7 +169,7 @@ export function Correction() {
       <div className="small muted">
         Gris : date prévue · jaune : copies à corriger · vert : corrigée (moyenne). <Icon name="eval" size={14} /> : évaluation placée dans une séquence de la Progression.
       </div>
-      {groups.length === 0 && <div className="small muted">Astuce : créez d'abord vos classes (bouton « + » de la page Élèves).</div>}
+      {groups.length === 0 && <div className="small muted">Astuce : créez d'abord vos classes (tuile « + » de la page Élèves).</div>}
     </div>
   );
 }

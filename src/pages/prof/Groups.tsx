@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { SeatPlanTab } from '../../components/SeatPlanTab';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, uid, isClass, SUBJECTS, type Group, shortName } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
@@ -42,19 +42,7 @@ export async function createClass(teacherId: string): Promise<string | null> {
 
 export function Groups({ embedded = false }: { embedded?: boolean }) {
   const { session } = useAuth();
-  const nav = useNavigate();
   const groups = useLiveQuery(() => db.groups.filter(isClass).toArray(), [], []);
-  const counts = useLiveQuery(
-    async () => {
-      const ms = await db.memberships.toArray();
-      const m = new Map<string, number>();
-      ms.forEach((x) => m.set(x.groupId, (m.get(x.groupId) ?? 0) + 1));
-      return m;
-    },
-    [],
-    new Map<string, number>(),
-  );
-  const active = groups.filter((g) => !g.archived);
   const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
   // Les classes prennent la couleur de leur niveau
   useEffect(() => {
@@ -67,24 +55,6 @@ export function Groups({ embedded = false }: { embedded?: boolean }) {
       <h1 className={embedded ? '' : 'title'} style={embedded ? { margin: 0 } : undefined}>
         Classes
       </h1>
-      <div className="grid3">
-        {active
-          .slice()
-          .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }))
-          .map((g) => (
-            <div key={g.id} className="panel stack" style={{ background: g.color ?? 'var(--paper)', gap: 8 }}>
-              <Link to={`/prof/classes/${g.id}`} className="stack" style={{ textDecoration: 'none', gap: 8 }}>
-                <h2 style={{ margin: 0 }}>{shortName(g.name)}</h2>
-                <div className="muted">
-                  {g.subject} · {g.schoolYear}
-                </div>
-                <div>
-                  <b>{counts.get(g.id) ?? 0}</b> élève(s)
-                </div>
-              </Link>
-            </div>
-          ))}
-      </div>
       <div className="panel stack">
         <h3 style={{ margin: 0 }}>Couleurs des niveaux</h3>
         <span className="small muted">Toutes les classes d'un même niveau (déduit du début du nom : « 4A… » → 4e, « 2B… » → 2nde, « 1G… » → 1re, « TG… » ou « Tle… » → Tle) prennent sa couleur.</span>

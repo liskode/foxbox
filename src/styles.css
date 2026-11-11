@@ -623,3 +623,9 @@ table.list tr.click:hover td { background: #faf7ef; }
 
 /* Élément cliquable sans apparence de bouton (ex. ligne de compétence repliable) */
 .clickable { cursor: pointer; }
+
+/* Page Élèves : tuiles compactes des classes */
+.class-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.class-tile { display: flex; flex-direction: column; gap: 0; padding: 8px 16px; border: 1.5px solid var(--soft-line); border-radius: 12px; text-decoration: none; color: inherit; }
+.class-tile b { font-size: 1.15rem; }
+.class-tile.add { align-items: center; justify-content: center; background: transparent; border-style: dashed; border-color: var(--muted-line); cursor: pointer; color: var(--ink-soft); min-height: 56px; }
