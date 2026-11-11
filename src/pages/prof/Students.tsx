@@ -1,7 +1,8 @@
 // Élèves : recherche rapide et accès directs par classe (vue d'ensemble, trombis, plans de classe, fiches identifiants).
 import { shortName } from '../../lib/db';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { createClass } from './Groups';
 import type { Group } from '../../lib/db';
 import { StudentSearch, useAllStudents } from '../../components/StudentSearch';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -32,6 +33,7 @@ export function Students() {
   const groups = data?.groups ?? [];
   const { session } = useAuth();
   const rooms = useLiveQuery(() => loadRooms(session!.id), [session?.id], []);
+  const nav = useNavigate();
 
   return (
     <div className="page stack" style={{ gap: 12 }}>
@@ -47,6 +49,16 @@ export function Students() {
           {groups.map((g) => (
             <Chip key={g.id} g={g} to={`/prof/classes/${g.id}?onglet=apercu`} />
           ))}
+          <button
+            className="btn ghost small"
+            title="Nouvelle classe"
+            onClick={async () => {
+              const id = await createClass(session!.id);
+              if (id) nav(`/prof/classes/${id}`);
+            }}
+          >
+            <Icon name="plus" size={15} />
+          </button>
         </div>
       </div>
       <Line title={<><Icon name="camera" size={16} /> Trombis</>}>

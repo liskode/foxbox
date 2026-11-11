@@ -14,11 +14,30 @@ import { StudentsTab } from './groups/StudentsTab';
 import { TeachersTab } from './groups/SettingsTab';
 import { Icon } from '../../components/Icon';
 import { TabBar } from '../../components/TabBar';
+import { askForm } from '../../components/Dialog';
 
 function schoolYear() {
   const d = new Date();
   const y = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1;
   return `${y}-${y + 1}`;
+}
+
+// Nouvelle classe (bouton « + » de la page Élèves) ; elle prend la couleur de son niveau (déduit du nom, ex. « 4A » → 4e)
+export async function createClass(teacherId: string): Promise<string | null> {
+  const r = await askForm(
+    'Nouvelle classe',
+    [
+      { key: 'name', label: 'Nom', placeholder: 'ex. 4C' },
+      { key: 'subject', label: 'Matière', options: SUBJECTS.map((s) => ({ value: s, label: s })) },
+    ],
+    'Créer',
+  );
+  if (!r?.name.trim()) return null;
+  const lvl = levelOfName(r.name);
+  const color = lvl ? (await levelColors(teacherId))[lvl] : undefined;
+  const g: Group = { id: uid(), name: r.name.trim(), schoolYear: schoolYear(), subject: r.subject, teacherIds: [teacherId], color };
+  await db.groups.put(g);
+  return g.id;
 }
 
 export function Groups({ embedded = false }: { embedded?: boolean }) {
@@ -35,19 +54,6 @@ export function Groups({ embedded = false }: { embedded?: boolean }) {
     [],
     new Map<string, number>(),
   );
-  const [name, setName] = useState('');
-  const [subject, setSubject] = useState(SUBJECTS[0]);
-
-  async function create() {
-    if (!name.trim()) return;
-    // Couleur : celle du niveau de la classe (déduit du nom, ex. « 4A » → 4e)
-    const lvl = levelOfName(name);
-    const color = lvl ? (await levelColors(session!.id))[lvl] : undefined;
-    const g: Group = { id: uid(), name: name.trim(), schoolYear: schoolYear(), subject, teacherIds: [session!.id], color };
-    await db.groups.put(g);
-    nav(`/prof/classes/${g.id}`);
-  }
-
   const active = groups.filter((g) => !g.archived);
   const colors = useLiveQuery(() => levelColors(session!.id), [session], {} as Record<string, string>);
   // Les classes prennent la couleur de leur niveau
@@ -89,20 +95,6 @@ export function Groups({ embedded = false }: { embedded?: boolean }) {
               <ColorPicker value={colors[l]} onChange={(c) => setLevelColor(session!.id, l, c)} title={`Couleur des classes de ${l}`} />
             </div>
           ))}
-        </div>
-      </div>
-      <div className="panel stack">
-        <h3 style={{ margin: 0 }}>Nouvelle classe</h3>
-        <div className="row">
-          <input placeholder="Nom (ex. 4e C)" value={name} onChange={(e) => setName(e.target.value)} />
-          <select value={subject} onChange={(e) => setSubject(e.target.value)}>
-            {SUBJECTS.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-          <button className="btn primary" onClick={create}>
-            Créer
-          </button>
         </div>
       </div>
       {archived.length > 0 && (

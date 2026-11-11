@@ -86,7 +86,7 @@ export function Dashboard() {
   }));
 
   const steps = [
-    { done: !!counts?.groups, label: 'Créer vos classes et importer les élèves (Réglages)', to: '/prof/reglages' },
+    { done: !!counts?.groups, label: 'Créer vos classes (bouton « + » de la page Élèves) et importer les élèves', to: '/prof/eleves' },
     { done: !!counts?.seqs, label: 'Préparer vos séquences et séances (Progression)', to: '/prof/progression' },
     { done: !!counts?.cards, label: 'Importer vos flashcards (Flashcards › Import)', to: '/prof/flashcards?onglet=import' },
   ];

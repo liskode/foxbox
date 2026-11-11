@@ -293,7 +293,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'messages : votre photo ou logo, interlocuteurs de la famille et leur code (Mère M, Père P, Grand-mère GM…)',
       'notification par e-mail des nouveaux messages (professeur, élève, parents : chacun choisit)',
       'origines des flashcards (ER, MM…)',
-      'classes : création, couleurs des niveaux (de la 6e à la terminale), archivage',
+      'classes : couleurs des niveaux (de la 6e à la terminale), archivage ; création par le bouton « + » à droite des classes, page Élèves',
       'choix des couleurs dans une palette standard (couleurs vives, gris, 12 teintes du foncé au pâle)',
       'compte',
     ],
