@@ -143,6 +143,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'tableau de la classe par sous-compétence, avec la part des élèves au-dessus du 2e seuil des critères de réussite',
       'niveaux du LSU (MI, MF, MS, TBM) au survol et dans la fiche élève',
       'tableau élèves × compétences par classe : pourcentage arrondi, aux couleurs et seuils des critères de réussite (Réglages › Évaluations) ; colonnes étroites, intitulés dans le référentiel à gauche, sous-compétences séparées d’un filet',
+      'sur les couleurs réglables (grille de correction, compétences), le texte s’écrit en noir sur fond clair et en blanc sur fond foncé',
       'histogramme par compétence pondéré par le barème (correction, résultats, fiche élève, espace élève)',
       'niveau retenu : moyenne des 3 évaluations les plus récentes',
     ],

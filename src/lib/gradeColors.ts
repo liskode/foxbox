@@ -25,3 +25,18 @@ export const overallColor = (v: number | null | undefined, c: GradeColors = DEFA
 export const levelCategory = (v: number, c: GradeColors = DEFAULT_GRADE_COLORS) => rank(v, c.levels.thresholds); // 0..3
 export const levelCellColor = (v: number | null | undefined, c: GradeColors = DEFAULT_GRADE_COLORS) =>
   v === null || v === undefined ? undefined : c.levels.colors[levelCategory(v, c)];
+
+// Couleur du texte posé sur une couleur réglable : noir sur fond clair, blanc sur fond foncé
+// (celle des deux qui contraste le plus, d'après la luminance du fond)
+export function inkOn(bg?: string): string | undefined {
+  const m = bg?.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (!m) return undefined;
+  const h = m[1].length === 3 ? [...m[1]].map((x) => x + x).join('') : m[1];
+  const lin = (i: number) => {
+    const c = parseInt(h.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const L = 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
+  // contraste avec le noir (L+0.05)/0.05 contre le blanc 1.05/(L+0.05) : égalité vers L = 0.18
+  return L > 0.18 ? 'var(--ink)' : '#fff';
+}

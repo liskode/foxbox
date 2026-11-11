@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, shortName, type Evaluation, type Group, type Result } from '../../../lib/db';
 import { LEVEL_KEYS, emptyResult, round1, saveResult, score } from '../../../lib/grading';
-import { levelCellColor, overallColor } from '../../../lib/gradeColors';
+import { inkOn, levelCellColor, overallColor } from '../../../lib/gradeColors';
 import { useGradeColors } from '../../../components/GradeColorsEditor';
 import { Link } from 'react-router-dom';
 import { Avatar } from '../../../components/Avatar';
@@ -113,7 +113,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
   const sticky = { position: 'sticky' as const, background: 'var(--paper)' };
   // Colonne de moyennes (« Tous » ou une classe)
   const SumCell = ({ v, color, bold }: { v: number | null; color?: string; bold?: boolean }) => (
-    <td style={{ textAlign: 'center', fontWeight: bold ? 900 : 800, background: color ?? overallColor(v, gc), borderLeft: '2px solid var(--ink)', borderRight: '2px solid var(--ink)', height: 26 }}>
+    <td style={{ textAlign: 'center', fontWeight: bold ? 900 : 800, background: color ?? overallColor(v, gc), color: inkOn(color ?? overallColor(v, gc)), borderLeft: '2px solid var(--ink)', borderRight: '2px solid var(--ink)', height: 26 }}>
       {v === null ? '' : Math.round(v * 100)}
     </td>
   );
@@ -123,7 +123,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
     v === null || v === undefined ? (
       <span style={{ height: 20 }} />
     ) : (
-      <span style={{ background: overallColor(v / 20, gc), borderRadius: 6, padding: '0 5px', fontSize: '0.8rem', fontWeight: bold ? 900 : 500, color: 'var(--ink)' }}>
+      <span style={{ background: overallColor(v / 20, gc), borderRadius: 6, padding: '0 5px', fontSize: '0.8rem', fontWeight: bold ? 900 : 500, color: inkOn(overallColor(v / 20, gc)) ?? 'var(--ink)' }}>
         {round1(v)}
       </span>
     );
@@ -234,6 +234,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                               textAlign: 'center',
                               cursor: 'pointer',
                               background: r?.absent ? '#e9e5dc' : levelCellColor(l, gc),
+                              color: r?.absent ? undefined : inkOn(levelCellColor(l, gc)),
                               outline: on ? '2.5px solid var(--ink)' : '1px solid var(--muted-line)',
                               outlineOffset: on ? -2 : -1,
                               height: 26,
@@ -304,7 +305,7 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                               <td
                                 key={student.id}
                                 title={sc ? `${k.code} ${k.name} : ${round1(sc.note)}/${round1(sc.total)} pts · ${masteryOf(sc.value).name}` : undefined}
-                                style={{ textAlign: 'center', fontWeight: sub ? 500 : 800, fontSize: '0.8rem', background: sc ? overallColor(sc.value, gc) : undefined }}
+                                style={{ textAlign: 'center', fontWeight: sub ? 500 : 800, fontSize: '0.8rem', background: sc ? overallColor(sc.value, gc) : undefined, color: sc ? inkOn(overallColor(sc.value, gc)) : undefined }}
                               >
                                 {sc ? Math.round(sc.value * 100) : ''}
                               </td>

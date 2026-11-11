@@ -2,6 +2,7 @@
 // Lancées avant chaque publication : une erreur de calcul bloque la mise en ligne.
 import { describe, expect, it } from 'vitest';
 import type { Billing, Evaluation, Payment, Result, StudentCard, TutoringSession } from '../src/lib/db';
+import { inkOn } from '../src/lib/gradeColors';
 import { faceOf, LEVEL_KEYS, maxPoints, score, stats } from '../src/lib/grading';
 import { competenceScores, DEFAULT_COMPETENCES, masteryOf, subCompetenceScores } from '../src/lib/competences';
 import { applyAnswer, buildQueue, INTERVALS, nextBox } from '../src/lib/leitner';
@@ -166,4 +167,12 @@ describe('niveau déduit du nom de la classe', () => {
     expect(levelOfName('Tle A')).toBe('Tle');
     expect(levelOfName('Test')).toBeUndefined();
   });
+});
+
+it('texte lisible sur une couleur réglable', () => {
+  expect(inkOn('#fbe7a1')).toBe('var(--ink)'); // jaune pâle → noir
+  expect(inkOn('#1d3f8f')).toBe('#fff'); // bleu foncé → blanc
+  expect(inkOn('#000')).toBe('#fff');
+  expect(inkOn('#2e7d32')).toBe('#fff'); // vert foncé → blanc
+  expect(inkOn('var(--paper)')).toBeUndefined();
 });

@@ -18,7 +18,7 @@ import {
 import { CompetenceChip, useCompetences } from '../../components/CompetencePicker';
 import { StudentName } from '../../components/Avatar';
 import { useGradeColors } from '../../components/GradeColorsEditor';
-import { levelCategory, levelCellColor, type GradeColors } from '../../lib/gradeColors';
+import { inkOn, levelCategory, levelCellColor, type GradeColors } from '../../lib/gradeColors';
 
 // Niveau d'un élève : pourcentage arrondi, aux couleurs des « critères de réussite » (Réglages › Évaluations)
 export function MasteryCell({ lv, gc }: { lv: ReturnType<typeof levelFor>; gc: GradeColors }) {
@@ -26,7 +26,7 @@ export function MasteryCell({ lv, gc }: { lv: ReturnType<typeof levelFor>; gc: G
   return (
     <span
       title={`${lv.mastery.name} · ${lv.evals} évaluation(s), ${lv.n} critère(s) ; niveau retenu : ${RECENT} plus récentes`}
-      style={{ background: levelCellColor(lv.value, gc), borderRadius: 6, padding: '1px 6px', fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+      style={{ background: levelCellColor(lv.value, gc), color: inkOn(levelCellColor(lv.value, gc)), borderRadius: 6, padding: '1px 6px', fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap' }}
     >
       {Math.round(lv.value * 100)} %
     </span>
@@ -201,7 +201,7 @@ export function Competences() {
           <div className="row small" style={{ gap: 8 }}>
             {gc.levels.colors.map((color, i) => (
               <span key={i}>
-                <span style={{ background: color, borderRadius: 6, padding: '0 6px', fontWeight: 800 }}>{i + 1}</span>{' '}
+                <span style={{ background: color, color: inkOn(color), borderRadius: 6, padding: '0 6px', fontWeight: 800 }}>{i + 1}</span>{' '}
                 {i === 0 ? `moins de ${gc.levels.thresholds[0]} %` : i === 3 ? `${gc.levels.thresholds[2]} % et plus` : `${gc.levels.thresholds[i - 1]} à ${gc.levels.thresholds[i]} %`}
               </span>
             ))}
