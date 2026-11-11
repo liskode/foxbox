@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Card, type Unit } from '../../lib/db';
 import { ALL_LEVELS, byProgression, levelColors } from '../../lib/units';
 import { INTRO_PROPOSALS } from '../../lib/introProposals';
+import { addToPrereqs } from '../../lib/prereq';
 import { useAuth } from '../../lib/auth';
 import { CardFace } from '../../components/CardFace';
 import { toast } from '../../components/Toast';
@@ -30,7 +31,7 @@ async function load() {
   for (const l of await db.unitCards.toArray()) {
     const u = byId.get(l.unitId);
     const seq = u?.kind === 'seance' ? byId.get(u.parentId ?? '') : u;
-    if (!seq || seq.kind !== 'sequence' || (u?.code && u.code === `${seq.code}0`)) continue;
+    if (!seq || seq.kind !== 'sequence' || u?.prereqIds?.length || (u?.code && u.code === `${seq.code}0`)) continue;
     fromLinks.set(l.cardId, [...(fromLinks.get(l.cardId) ?? []), seq]);
   }
   const rows: Row[] = cards.map((card) => {
@@ -78,16 +79,18 @@ export function IntroTab() {
     await db.transaction('rw', db.cards, async () => {
       for (const { card, seqId } of list) await db.cards.update(card.id, { introUnitId: seqId, updatedAt: now });
     });
-    return before;
+    // Ajout, suspendues, aux séances 0 des niveaux supérieurs
+    const links = await addToPrereqs(list.map(({ card, seqId }) => ({ id: card.id, introUnitId: seqId })));
+    return async () => {
+      await db.unitCards.bulkDelete(links);
+      await db.transaction('rw', db.cards, async () => {
+        for (const b of before) await db.cards.update(b.id, { introUnitId: b.introUnitId, updatedAt: Date.now() });
+      });
+    };
   }
   async function validate(list: Row[], label: string) {
-    const before = await save(list);
-    toast(label, {
-      undo: () =>
-        db.transaction('rw', db.cards, async () => {
-          for (const b of before) await db.cards.update(b.id, { introUnitId: b.introUnitId, updatedAt: Date.now() });
-        }),
-    });
+    const undo = await save(list);
+    toast(label, { undo });
   }
 
   // Regroupement par séquence (ordre de la progression), « sans séquence » à la fin
@@ -101,10 +104,8 @@ export function IntroTab() {
       style={{ maxWidth: 260 }}
       onChange={async (e) => {
         const seqId = e.target.value || undefined;
-        const before = await save([{ card: r.card, seqId }]);
-        toast(seqId ? `${r.card.code} : séquence ${byId.get(seqId)?.code ?? byId.get(seqId)?.name} validée` : `${r.card.code} : séquence retirée`, {
-          undo: () => db.cards.update(before[0].id, { introUnitId: before[0].introUnitId, updatedAt: Date.now() }),
-        });
+        const undo = await save([{ card: r.card, seqId }]);
+        toast(seqId ? `${r.card.code} : séquence ${byId.get(seqId)?.code ?? byId.get(seqId)?.name} validée` : `${r.card.code} : séquence retirée`, { undo });
       }}
     >
       <option value="">— choisir —</option>

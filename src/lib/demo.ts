@@ -66,7 +66,7 @@ export async function generateDemo() {
     const avail: Available[] = [];
     for (const p of pubs) {
       const seances = await db.units.where('parentId').equals(p.unitId).primaryKeys();
-      const links = await db.unitCards.where('unitId').anyOf(seances).toArray();
+      const links = (await db.unitCards.where('unitId').anyOf(seances).toArray()).filter((l) => !l.suspended);
       for (const l of links) {
         const c = cards.find((x) => x.id === l.cardId)!;
         avail.push({ cardId: c.id, pubDate: p.date, order: parseInt(c.code.slice(1)) });

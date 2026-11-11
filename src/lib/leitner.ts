@@ -93,7 +93,7 @@ export async function availableCards(studentId: string, subject: string, day?: s
       let units = [p.unitId, ...(await db.units.where('parentId').equals(p.unitId).primaryKeys())];
       // Soutien : une séance peut mêler plusieurs matières, on ne garde que les points de cette matière
       if (tutoring) units = (await db.units.bulkGet(units)).filter((u) => u && unitSubject(u) === subject).map((u) => u!.id);
-      const links = await db.unitCards.where('unitId').anyOf(units).toArray();
+      const links = (await db.unitCards.where('unitId').anyOf(units).toArray()).filter((l) => !l.suspended);
       for (const c of await db.cards.bulkGet(links.map((l) => l.cardId))) offer(c, p.date);
     }
     if (!tutoring) continue;

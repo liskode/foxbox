@@ -94,6 +94,8 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'codes de séquence et de séance (431, 4311…)',
       'physique-chimie de la 6e à la terminale (programme de spécialité de terminale)',
       'en 2nde, 1re et terminale, une séance 0 « Prérequis » en tête de chaque séquence (2110, T110…) : révision des flashcards des niveaux précédents utiles pour la séquence, d’après leur point d’introduction',
+      'flashcard suspendue dans une séance : elle y reste, grisée et visible du professeur seul, mais n’est pas donnée aux élèves (boutons « Suspendre » / « Réactiver »)',
+      'nouvelle flashcard ajoutée à une séance : elle prend la séquence comme point d’introduction et rejoint automatiquement, suspendue, les séances 0 des niveaux supérieurs',
       'durée de chaque séance',
       'descriptif et documents PDF téléchargeables par les élèves',
       'flashcards rattachées à chaque séance (au moment d’en ajouter, celles déjà dans la progression du niveau restent visibles, grisées, avec la séance où elles sont ; en soutien, celles déjà données à l’élève)',

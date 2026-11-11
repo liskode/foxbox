@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { ask, confirmBox } from '../../../components/Dialog';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { toast } from '../../../components/Toast';
+import { introFromSeance } from '../../../lib/prereq';
 import { unitSubject } from '../../../lib/units';
 import { db, uid, SUBJECTS, type Group, type Unit, shortName } from '../../../lib/db';
 import { themesOf } from '../../../lib/themes';
@@ -46,7 +48,10 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
     const cards = await db.cards.bulkGet([...new Set(links.map((l) => l.cardId))]);
     return cards
       .filter((c) => c && !c.deleted)
-      .map((c) => ({ card: c!, own: links.some((l) => l.cardId === c!.id && l.unitId === unit.id) }))
+      .map((c) => {
+        const link = links.find((l) => l.cardId === c!.id && l.unitId === unit.id);
+        return { card: c!, own: !!link, suspended: !!link?.suspended };
+      })
       .sort((a, b) => a.card.code.localeCompare(b.card.code));
   }, [sel, units]);
 
@@ -149,6 +154,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
       ocrDone: true,
     });
     await db.unitCards.put({ id: `${u.id}|${id}`, unitId: u.id, cardId: id });
+    await introFromSeance(u, [id]);
     setCreating(id);
     setOpen(id);
   }
@@ -156,6 +162,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
   async function addPicked() {
     if (!unit) return;
     await db.unitCards.bulkPut([...picked].map((cardId) => ({ id: `${unit.id}|${cardId}`, unitId: unit.id, cardId })));
+    await introFromSeance(unit, [...picked]);
     setPicked(new Set());
     setPicking(false);
   }
@@ -335,7 +342,15 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
               ) : (
                 <div className="panel stack">
                   <div className="spread">
-                    <h3 style={{ margin: 0 }}>{cardsInUnit?.length ?? 0} flashcard(s)</h3>
+                    <h3 style={{ margin: 0 }}>
+                      {cardsInUnit?.length ?? 0} flashcard(s)
+                      {!!cardsInUnit?.some((x) => x.suspended) && (
+                        <span className="small muted" style={{ fontWeight: 400 }}>
+                          {' '}
+                          dont {cardsInUnit.filter((x) => x.suspended).length} suspendue(s), non données aux élèves
+                        </span>
+                      )}
+                    </h3>
                     <div className="row">
                       <button className="btn" onClick={() => newCard(unit)}>
                         + Nouvelle flashcard
@@ -346,8 +361,8 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                     </div>
                   </div>
                   <div className="cardgrid">
-                    {cardsInUnit?.map(({ card, own }) => (
-                      <div key={card.id} className="thumb" onClick={() => (setSiblings(cardsInUnit?.map((x) => x.card.id) ?? []), setOpen(card.id))}>
+                    {cardsInUnit?.map(({ card, own, suspended }) => (
+                      <div key={card.id} className={'thumb' + (suspended ? ' suspended' : '')} onClick={() => (setSiblings(cardsInUnit?.map((x) => x.card.id) ?? []), setOpen(card.id))}>
                         <div className="bar" style={{ background: themeColor(card.theme) }} />
                         <div className="face">
                           <CardFace html={card.front} />
@@ -355,6 +370,19 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                         <div className="meta">
                           <span className="code">{card.code}</span>
                           {own ? (
+                            <span className="row" style={{ gap: 4 }}>
+                            <button
+                              className="btn small ghost"
+                              title={suspended ? 'Réactiver : la flashcard sera donnée aux élèves' : 'Suspendre : la flashcard reste ici, grisée, mais n’est pas donnée aux élèves'}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const id = `${unit.id}|${card.id}`;
+                                db.unitCards.update(id, { suspended: !suspended });
+                                toast(`${card.code} ${suspended ? 'réactivée' : 'suspendue'}`, { undo: () => db.unitCards.update(id, { suspended }) });
+                              }}
+                            >
+                              {suspended ? 'Réactiver' : 'Suspendre'}
+                            </button>
                             <button
                               className="btn small ghost"
                               title="Retirer de cette séquence"
@@ -365,6 +393,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                             >
                               Retirer
                             </button>
+                            </span>
                           ) : (
                             <span className="muted small">via séance</span>
                           )}

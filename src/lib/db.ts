@@ -154,12 +154,14 @@ export interface Unit {
   documents?: { mediaId: string; name: string; size: number }[]; // PDF téléchargeables par les élèves
   duration?: number; // durée prévue en heures de cours (1 par défaut)
   isEval?: boolean; // séance d'évaluation (liée à une ou plusieurs évaluations, une par variante)
+  prereqIds?: string[]; // séance 0 « Prérequis » : séquences préalables dont les flashcards y sont révisées
 }
 
 export interface UnitCard {
   id: string; // unitId|cardId
   unitId: string;
   cardId: string;
+  suspended?: boolean; // suspendue : reste dans la séance (grisée, vue du professeur seul) mais n'est pas donnée aux élèves
 }
 
 export interface Publication {
