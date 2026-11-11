@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { toast } from '../../../components/Toast';
 import { introFromSeance } from '../../../lib/prereq';
-import { unitSubject } from '../../../lib/units';
+import { unitSubject, ALL_LEVELS } from '../../../lib/units';
 import { db, uid, SUBJECTS, type Group, type Unit, shortName } from '../../../lib/db';
 import { themesOf } from '../../../lib/themes';
 import { CardBrowser } from '../../../components/CardBrowser';
@@ -55,9 +55,11 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
       .sort((a, b) => a.card.code.localeCompare(b.card.code));
   }, [sel, units]);
 
-  // Flashcards déjà dans la progression de ce niveau (même matière) : grisées dans le choix, avec la séance où elles sont
-  const inProgression = useLiveQuery(async () => {
-    if (!unit) return new Map<string, string>();
+  // Flashcards déjà dans la progression de ce niveau (même matière) : grisées dans le choix, avec la séance où elles sont.
+  // Celles de cette séance ne sont pas cochables ; celles d'une autre séance peuvent être ajoutées ici aussi.
+  // prevAbsent : flashcards des niveaux précédents absentes de toute la progression (pour récupérer celles retirées d'une séance 0)
+  const pickInfo = useLiveQuery(async () => {
+    if (!unit) return { here: new Map<string, string>(), elsewhere: new Map<string, string>(), prevAbsent: new Set<string>() };
     const seqOf = (u: (typeof units)[number]) => (u.kind === 'sequence' ? u : units.find((x) => x.id === u.parentId));
     const mine = seqOf(unit);
     const same = units.filter((u) => {
@@ -65,12 +67,23 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
       return sq && sq.level === mine?.level && unitSubject(sq) === (mine ? unitSubject(mine) : '');
     });
     const byId = new Map(same.map((u) => [u.id, u]));
-    const m = new Map<string, string>();
+    const here = new Map<string, string>();
+    const elsewhere = new Map<string, string>();
     for (const l of await db.unitCards.where('unitId').anyOf([...byId.keys()]).toArray()) {
       const u = byId.get(l.unitId)!;
-      if (!m.has(l.cardId)) m.set(l.cardId, `déjà en ${u.code ?? u.name.slice(0, 20)}`);
+      if (l.unitId === unit.id) here.set(l.cardId, 'déjà dans cette séance');
+      else if (!elsewhere.has(l.cardId)) elsewhere.set(l.cardId, `déjà en ${u.code ?? u.name.slice(0, 20)}`);
     }
-    return m;
+    for (const id of here.keys()) elsewhere.delete(id);
+    const rank = ALL_LEVELS.indexOf(mine?.level ?? '');
+    const subj = mine ? unitSubject(mine) : '';
+    const prevAbsent = new Set(
+      (await db.cards.toArray())
+        .filter((c) => !c.deleted && c.subject === subj && c.level && ALL_LEVELS.indexOf(c.level) >= 0 && ALL_LEVELS.indexOf(c.level) < rank)
+        .filter((c) => !here.has(c.id) && !elsewhere.has(c.id))
+        .map((c) => c.id),
+    );
+    return { here, elsewhere, prevAbsent };
   }, [sel, units]);
 
   // Écran d'un niveau : seules ses séquences sont listées (on peut masquer celles terminées par toutes les classes)
@@ -336,7 +349,11 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                       setPicked(n);
                     }}
                     onOpen={(c, ids) => (setSiblings(ids), setOpen(c.id))}
-                    exclude={inProgression}
+                    exclude={pickInfo?.here}
+                    already={pickInfo?.elsewhere}
+                    extraFilter={
+                      pickInfo?.prevAbsent.size ? { label: 'Niveaux précédents, absentes de cette progression', ids: pickInfo.prevAbsent } : undefined
+                    }
                   />
                 </div>
               ) : (

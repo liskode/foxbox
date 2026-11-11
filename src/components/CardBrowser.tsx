@@ -37,6 +37,8 @@ export function CardBrowser({
   onToggleMany,
   onOpen,
   exclude,
+  already,
+  extraFilter,
   onCreate,
   onExport,
   subjects,
@@ -47,6 +49,8 @@ export function CardBrowser({
   onToggleMany?: (ids: string[], on: boolean) => void;
   onOpen?: (c: Card, ids: string[]) => void; // ids : flashcards affichées, dans l'ordre
   exclude?: Set<string> | Map<string, string>; // flashcards déjà attribuées : affichées grisées, non cochables (Map : où elles le sont)
+  already?: Map<string, string>; // flashcards déjà ailleurs (ex. une autre séance de la progression) : grisées mais cochables, masquables
+  extraFilter?: { label: string; ids: Set<string> }; // filtre supplémentaire proposé en case à cocher
   onCreate?: () => void; // tuile « + » en fin de liste pour créer une flashcard
   onExport?: (cards: Card[]) => void; // export des flashcards affichées (filtres appliqués)
   subjects?: string[]; // matières proposées (toutes par défaut)
@@ -64,6 +68,8 @@ export function CardBrowser({
   const [levels, setLevels] = useState<Set<string>>(new Set());
   const [tag, setTag] = useState('');
   const [orphans, setOrphans] = useState(false);
+  const [showAlready, setShowAlready] = useState(true);
+  const [extra, setExtra] = useState(false);
   const [hover, setHover] = useState<string | null>(null); // écran de choix : verso au survol
 
   const allThemes = useMemo(
@@ -84,6 +90,8 @@ export function CardBrowser({
     .filter((c) => !levels.size || levels.has(c.level ?? ''))
     .filter((c) => !tag || c.tags.includes(tag))
     .filter((c) => !orphans || !linked.has(c.id))
+    .filter((c) => showAlready || !already?.has(c.id))
+    .filter((c) => !extra || !!extraFilter?.ids.has(c.id))
     .filter((c) => {
       if (!words.length && !patterns.length) return true;
       const t = searchText(c);
@@ -100,7 +108,7 @@ export function CardBrowser({
     else n.add(t);
     setThemes(n);
   };
-  const pickable = list.filter((c) => !exclude?.has(c.id));
+  const pickable = list.filter((c) => !exclude?.has(c.id) && !already?.has(c.id));
   const allSelected = !!selected && pickable.length > 0 && pickable.every((c) => selected.has(c.id));
 
   return (
@@ -162,6 +170,18 @@ export function CardBrowser({
             <input type="checkbox" checked={orphans} onChange={(e) => setOrphans(e.target.checked)} />
             Dans aucune séquence
           </label>
+          {already && (
+            <label className="row small" style={{ gap: 6, fontWeight: 700 }}>
+              <input type="checkbox" checked={showAlready} onChange={(e) => setShowAlready(e.target.checked)} />
+              Afficher celles déjà dans la progression
+            </label>
+          )}
+          {extraFilter && (
+            <label className="row small" style={{ gap: 6, fontWeight: 700 }}>
+              <input type="checkbox" checked={extra} onChange={(e) => setExtra(e.target.checked)} />
+              {extraFilter.label} <span className="muted" style={{ fontWeight: 500 }}>({extraFilter.ids.size})</span>
+            </label>
+          )}
           <span className="muted small" style={{ marginLeft: 'auto' }}>
             {list.length} flashcard(s)
           </span>
@@ -182,15 +202,18 @@ export function CardBrowser({
         {list.map((c) => (
           <button
             key={c.id}
-            className={'thumb' + (selected?.has(c.id) ? ' selected' : '') + (exclude?.has(c.id) ? ' linked' : '')}
+            className={
+              'thumb' + (selected?.has(c.id) ? ' selected' : '') + (exclude?.has(c.id) ? ' linked' : already?.has(c.id) && !selected?.has(c.id) ? ' elsewhere' : '')
+            }
             onClick={() => (exclude?.has(c.id) ? undefined : onToggle ? onToggle(c.id) : onOpen?.(c, list.map((x) => x.id)))}
-            title={exclude?.has(c.id) ? 'Déjà attribuée' : onToggle ? undefined : c.ocrFront || undefined}
+            title={exclude?.has(c.id) ? 'Déjà attribuée' : already?.has(c.id) ? `${already.get(c.id)} : vous pouvez l'ajouter aussi ici` : onToggle ? undefined : c.ocrFront || undefined}
             onMouseEnter={onToggle ? () => setHover(c.id) : undefined}
             onMouseLeave={onToggle ? () => setHover(null) : undefined}
           >
             <div className="bar" style={{ background: themeColor(c.theme) }} />
             {onToggle && <div className="check">{selected?.has(c.id) || exclude?.has(c.id) ? <Icon name="check" size={14} /> : ''}</div>}
             {exclude?.has(c.id) && <span className="linked-tag">{(exclude instanceof Map && exclude.get(c.id)) || 'déjà attribuée'}</span>}
+            {!exclude?.has(c.id) && already?.has(c.id) && <span className="linked-tag">{already.get(c.id)}</span>}
             <div className="face">
               <CardFace html={hover === c.id ? c.back : c.front} />
             </div>
