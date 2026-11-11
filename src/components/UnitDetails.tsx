@@ -18,6 +18,14 @@ export async function openDocument(mediaId: string, name: string) {
   a.click();
 }
 
+// Un même PDF peut servir à plusieurs évaluations (modèle, évaluation créée depuis un modèle, copie) ou séances :
+// on ne supprime le fichier que lorsque plus aucune ne le cite.
+export async function deleteDocumentIfUnused(mediaId: string) {
+  const cites = (x: { documents?: { mediaId: string }[] }) => !!x.documents?.some((d) => d.mediaId === mediaId);
+  if ((await db.evaluations.filter(cites).count()) || (await db.units.filter(cites).count())) return;
+  await db.media.delete(mediaId);
+}
+
 export function DocumentList({ docs }: { docs: NonNullable<Unit['documents']> }) {
   return (
     <div className="row" style={{ gap: 6 }}>
@@ -58,7 +66,7 @@ export function UnitDetails({ unit }: { unit: Unit }) {
   async function remove(mediaId: string, name: string) {
     if (!(await confirmBox(`Retirer le document « ${name} » ?`))) return;
     await db.units.update(unit.id, { documents: docs.filter((d) => d.mediaId !== mediaId) });
-    await db.media.delete(mediaId);
+    await deleteDocumentIfUnused(mediaId);
   }
 
   return (
@@ -120,7 +128,7 @@ export function DocumentsEditor({ docs, onChange, label = 'Documents' }: { docs:
   async function remove(mediaId: string, name: string) {
     if (!(await confirmBox(`Retirer le document « ${name} » ?`))) return;
     await onChange(docs.filter((d) => d.mediaId !== mediaId));
-    await db.media.delete(mediaId);
+    await deleteDocumentIfUnused(mediaId);
   }
   return (
     <div className="stack" style={{ gap: 6 }}>
