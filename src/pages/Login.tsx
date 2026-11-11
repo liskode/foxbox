@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth, homeOf } from '../lib/auth';
 import { db, DEMO_TEACHER } from '../lib/db';
 import { ONLINE } from '../lib/supabase';
+import { Loader } from '../components/Loader';
 
 export function Login() {
   const { session, ready, login } = useAuth();
@@ -21,8 +22,10 @@ export function Login() {
     return tutored ? '/eleve/soutien' : '/eleve';
   }, [session?.id, session?.role]);
 
-  if (!ready) return null;
-  if (session) return home ? <Navigate to={home} replace /> : null;
+  if (!ready) return <Loader />;
+  if (session) return home ? <Navigate to={home} replace /> : <Loader />;
+  // Connexion en cours (à la première connexion, téléchargement de toutes les données) : le renard animé plutôt que le formulaire figé
+  if (busy) return <Loader text="Connexion…" delay={0} />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
