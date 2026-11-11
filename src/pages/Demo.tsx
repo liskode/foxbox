@@ -7,6 +7,7 @@ import { supabase, ONLINE } from '../lib/supabase';
 import { homeOf, useAuth } from '../lib/auth';
 import { DEMO_COLUMNS } from './prof/About';
 import { Icon } from '../components/Icon';
+import { Loader } from '../components/Loader';
 import type { DemoProfile } from '../lib/demoMode';
 
 interface Info {
@@ -38,6 +39,8 @@ export function Demo() {
     else nav(homeOf(r.role));
   }
 
+  // Ouverture d'un profil (téléchargement de ses données) : le renard animé plutôt que la page figée
+  if (busy) return <Loader text="Ouverture de la démo…" delay={0} />;
   const cols = DEMO_COLUMNS.filter((c) => info?.profiles[c.key]);
   return (
     <div className="page stack" style={{ maxWidth: 1200 }}>
