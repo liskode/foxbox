@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { loadRooms } from '../../lib/rooms';
 import { SeatPlanTab } from '../../components/SeatPlanTab';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -95,6 +96,9 @@ export function GroupPage() {
   const tab = ((raw === 'stats' ? 'suivi' : raw) as Tab) || 'apercu';
   const setTab = (t: string) => setParams({ onglet: t }, { replace: true });
   const count = useLiveQuery(() => db.memberships.where('groupId').equals(id!).count(), [id]);
+  const { session } = useAuth();
+  const rooms = useLiveQuery(() => loadRooms(session!.id), [session?.id], []);
+  const [choosing, setChoosing] = useState(false);
   if (group === undefined) return null;
   if (!group) return <div className="page muted">Classe introuvable.</div>;
   const tabs = [
@@ -108,6 +112,7 @@ export function GroupPage() {
     ['profs', 'Réglages'],
   ] as const;
   const plans = group.seatPlans ?? [];
+  const project = (planId: string) => window.open(`#/prof/plan/${group.id}/${planId}`, 'foxbox-plan', 'popup,width=1400,height=900');
   return (
     <div className="page stack">
       {/* Bandeau à la couleur du niveau : identité de la classe ; les deux actions du cours à droite */}
@@ -123,13 +128,27 @@ export function GroupPage() {
               <Icon name="eval" /> Faire l'appel
             </button>
             {plans.length > 0 && (
-              <button
-                className="btn"
-                title="Ouvre le plan de classe en grand dans une fenêtre, pour le tableau"
-                onClick={() => window.open(`#/prof/plan/${group.id}/${plans[0].id}`, 'foxbox-plan', 'popup,width=1400,height=900')}
-              >
-                <Icon name="screen" /> Projeter le plan
-              </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn"
+                  title="Ouvre le plan de classe en grand dans une fenêtre, pour le tableau"
+                  onClick={() => (plans.length > 1 ? setChoosing(!choosing) : project(plans[0].id))}
+                >
+                  <Icon name="screen" /> Projeter le plan
+                </button>
+                {/* Plusieurs plans : choix de la salle (menu, pour que la fenêtre s'ouvre directement au clic, y compris dans Safari) */}
+                {choosing && (
+                  <div className="panel pop stack" style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, zIndex: 20, gap: 8, minWidth: 220 }}>
+                    <b className="small">Quelle salle ?</b>
+                    {plans.map((p) => (
+                      <button key={p.id} className="btn small ghost" style={{ justifyContent: 'flex-start' }} onClick={() => (setChoosing(false), project(p.id))}>
+                        {rooms.find((x) => x.id === p.roomId)?.name ?? 'Salle'}
+                        {p.name && p.name !== 'Plan' ? ` · ${p.name}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
