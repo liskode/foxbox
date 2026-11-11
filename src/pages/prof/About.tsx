@@ -118,7 +118,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'barème par critère avec compétences et flashcards liées',
       'sujet et corrigé en PDF',
       'variantes selon les classes',
-      'modèles réutilisables, qui gardent le sujet et le corrigé (un PDF retiré d’une évaluation reste dans le modèle, et inversement)',
+      'modèles réutilisables, qui gardent le sujet et le corrigé (un PDF retiré d’une évaluation reste dans le modèle, et inversement) : un clic sur le modèle l’ouvre en édition ; cocher une classe crée son évaluation et la place dans la Progression, à la fin de la séquence choisie (dans la séance d’évaluation qui s’y trouve déjà, sinon dans une nouvelle)',
       'grille façon tableur, élèves rangés par classe : colonne « Tous » (réussite moyenne par question), puis pour chaque classe sa colonne de moyennes et ses élèves, repliables ; note /20 sous chaque élève, appréciation au survol ; réussite par compétence (en gras) et par sous-compétence, repliables par compétence ; couleurs de réussite réglables dans les Réglages (6 couleurs pour les moyennes, 4 pour les cases élève × critère, seuils en %)',
       'résultats : moyenne, répartition, réussite par critère et par compétence',
       'appréciations',

@@ -255,6 +255,32 @@ export async function assignClass(ev: Evaluation, groupId: string, on: boolean) 
   await db.evaluations.update(ev.id, { groupIds: on ? [...new Set([...ev.groupIds, groupId])] : ev.groupIds.filter((x) => x !== groupId) });
 }
 
+// Modèle : cocher une classe crée l'évaluation (copie du modèle) pour cette classe. Avec une séquence, elle va dans
+// la séance d'évaluation de la séquence (variante des évaluations déjà prévues, qui perdent la classe), ou dans une
+// nouvelle séance en fin de séquence. Une évaluation prévue restée vide et sans classe est retirée.
+// Renvoie la nouvelle évaluation et de quoi annuler.
+export async function evalFromTemplate(t: Evaluation, groupId: string, seq?: Unit) {
+  let ev: Evaluation = { ...duplicate(t), seqId: undefined, groupIds: [], level: seq?.level ?? t.level };
+  let created: Unit | undefined;
+  const seance = seq && (await db.units.where('parentId').equals(seq.id).toArray()).filter((u) => u.isEval).sort((a, b) => a.order - b.order).pop();
+  const before = seance ? (await db.evaluations.toArray()).filter((e) => e.unitId === seance.id) : [];
+  if (seance) ev = { ...ev, unitId: seance.id };
+  if (seq && !seance) ({ unit: created, ev } = await createEvalSeance(seq, ev));
+  else await db.evaluations.put(ev);
+  await assignClass(ev, groupId, true);
+  for (const b of before) {
+    const now = await db.evaluations.get(b.id);
+    const results = await db.results.where('evaluationId').equals(b.id).count();
+    if (now && !now.groupIds.length && !now.criteria.length && !now.documents?.length && !results) await db.evaluations.delete(b.id);
+  }
+  const undo = async () => {
+    await db.evaluations.delete(ev.id);
+    if (created) await db.units.delete(created.id);
+    await db.evaluations.bulkPut(before);
+  };
+  return { ev, undo };
+}
+
 // Notes d'une classe pour Pronote : une ligne par élève (ordre alphabétique), sur 20, « Abs » si absent
 export function pronoteColumn(ev: Evaluation, list: { student: Student; groupId: string }[], results: Map<string, Result>, groupId: string) {
   return list

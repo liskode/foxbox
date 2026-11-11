@@ -381,6 +381,7 @@ export interface Evaluation {
   template?: boolean; // modèle réutilisable (sans classe)
   level?: string; // niveau (6e…3e)
   unitId?: string; // séance d'évaluation de la Progression (les variantes partagent la même séance)
+  seqId?: string; // modèle : séquence où placer l'évaluation créée quand on lui coche une classe
   documents?: { mediaId: string; name: string; size: number }[]; // PDF : sujet, corrigé… (professeur)
   createdAt: number;
 }

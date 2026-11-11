@@ -2,7 +2,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, isClass, SUBJECTS, type Evaluation, type Group } from '../../lib/db';
-import { newEvaluation, duplicate, score, stats, levelOfEval } from '../../lib/grading';
+import { newEvaluation, score, stats, levelOfEval } from '../../lib/grading';
 import { today } from '../../lib/dates';
 import { useAuth } from '../../lib/auth';
 import { levelPlans, dm } from '../../lib/forecast';
@@ -110,14 +110,6 @@ export function Correction() {
     nav(`/prof/correction/${ev.id}?onglet=bareme`);
   }
 
-  async function fromTemplate(t: Evaluation) {
-    // Par défaut, toutes les classes du niveau du modèle
-    const ids = groups.filter((g) => !g.archived && t.level && levelOfName(g.name) === t.level).map((g) => g.id);
-    const ev = { ...duplicate(t), groupIds: ids };
-    await db.evaluations.put(ev);
-    nav(`/prof/correction/${ev.id}?onglet=bareme`);
-  }
-
   return (
     <div className="page stack">
       <div className="spread">
@@ -150,15 +142,9 @@ export function Correction() {
                   {templates
                     .filter((t) => (t.level ?? '') === level)
                     .map((t) => (
-                      <div key={t.id} className="row small" style={{ gap: 4, flexWrap: 'nowrap' }}>
-                        <Link to={`/prof/correction/${t.id}?onglet=bareme`} style={{ flex: 1, fontWeight: 700, color: 'inherit' }} title="Modifier le modèle">
-                          {t.name}
-                        </Link>
-                        <span className="muted">{t.criteria.length} crit.</span>
-                        <button className="btn small" onClick={() => fromTemplate(t)} title="Créer une évaluation à partir de ce modèle">
-                          Utiliser
-                        </button>
-                      </div>
+                      <Link key={t.id} to={`/prof/correction/${t.id}?onglet=bareme`} className="small" style={{ fontWeight: 700, color: 'inherit' }} title="Modifier le modèle, ou cocher des classes pour l'ajouter à la progression">
+                        {t.name} <span className="muted" style={{ fontWeight: 400 }}>· {t.criteria.length} crit.</span>
+                      </Link>
                     ))}
                 </div>
               )}

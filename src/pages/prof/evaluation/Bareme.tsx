@@ -1,5 +1,6 @@
 // Évaluation : onglet Barème et réglages (critères, compétences, flashcards liées, classes, visibilité).
-import { alertBox, confirmBox } from '../../../components/Dialog';
+import { alertBox, askForm, confirmBox } from '../../../components/Dialog';
+import { toast } from '../../../components/Toast';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -14,6 +15,7 @@ import {
   createEvalSeance,
   variantOf,
   assignClass,
+  evalFromTemplate,
 } from '../../../lib/grading';
 import { LEVELS as UNIT_LEVELS, levelOfName, nextSeanceCode, unitLabel, unitSubject, byProgression } from '../../../lib/units';
 import { CardBrowser } from '../../../components/CardBrowser';
@@ -131,6 +133,29 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
       await db.units.update(evUnit.id, { parentId: seqId, order: n + 1, code: await nextSeanceCode(seq), theme: seq.theme });
     } else await createEvalSeance(seq, ev);
   }
+  // Modèle : la classe cochée reçoit sa propre évaluation, placée dans la Progression ; on continue sur celle-ci
+  async function fromTemplate(groupId: string) {
+    let seq = seqs.find((q) => q.id === ev.seqId);
+    if (!seq && seqs.length) {
+      const r = await askForm(
+        'Séquence de la Progression',
+        [{ key: 'seq', label: 'Placer l’évaluation à la fin de la séquence', value: seqs[seqs.length - 1].id, options: seqs.map((q) => ({ value: q.id, label: unitLabel(q) })) }],
+        'Créer l’évaluation',
+      );
+      if (!r) return;
+      seq = seqs.find((q) => q.id === r.seq);
+      await update({ seqId: seq?.id });
+    }
+    const { ev: created, undo } = await evalFromTemplate(ev, groupId, seq);
+    const g = groups.find((x) => x.id === groupId);
+    toast(`Évaluation créée pour ${g ? shortName(g.name) : 'la classe'}${seq ? ` dans ${unitLabel(seq)}` : ''}`, {
+      undo: async () => {
+        await undo();
+        nav(`/prof/correction/${ev.id}?onglet=bareme`);
+      },
+    });
+    nav(`/prof/correction/${created.id}?onglet=bareme`);
+  }
   const setCrit = (i: number, p: Partial<Criterion>) => update({ criteria: ev.criteria.map((c, j) => (j === i ? { ...c, ...p } : c)) });
   const move = (i: number, d: number) => {
     const list = [...ev.criteria];
@@ -165,7 +190,10 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
           {level && (
             <label className="field" style={{ maxWidth: 280 }}>
               Séquence (Progression)
-              <select value={evUnit?.parentId ?? ''} onChange={(e) => setSequence(e.target.value)}>
+              <select
+                value={(ev.template ? ev.seqId : evUnit?.parentId) ?? ''}
+                onChange={(e) => (ev.template ? update({ seqId: e.target.value || undefined }) : setSequence(e.target.value))}
+              >
                 <option value="">— aucune —</option>
                 {seqs.map((q) => (
                   <option key={q.id} value={q.id}>
@@ -184,6 +212,22 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
             </select>
           </label>
         </div>
+        {ev.template && (
+          <div className="stack" style={{ gap: 6 }}>
+            <b className="small">Classes{level ? ` (${level})` : ''}</b>
+            <span className="small muted">Choisir des classes pour ajouter ce modèle à la progression.</span>
+            <div className="row" style={{ gap: 6 }}>
+              {groups
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }))
+                .map((g) => (
+                  <button key={g.id} className="chip cchip off" style={{ background: g.color ?? 'var(--paper)' }} onClick={() => fromTemplate(g.id)}>
+                    {shortName(g.name)}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
         {!ev.template && (
           <div className="stack" style={{ gap: 6 }}>
             <div className="spread">
@@ -392,7 +436,7 @@ export function BaremeTab({ ev, update }: { ev: Evaluation; update: (p: Partial<
           <button
             className="btn ghost"
             onClick={async () => {
-              const t = { ...duplicate(ev), template: true, groupIds: [], groupDates: {}, unitId: undefined, name: ev.name };
+              const t = { ...duplicate(ev), template: true, groupIds: [], groupDates: {}, unitId: undefined, seqId: evUnit?.parentId, name: ev.name };
               await db.evaluations.put(t);
               alertBox('Modèle enregistré : il apparaît dans la liste des modèles de l’onglet Correction.');
             }}
