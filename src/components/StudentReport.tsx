@@ -134,7 +134,7 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
                 </select>
               </label>
               {data.tutoring.length > 0 && (
-                <label className="row small" style={{ gap: 6, maxWidth: 200 }} title="L'élève peut sortir une flashcard de ses révisions ; il peut aussi la reprendre">
+                <label className="small" style={{ display: 'flex', gap: 6, alignItems: 'baseline', maxWidth: 220 }} title="L'élève peut sortir une flashcard de ses révisions ; il peut aussi la reprendre">
                   <input
                     type="checkbox"
                     checked={data.tutoring.some((g) => g.studentsCanSuspend)}

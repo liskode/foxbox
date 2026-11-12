@@ -292,7 +292,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'emploi du temps et calendrier',
       'salles',
       'référentiel de compétences',
-      'modules à activer (soutien scolaire ; onglet Physifox pour l’administrateur du site), coordonnées des relevés et attestations',
+      'modules à activer (soutien scolaire ; onglet Physifox et ouverture du site public pour l’administrateur du site), coordonnées des relevés et attestations',
       'démo en lecture seule : lien à partager, profils proposés (professeur, élève en classe, élève en soutien, parent), mot d’accueil, fermeture de la démo',
       'messages : votre photo ou logo, interlocuteurs de la famille et leur code (Mère M, Père P, Grand-mère GM…)',
       'notification par e-mail des nouveaux messages (professeur, élève, parents : chacun choisit)',
@@ -322,6 +322,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Physifox',
     text: 'Votre site public de cours : les visiteurs consultent les chapitres, ajoutent les flashcards à leur Deck et s’entraînent. Vous suivez tout depuis l’onglet Physifox.',
     details: [
+      'site public fermé ou ouvert d’un clic (Réglages › Modules) : fermé, les visiteurs voient « Bientôt de retour » et ne peuvent plus rien lire, l’administrateur voit tout',
       'chapitres consultables sans compte, modifiables et publiés un par un, avec leurs schémas',
       'flashcards rattachées à des notions du programme : changer de progression ne les touche pas',
       'inscription avec e-mail et pseudo ; classe, établissement et pays facultatifs',

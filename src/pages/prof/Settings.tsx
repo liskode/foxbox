@@ -1,5 +1,6 @@
 // Réglages : ce qu'on modifie rarement (emploi du temps, classes et élèves, couleurs, compétences, compte).
 import { askForm, alertBox } from '../../components/Dialog';
+import { toast } from '../../components/Toast';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
@@ -13,6 +14,7 @@ import { Icon } from '../../components/Icon';
 import { DemoSettings } from '../../components/DemoSettings';
 import { GradeColorsEditor } from '../../components/GradeColorsEditor';
 import { usePfAdmin } from '../../lib/physifoxAdmin';
+import { setPfSiteOpen, usePfSiteOpen } from '../../lib/physifoxSite';
 
 export function Settings() {
   const { session, logout } = useAuth();
@@ -106,6 +108,7 @@ function ModulesPanel() {
   const { session } = useAuth();
   const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
   const pfAdmin = usePfAdmin(session?.id);
+  const siteOpen = usePfSiteOpen();
   if (!me) return null;
   return (
     <div className="panel stack" style={{ gap: 8 }}>
@@ -120,7 +123,25 @@ function ModulesPanel() {
             />
             Physifox
           </label>
-          <span className="small muted">Ajoute « Physifox » au menu : gestion du site public de cours. Le site reste en ligne même si l'onglet est masqué.</span>
+          <span className="small muted">Ajoute « Physifox » au menu : gestion du site public de cours.</span>
+          <label className="row" style={{ gap: 8, fontWeight: 700 }}>
+            <input
+              type="checkbox"
+              checked={!!siteOpen}
+              disabled={siteOpen === null}
+              onChange={async (e) => {
+                const v = e.target.checked;
+                try {
+                  await setPfSiteOpen(v);
+                  toast(v ? 'Site Physifox ouvert au public' : 'Site Physifox fermé au public', { undo: () => setPfSiteOpen(!v) });
+                } catch (err) {
+                  alertBox((err as Error).message);
+                }
+              }}
+            />
+            Site public Physifox ouvert
+          </label>
+          <span className="small muted">Décoché : les visiteurs voient « Bientôt de retour » et ne peuvent plus lire les cours ni les flashcards. Vous seul continuez à tout voir.</span>
         </>
       )}
       <label className="row" style={{ gap: 8, fontWeight: 700 }}>

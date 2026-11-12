@@ -11,6 +11,8 @@ import { CardFace, mediaUrl } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
 import { toast } from '../../components/Toast';
 import { ask } from '../../components/Dialog';
+import { usePfSiteOpen } from '../../lib/physifoxSite';
+import { usePfAdmin } from '../../lib/physifoxAdmin';
 
 const THEME_ORDER = ['Matière', 'Mouvement', 'Énergie', 'Signaux', 'Méthodes'];
 const THEME_CLASS: Record<string, string> = { Matière: 't-Matière', Mouvement: 't-Mouvement', Énergie: 't-Énergie', Signaux: 't-Signaux', Méthodes: 't-Outils' };
@@ -20,10 +22,14 @@ const SECTION_LABEL: Record<PfSection['kind'], string> = { cours: 'Cours', rappe
 export function PfShell({ children, needAccount }: { children: ReactNode; needAccount?: boolean }) {
   const { session, ready, logout } = useAuth();
   const visitor = session?.role === 'visiteur';
+  // Site fermé (contenus en cours de révision) : seul l'administrateur le voit
+  const open = usePfSiteOpen();
+  const admin = usePfAdmin(session?.id) && !!session;
+  const closed = open === false && !admin;
   useEffect(() => {
-    loadPublic();
-  }, []);
-  if (!ready) return null;
+    if (!closed) loadPublic();
+  }, [closed]);
+  if (!ready || open === null) return null;
   if (needAccount && !visitor) return <Navigate to={session ? '/' : '/physifox/connexion'} replace />;
   return (
     <div className="eleve-shell pf-shell">
@@ -46,7 +52,16 @@ export function PfShell({ children, needAccount }: { children: ReactNode; needAc
           <Link className="btn small" to="/">FoxBox</Link>
         )}
       </header>
-      {children}
+      {open === false && admin && <div className="demo-banner noprint">Site fermé au public — réouverture dans Réglages › Modules</div>}
+      {closed ? (
+        <div className="page narrow stack" style={{ textAlign: 'center', alignItems: 'center', paddingTop: 48 }}>
+          <img src="./logo.png" alt="" style={{ width: 120 }} />
+          <h1 className="title">Bientôt de retour</h1>
+          <p>Physifox est en cours de mise à jour. Les cours et les flashcards reviennent très vite.</p>
+        </div>
+      ) : (
+        children
+      )}
       <footer className="pf-footer noprint small muted">
         <Link to="/physifox/confidentialite">Confidentialité</Link> · E. Renard
       </footer>
