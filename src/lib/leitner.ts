@@ -146,7 +146,8 @@ export async function todaySession(studentId: string, subject: string, extra = 0
   const scs = await db.studentCards.where('studentId').equals(studentId).toArray();
   const scMap = new Map(scs.map((s) => [s.cardId, s]));
   const done = await doneToday(studentId, subject, day);
-  const queue = buildQueue(avail, scMap, goal - done + extra, day);
+  // « Encore 10 » : 10 de plus que ce qui est déjà fait, même si l'objectif est dépassé depuis longtemps
+  const queue = buildQueue(avail, scMap, Math.max(0, goal - done) + extra, day);
   const pending = buildQueue(avail, scMap, Infinity, day).length;
   return { goal, done, queue, pending, scMap };
 }
