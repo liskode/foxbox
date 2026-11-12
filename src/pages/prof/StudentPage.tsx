@@ -3,9 +3,8 @@ import { showInfo, alertBox, confirmBox } from '../../components/Dialog';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { renameStudent, deleteStudent, resetPassword } from '../../lib/students';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, byName, groupStudents, type Rule } from '../../lib/db';
+import { db, byName, groupStudents } from '../../lib/db';
 import { StudentReport } from '../../components/StudentReport';
-import { DEFAULT_GOAL } from '../../lib/leitner';
 import { Avatar } from '../../components/Avatar';
 import { removePhoto } from '../../lib/photos';
 import { NoteEditor, FlagChecks } from '../../components/StudentNote';
@@ -61,7 +60,6 @@ export function StudentPage() {
   });
   if (student === undefined) return null;
   if (!student) return <div className="page muted">Élève introuvable.</div>;
-  const subjects = [...new Set(groups.map((g) => g.subject))];
 
   return (
     <div className="page stack">
@@ -182,47 +180,7 @@ export function StudentPage() {
       <StudentCompetenceDetail student={student} />
       <section className="stack" style={{ gap: 12, borderTop: '3px solid var(--line)', paddingTop: 12 }}>
         <h2 className="row" style={{ margin: 0, gap: 8 }}><Icon name="cards" size={20} /> Flashcards</h2>
-        <StudentReport
-          studentId={student.id}
-          teacherView
-          settings={
-            <>
-              {subjects.map((s) => (
-                <label key={s} className="field">
-                  Objectif / jour{subjects.length > 1 ? ` (${s})` : ''}
-                  <input
-                    type="number"
-                    min={1}
-                    style={{ width: 80 }}
-                    value={student.goals[s] ?? DEFAULT_GOAL}
-                    onChange={(e) =>
-                      db.students.update(student.id, {
-                        goals: {
-                          ...student.goals,
-                          [s]: Math.max(1, Number(e.target.value)),
-                        },
-                      })
-                    }
-                  />
-                </label>
-              ))}
-              <label className="field">
-                Règle d'erreur
-                <select
-                  value={student.rule}
-                  onChange={(e) =>
-                    db.students.update(student.id, {
-                      rule: e.target.value as Rule,
-                    })
-                  }
-                >
-                  <option value="strict">Stricte (retour boîte 1)</option>
-                  <option value="douce">Douce (−1 boîte)</option>
-                </select>
-              </label>
-            </>
-          }
-        />
+        <StudentReport studentId={student.id} teacherView compact />
       </section>
       <StudentVisits student={student} />
       <div>

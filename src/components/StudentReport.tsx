@@ -1,17 +1,17 @@
 // Statistiques d'un élève — partagé entre la vue professeur et la vue élève.
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Card } from '../lib/db';
+import { db, type Card, type Rule } from '../lib/db';
 import { boxDistribution, difficultForStudent, heatmapCounts, streak, summarize } from '../lib/stats';
-import { availableCards, studentDay, studentSubjects } from '../lib/leitner';
+import { availableCards, DEFAULT_GOAL, studentDay, studentSubjects } from '../lib/leitner';
 import { Boxes, Heatmap, Pct, RateBar } from './widgets';
 import { CardFace } from './CardFace';
 import { CardDetail } from './CardDetail';
 import { Icon } from './Icon';
 import { toast } from './Toast';
 import { setSuspended, tutoringsOf } from '../lib/tutoring';
+import { useCardBand } from '../lib/cardLevel';
 
-// teacherView : présentation compacte sur une ligne (réglages, chiffres, régularité, boîtes) ; settings : réglages à y insérer
 // Séances de révision : révisions espacées de moins de 30 min regroupées ; les plus récentes d'abord
 export function revisionSessions(reviews: { ts: number }[], max = 7) {
   const ts = reviews.map((r) => r.ts).sort((a, b) => b - a);
@@ -34,18 +34,11 @@ export const when = (t: number) => {
   return `${DAYS[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} · ${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-// compact (soutien, vue professeur) : chiffres en pictos, régularité, boîtes et dernières révisions sur une ligne
-export function StudentReport({
-  studentId,
-  teacherView = false,
-  settings,
-  compact = false,
-}: {
-  studentId: string;
-  teacherView?: boolean;
-  settings?: ReactNode;
-  compact?: boolean;
-}) {
+// compact (vue professeur : fiche élève et soutien) : chiffres en pictos, régularité, boîtes et dernières révisions sur une ligne,
+// puis le détail des boîtes ; teacherView : objectif par jour et règle d'erreur modifiables dans ce récapitulatif
+export function StudentReport({ studentId, teacherView = false, compact = false }: { studentId: string; teacherView?: boolean; compact?: boolean }) {
+  const band = useCardBand();
+  const student = useLiveQuery(() => (teacherView ? db.students.get(studentId) : undefined), [studentId, teacherView]);
   const subjects = useLiveQuery(() => studentSubjects(studentId), [studentId], []);
   const [subject, setSubject] = useState<string | null>(null);
   const subj = subject ?? subjects[0];
@@ -79,7 +72,9 @@ export function StudentReport({
     }
     // Flashcards suspendues pour cet élève (soutien) : hors révisions, avec la boîte où elles en sont
     const suspended: { card: Card; box: number }[] = [];
-    if (compact) {
+    // Suspendre n'existe qu'en soutien (la liste est rangée dans le groupe de soutien)
+    const tutored = compact && (await tutoringsOf(studentId)).length > 0;
+    if (tutored) {
       const ids = [...new Set((await tutoringsOf(studentId)).flatMap((g) => g.suspended?.[studentId] ?? []))];
       const cs = await db.cards.bulkGet(ids);
       for (const c of cs) if (c && !c.deleted && (c.subject === subj || subjects.length < 2)) suspended.push({ card: c, box: (await db.studentCards.get(`${studentId}|${c.id}`))?.box ?? 0 });
@@ -88,6 +83,7 @@ export function StudentReport({
       day,
       byBox,
       suspended,
+      tutored,
       reviews,
       dist,
       hard: hard.map((h, i) => ({ agg: h, card: cards[i] })).filter((x) => x.card && !x.card.deleted),
@@ -115,6 +111,27 @@ export function StudentReport({
       )}
       {compact ? (
         <div className="panel report-line">
+          {student && (
+            <div className="stack" style={{ gap: 8 }}>
+              <label className="field">
+                Objectif / jour
+                <input
+                  type="number"
+                  min={1}
+                  style={{ width: 80 }}
+                  value={student.goals[subj] ?? DEFAULT_GOAL}
+                  onChange={(e) => db.students.update(student.id, { goals: { ...student.goals, [subj]: Math.max(1, Number(e.target.value)) } })}
+                />
+              </label>
+              <label className="field">
+                Règle d'erreur
+                <select value={student.rule} onChange={(e) => db.students.update(student.id, { rule: e.target.value as Rule })}>
+                  <option value="strict">Stricte (retour boîte 1)</option>
+                  <option value="douce">Douce (−1 boîte)</option>
+                </select>
+              </label>
+            </div>
+          )}
           <div className="report-stats">
             <span title="Série en cours (jours de révision d'affilée)">
               <Icon name="flame" size={22} /> <b>{streak(counts, data.day)} j</b>
@@ -125,6 +142,11 @@ export function StudentReport({
             <span title="Réussite sur les 30 derniers jours">
               <Icon name="target" size={22} /> <b>{sum.total ? <Pct v={sum.success} /> : '—'}</b>
             </span>
+            {teacherView && (
+              <span title="Score de classement (régularité et réussite)">
+                <Icon name="chart" size={22} /> <b>{sum.score} / 100</b>
+              </span>
+            )}
           </div>
           <div className="tile-cards">
             <Heatmap counts={counts} day={data.day} />
@@ -137,49 +159,6 @@ export function StudentReport({
               </span>
             ))}
             {!data.reviews.length && <span className="muted">Aucune révision pour l'instant.</span>}
-          </div>
-        </div>
-      ) : teacherView ? (
-        <div className="row" style={{ gap: 12, alignItems: 'stretch' }}>
-          {settings && (
-            <div className="panel stack" style={{ gap: 6, padding: '12px 14px' }}>
-              {settings}
-            </div>
-          )}
-          <div
-            className="panel"
-            style={{
-              padding: '12px 14px',
-              display: 'grid',
-              gridTemplateColumns: 'auto auto',
-              gap: '6px 18px',
-              alignContent: 'center',
-            }}
-          >
-            {[
-              ['Série', `${streak(counts, data.day)} j`],
-              ['Jours (30 j)', `${sum.activeDays} / 30`],
-              ['Réussite (30 j)', sum.total ? <Pct v={sum.success} /> : '—'],
-              ['Score', `${sum.score} / 100`],
-            ].map(([l, v], i) => (
-              <div key={i}>
-                <div className="muted small">{l}</div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 900 }}>{v}</div>
-              </div>
-            ))}
-          </div>
-          <div className="panel stack" style={{ gap: 6, padding: '12px 14px' }}>
-            <b className="small">Régularité</b>
-            <Heatmap counts={counts} day={data.day} />
-          </div>
-          <div className="panel stack" style={{ gap: 4, padding: '12px 14px', flex: 1, minWidth: 240 }}>
-            <b className="small">
-              Boîtes{' '}
-              <span className="muted" style={{ fontWeight: 500 }}>
-                · {total} flashcard(s) · {mastered} bien installée(s)
-              </span>
-            </b>
-            <Boxes dist={data.dist} compact />
           </div>
         </div>
       ) : (
@@ -246,11 +225,13 @@ export function StudentReport({
                         <div className="face">
                           <CardFace html={card.front} />
                         </div>
-                        <div className="meta">
+                        <div className="meta" style={{ background: band(card).color }}>
+                          <span className="band-label">{band(card).label}</span>
                           <span className="code">{card.code}</span>
-                          <span className="small muted" title="Prochaine révision">
+                          <span className="small" title="Prochaine révision">
                             {!due ? 'nouvelle' : due <= data.day ? 'à revoir' : `le ${due.slice(8, 10)}/${due.slice(5, 7)}`}
                           </span>
+                          {data.tutored && (
                           <span
                             className="small"
                             style={{ textDecoration: 'underline', marginLeft: 'auto' }}
@@ -264,6 +245,7 @@ export function StudentReport({
                           >
                             suspendre
                           </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -288,9 +270,10 @@ export function StudentReport({
                 <div className="face">
                   <CardFace html={card.front} />
                 </div>
-                <div className="meta">
+                <div className="meta" style={{ background: band(card).color }}>
+                  <span className="band-label">{band(card).label}</span>
                   <span className="code">{card.code}</span>
-                  <span className="small muted">{box ? `boîte ${box}` : 'pas encore vue'}</span>
+                  <span className="small">{box ? `boîte ${box}` : 'pas encore vue'}</span>
                   <span
                     className="small"
                     style={{ textDecoration: 'underline', marginLeft: 'auto' }}
@@ -316,7 +299,8 @@ export function StudentReport({
                 <div className="face">
                   <CardFace html={card!.front} />
                 </div>
-                <div className="meta" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                <div className="meta" style={{ flexDirection: 'column', alignItems: 'stretch', background: band(card!).color }}>
+                  <span className="band-label">{band(card!).label}</span>
                   <span className="code">{card!.code}</span>
                   <RateBar agg={agg} />
                 </div>
