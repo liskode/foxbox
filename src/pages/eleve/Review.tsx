@@ -111,19 +111,12 @@ export function ReviewSession() {
             </div>
           </div>
         </div>
-        <div className="flip banded" onClick={flip} style={{ cursor: flipped ? 'default' : 'pointer' }}>
-          <CardFace html={flipped ? card.back : card.front} full />
-          {/* couleur du niveau où la flashcard a été vue pour la première fois */}
-          <div className="flip-band" style={{ background: band(card).color }}>
-            <span className="band-label">{band(card).label}</span>
-            <span className="code">{card.code}</span>
-          </div>
-        </div>
-        {/* Si la classe l'autorise : l'élève sort cette flashcard de sa pile (il pourra la reprendre depuis son accueil) */}
+        {/* Si la classe l'autorise : l'élève sort cette flashcard de sa pile (il pourra la reprendre depuis son accueil) ;
+            au-dessus de la flashcard, loin des boutons de réponse, pour éviter un appui par erreur */}
         {canSuspend && (
           <button
             className="btn ghost small"
-            style={{ alignSelf: 'center' }}
+            style={{ alignSelf: 'flex-end' }}
             onClick={async () => {
               const c = card;
               await setSuspended(session!.id, c.id, true, 'eleve');
@@ -135,6 +128,14 @@ export function ReviewSession() {
             <Icon name="trash" size={16} /> Retirer cette flashcard de ma pile
           </button>
         )}
+        <div className="flip banded" onClick={flip} style={{ cursor: flipped ? 'default' : 'pointer' }}>
+          <CardFace html={flipped ? card.back : card.front} full />
+          {/* couleur du niveau où la flashcard a été vue pour la première fois */}
+          <div className="flip-band" style={{ background: band(card).color }}>
+            <span className="band-label">{band(card).label}</span>
+            <span className="code">{card.code}</span>
+          </div>
+        </div>
         {/* Sur téléphone, les boutons restent en bas de l'écran, sous le pouce */}
         <div className="review-actions">
           {!flipped ? (

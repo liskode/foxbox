@@ -311,7 +311,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'pensé pour le téléphone : flashcard en grand, boutons de réponse sous le pouce, menu en bas de l’écran',
       'réponses « Je ne sais pas », « J’hésite… », « Facile »',
       'progrès : série, régularité, boîtes (avec les flashcards suspendues)',
-      'si sa classe ou son soutien l’autorise : bouton « Retirer cette flashcard de ma pile » pendant la révision, et bloc « Retirées de ma pile » sur l’accueil pour les reprendre',
+      'si sa classe ou son soutien l’autorise : bouton « Retirer cette flashcard de ma pile » au-dessus de la flashcard pendant la révision, et bloc « Retirées de ma pile » sur l’accueil pour les reprendre',
       'onglet Évaluations (élèves suivis en soutien) : « Signaler un DS à venir » (date, matière, programme par points cochés, texte ou capture Pronote), puis copie, corrigé et note ; graphique de progression par matière ; notes des évaluations rendues en classe',
       'documents de cours des séances faites',
       'soutien : page d’arrivée des élèves suivis, avec le bouton « Je révise mes flashcards CHAQUE JOUR » avec le nombre à revoir, prochaine séance en tête (date, heure, contenu prévu, documents), consignes de la dernière séance et bouton « Travail fait ? » (4 réponses possibles), dépôt de documents ou de photos, historique des séances avec documents, liens et note personnelle',
