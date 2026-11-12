@@ -224,13 +224,9 @@ function DemoBanner() {
   const nav = useNavigate();
   if (!isDemo()) return null;
   return (
-    <div className="demo-banner noprint">
-      <span>
-        <b>Démo en lecture seule</b> — vous pouvez cliquer partout, rien n’est enregistré.
-      </span>
-      <button className="btn small" onClick={() => logout().then(() => nav('/demo'))}>
-        Changer de profil
-      </button>
+    <div className="demo-banner noprint" title="Vous pouvez cliquer partout, rien n’est enregistré">
+      <b>Démo en lecture seule</b> —
+      <button onClick={() => logout().then(() => nav('/demo'))}>changer de profil</button>
     </div>
   );
 }
