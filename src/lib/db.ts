@@ -43,7 +43,7 @@ export interface Teacher {
   timetable?: import('./timetable').Timetable; // emploi du temps et calendrier A/B
   competences?: import('./competences').Competence[]; // référentiel de compétences
   rooms?: import('./rooms').Room[]; // salles (places cochées sur un quadrillage)
-  modules?: { soutien?: boolean }; // modules activés dans les Réglages
+  modules?: { soutien?: boolean; physifox?: boolean }; // modules activés dans les Réglages
   notifyEmail?: boolean; // e-mail à chaque nouveau message (adresse de connexion)
   tutorProfile?: TutorProfile; // soutien : coordonnées imprimées sur les relevés et attestations
   photoId?: string; // photo ou logo, à côté de ses messages

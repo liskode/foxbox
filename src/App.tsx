@@ -246,6 +246,8 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
     [session?.id, session?.role],
     false,
   );
+  // Onglet Physifox : réservé à l'administrateur du site, et seulement s'il l'a coché dans Réglages › Modules
+  const pfTab = useLiveQuery(async () => (pfAdmin && session ? !!(await db.teachers.get(session.id))?.modules?.physifox : false), [pfAdmin, session?.id], false);
   // Messages non lus : pastille sur « Soutien » (professeur, élève) ou « Messages » (parents)
   const unread = useLiveQuery(async () => (session && session.role !== 'visiteur' ? unreadTotal(session.id, session.role) : 0), [session?.id, session?.role], 0);
   const badgeOn = role === 'parent' ? '/parent/messages' : role === 'prof' ? '/prof/soutien' : '/eleve/soutien';
@@ -269,7 +271,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
           ['/prof/flashcards', 'Flashcards'],
           ['/prof/eleves', 'Élèves'],
           ...(soutien ? [['/prof/soutien', 'Soutien']] : []),
-          ...(pfAdmin ? [['/prof/physifox', 'Physifox']] : []),
+          ...(pfTab ? [['/prof/physifox', 'Physifox']] : []),
         ]
       : role === 'parent'
         ? [

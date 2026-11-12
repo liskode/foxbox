@@ -12,6 +12,7 @@ import { DEFAULT_ORIGINS, loadOrigins, type Origin } from '../../lib/cardCodes';
 import { Icon } from '../../components/Icon';
 import { DemoSettings } from '../../components/DemoSettings';
 import { GradeColorsEditor } from '../../components/GradeColorsEditor';
+import { usePfAdmin } from '../../lib/physifoxAdmin';
 
 export function Settings() {
   const { session, logout } = useAuth();
@@ -104,10 +105,24 @@ function OriginsPanel() {
 function ModulesPanel() {
   const { session } = useAuth();
   const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
+  const pfAdmin = usePfAdmin(session?.id);
   if (!me) return null;
   return (
     <div className="panel stack" style={{ gap: 8 }}>
       <h3 className="panel-title">Modules</h3>
+      {pfAdmin && (
+        <>
+          <label className="row" style={{ gap: 8, fontWeight: 700 }}>
+            <input
+              type="checkbox"
+              checked={!!me.modules?.physifox}
+              onChange={(e) => db.teachers.update(me.id, { modules: { ...(me.modules ?? {}), physifox: e.target.checked } })}
+            />
+            Physifox
+          </label>
+          <span className="small muted">Ajoute « Physifox » au menu : gestion du site public de cours. Le site reste en ligne même si l'onglet est masqué.</span>
+        </>
+      )}
       <label className="row" style={{ gap: 8, fontWeight: 700 }}>
         <input
           type="checkbox"

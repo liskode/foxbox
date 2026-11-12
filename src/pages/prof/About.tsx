@@ -292,7 +292,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'emploi du temps et calendrier',
       'salles',
       'référentiel de compétences',
-      'modules à activer (soutien scolaire), coordonnées des relevés et attestations',
+      'modules à activer (soutien scolaire ; onglet Physifox pour l’administrateur du site), coordonnées des relevés et attestations',
       'démo en lecture seule : lien à partager, profils proposés (professeur, élève en classe, élève en soutien, parent), mot d’accueil, fermeture de la démo',
       'messages : votre photo ou logo, interlocuteurs de la famille et leur code (Mère M, Père P, Grand-mère GM…)',
       'notification par e-mail des nouveaux messages (professeur, élève, parents : chacun choisit)',
