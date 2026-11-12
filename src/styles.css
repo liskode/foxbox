@@ -210,7 +210,7 @@ table.list tr.click:hover td { background: #faf7ef; }
 .boxes { display: flex; gap: 8px; align-items: flex-end; height: 150px; }
 .boxes .b { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
 .boxes .fill { width: 100%; border: 1.5px solid var(--line); border-radius: 6px 6px 2px 2px; background: var(--turquoise); min-height: 3px; }
-.boxes .lbl { font-weight: 800; font-size: 0.8rem; }
+.boxes .lbl { font-weight: 800; font-size: 0.8rem; white-space: nowrap; }
 .boxes .n { font-size: 0.8rem; color: var(--ink-soft); }
 .boxes.compact { height: 92px; gap: 4px; min-width: 230px; }
 .boxes.compact .fill { border-width: 1.5px; }
@@ -512,7 +512,7 @@ table.list tr.click:hover td { background: #faf7ef; }
 .tile-ind { position: relative; background: none; border: none; padding: 4px; cursor: pointer; color: var(--ink); border-radius: 8px; }
 .tile-ind:hover { background: var(--calm); }
 .tile-cards { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
-.tile-cards .boxes.compact { flex: none; width: 210px; min-width: 0; height: 104px; }
+.tile-cards .boxes.compact { flex: none; width: 236px; min-width: 0; height: 104px; }
 .tile-soutien { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 16px; }
 @media (max-width: 700px) { .tile-soutien { grid-template-columns: 1fr; } }
 .tile-money { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-weight: 900; font-size: 0.9rem; padding: 4px 10px; }
@@ -526,7 +526,7 @@ table.list tr.click:hover td { background: #faf7ef; }
 .tile-main { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; }
 .tile-cards .heatmap .cell { width: 10px; height: 10px; }
 .tile-cards .heatmap, .tile-cards .heatmap .col { gap: 2px; }
-.tile-cards .boxes.compact { height: 74px; width: 190px; }
+.tile-cards .boxes.compact { height: 74px; width: 214px; }
 .tile-deadline { align-items: center; padding: 4px 10px; white-space: nowrap; }
 .tile-deadlines { gap: 4px !important; }
 

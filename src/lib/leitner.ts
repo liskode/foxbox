@@ -69,6 +69,11 @@ export function buildQueue(
 // Cartes publiées (à la date `day`) dans les classes de l'élève pour une matière, et cartes de ses séances
 // de soutien (celles des points du programme travaillés et celles ajoutées pendant la séance).
 export async function availableCards(studentId: string, subject: string, day?: string): Promise<Available[]> {
+  return (await availableSplit(studentId, subject, day)).avail;
+}
+
+// Les mêmes, séparées en deux : celles proposées à l'élève, et celles suspendues (par le professeur ou par l'élève)
+export async function availableSplit(studentId: string, subject: string, day?: string): Promise<{ avail: Available[]; suspended: Available[] }> {
   day ??= await studentDay(studentId);
   const ms = await db.memberships.where('studentId').equals(studentId).toArray();
   const groups = (await db.groups.bulkGet(ms.map((m) => m.groupId))).filter(
@@ -105,9 +110,12 @@ export async function availableCards(studentId: string, subject: string, day?: s
       for (const c of await db.cards.bulkGet(ss.cardIds)) if (c && own(c)) offer(c, ss.date);
     }
   }
-  // Flashcards suspendues par le professeur pour cet élève (classe ou soutien) : elles ne sont plus proposées
-  for (const g of groups) for (const id of g.suspended?.[studentId] ?? []) result.delete(id);
-  return [...result.values()];
+  // Flashcards suspendues pour cet élève : elles ne sont plus proposées
+  // (anciennes suspensions rangées dans le groupe, puis celles notées dans sa progression)
+  const off = new Set(groups.flatMap((g) => g.suspended?.[studentId] ?? []));
+  for (const sc of await db.studentCards.where('studentId').equals(studentId).toArray()) if (sc.suspended) off.add(sc.cardId);
+  const all = [...result.values()];
+  return { avail: all.filter((a) => !off.has(a.cardId)), suspended: all.filter((a) => off.has(a.cardId)) };
 }
 
 // Fuseau de l'élève : celui fixé dans son groupe de soutien (sinon celui de son appareil)

@@ -66,11 +66,19 @@ export function Heatmap({ counts, weeks = 7, day }: { counts: Map<string, number
   );
 }
 
-export function Boxes({ dist, compact = false }: { dist: number[]; compact?: boolean }) {
-  const max = Math.max(1, ...dist);
+// suspended : flashcards suspendues, en gris clair à gauche des nouvelles
+export function Boxes({ dist, suspended, compact = false }: { dist: number[]; suspended?: number; compact?: boolean }) {
+  const max = Math.max(1, ...dist, suspended ?? 0);
   const labels = ['Nouv.', '1', '2', '3', '4', '5', '6', '7'];
   return (
     <div className={'boxes' + (compact ? ' compact' : '')}>
+      {suspended !== undefined && (
+        <div className="b" title="Flashcards suspendues : sorties des révisions, sans être supprimées">
+          <div className="n">{suspended}</div>
+          <div className="fill" style={{ height: `${(suspended / max) * 100}%`, background: 'var(--divers)', opacity: 0.45 }} />
+          <div className="lbl">Susp.</div>
+        </div>
+      )}
       {dist.map((n, i) => (
         <div key={i} className="b" title={i === 0 ? 'Flashcards jamais vues' : `Boîte ${i}`}>
           <div className="n">{n}</div>

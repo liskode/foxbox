@@ -6,6 +6,8 @@ import { recordAnswer, todaySession } from '../../lib/leitner';
 import { CardFace } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
 import { useCardBand } from '../../lib/cardLevel';
+import { canSelfSuspend, setSuspended } from '../../lib/tutoring';
+import { toast } from '../../components/Toast';
 
 export function ReviewSession() {
   const { session } = useAuth();
@@ -18,6 +20,10 @@ export function ReviewSession() {
   const busy = useRef(false);
   const [tally, setTally] = useState({ easy: 0, hard: 0, forgot: 0 });
   const band = useCardBand();
+  const [canSuspend, setCanSuspend] = useState(false);
+  useEffect(() => {
+    canSelfSuspend(session!.id).then(setCanSuspend);
+  }, [session]);
 
   useEffect(() => {
     (async () => {
@@ -113,6 +119,22 @@ export function ReviewSession() {
             <span className="code">{card.code}</span>
           </div>
         </div>
+        {/* Si la classe l'autorise : l'élève sort cette flashcard de sa pile (il pourra la reprendre depuis son accueil) */}
+        {canSuspend && (
+          <button
+            className="btn ghost small"
+            style={{ alignSelf: 'center' }}
+            onClick={async () => {
+              const c = card;
+              await setSuspended(session!.id, c.id, true, 'eleve');
+              toast('Flashcard retirée de ta pile', { undo: () => setSuspended(session!.id, c.id, false, 'eleve') });
+              setFlipped(false);
+              setI((n) => n + 1);
+            }}
+          >
+            <Icon name="trash" size={16} /> Retirer cette flashcard de ma pile
+          </button>
+        )}
         {/* Sur téléphone, les boutons restent en bas de l'écran, sous le pouce */}
         <div className="review-actions">
           {!flipped ? (

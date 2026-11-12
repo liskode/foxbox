@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Card, type Rule } from '../lib/db';
 import { boxDistribution, difficultForStudent, heatmapCounts, streak, summarize } from '../lib/stats';
-import { availableCards, DEFAULT_GOAL, studentDay, studentSubjects } from '../lib/leitner';
+import { availableSplit, DEFAULT_GOAL, studentDay, studentSubjects } from '../lib/leitner';
 import { Boxes, Heatmap, Pct, RateBar } from './widgets';
 import { CardFace } from './CardFace';
 import { CardDetail } from './CardDetail';
 import { Icon } from './Icon';
 import { toast } from './Toast';
-import { activeGroupsOf, setSuspended } from '../lib/tutoring';
+import { setSuspended, tutoringsOf } from '../lib/tutoring';
 import { useCardBand } from '../lib/cardLevel';
 
 // Séances de révision : révisions espacées de moins de 30 min regroupées ; les plus récentes d'abord
@@ -51,8 +51,9 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
     const cards = await db.cards.bulkGet(hard.map((h) => h.cardId));
     // Soutien : flashcards en cours (boîtes 1 à 7), avec leur prochaine date de révision
     const byBox: { card: Card; due: string }[][] = [[], [], [], [], [], [], [], []];
+    const split = await availableSplit(studentId, subj);
     if (compact) {
-      const availList = await availableCards(studentId, subj);
+      const availList = split.avail;
       const avail = new Set(availList.map((a) => a.cardId));
       const scs = (await db.studentCards.where('studentId').equals(studentId).toArray()).filter((sc) => avail.has(sc.cardId) && sc.box > 0);
       const cs = await db.cards.bulkGet(scs.map((sc) => sc.cardId));
@@ -70,17 +71,20 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
       });
       byBox.slice(1).forEach((l) => l.sort((a, b) => a.due.localeCompare(b.due) || a.card.code.localeCompare(b.card.code)));
     }
-    // Flashcards suspendues pour cet élève (soutien) : hors révisions, avec la boîte où elles en sont
-    const suspended: { card: Card; box: number }[] = [];
-    if (compact) {
-      const ids = [...new Set((await activeGroupsOf(studentId)).flatMap((g) => g.suspended?.[studentId] ?? []))];
-      const cs = await db.cards.bulkGet(ids);
-      for (const c of cs) if (c && !c.deleted && (c.subject === subj || subjects.length < 2)) suspended.push({ card: c, box: (await db.studentCards.get(`${studentId}|${c.id}`))?.box ?? 0 });
+    // Flashcards suspendues : hors révisions, avec la boîte où elles en sont et qui les a suspendues
+    const suspended: { card: Card; box: number; byStudent: boolean }[] = [];
+    const cs = await db.cards.bulkGet(split.suspended.map((a) => a.cardId));
+    for (const c of cs) {
+      const sc = c && !c.deleted ? await db.studentCards.get(`${studentId}|${c.id}`) : undefined;
+      if (c && !c.deleted) suspended.push({ card: c, box: sc?.box ?? 0, byStudent: sc?.suspendedBy === 'eleve' });
     }
+    // Soutien : le professeur autorise l'élève à retirer lui-même des flashcards de sa pile
+    const tutoring = teacherView ? await tutoringsOf(studentId) : [];
     return {
       day,
       byBox,
       suspended,
+      tutoring,
       reviews,
       dist,
       hard: hard.map((h, i) => ({ agg: h, card: cards[i] })).filter((x) => x.card && !x.card.deleted),
@@ -94,6 +98,8 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
   const sum = summarize(data.reviews, data.day);
   const total = data.dist.reduce((a, b) => a + b, 0);
   const mastered = data.dist.slice(5).reduce((a, b) => a + b, 0);
+  // L'élève ne voit (et ne peut reprendre) que celles qu'il a retirées lui-même
+  const mySuspended = compact ? data.suspended : data.suspended.filter((x) => x.byStudent);
 
   return (
     <div className="stack">
@@ -127,6 +133,18 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
                   <option value="douce">Douce (−1 boîte)</option>
                 </select>
               </label>
+              {data.tutoring.length > 0 && (
+                <label className="row small" style={{ gap: 6, maxWidth: 200 }} title="L'élève peut sortir une flashcard de ses révisions ; il peut aussi la reprendre">
+                  <input
+                    type="checkbox"
+                    checked={data.tutoring.some((g) => g.studentsCanSuspend)}
+                    onChange={async (e) => {
+                      for (const g of data.tutoring) await db.groups.update(g.id, { studentsCanSuspend: e.target.checked });
+                    }}
+                  />
+                  Peut retirer des flashcards de sa pile
+                </label>
+              )}
             </div>
           )}
           <div className="report-stats">
@@ -147,7 +165,7 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
           </div>
           <div className="tile-cards">
             <Heatmap counts={counts} day={data.day} />
-            <Boxes dist={data.dist} compact />
+            <Boxes dist={data.dist} suspended={data.suspended.length} compact />
           </div>
           <div className="report-sessions" title="Dernières séances de révision">
             {revisionSessions(data.reviews).map((x) => (
@@ -194,7 +212,7 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
                 {total} flashcard(s){teacherView ? ` · ${mastered} bien installée(s) (boîtes 5 à 7)` : ''}
               </span>
             </div>
-            <Boxes dist={data.dist} />
+            <Boxes dist={data.dist} suspended={data.suspended.length} />
           </div>
         </>
       )}
@@ -250,17 +268,17 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
           )}
         </div>
       )}
-      {compact && data.suspended.length > 0 && (
+      {mySuspended.length > 0 && (
         <div className="panel calm stack">
           <h3 style={{ margin: 0 }}>
-            Suspendues ({data.suspended.length})
+            {compact ? 'Suspendues' : 'Retirées de ma pile'} ({mySuspended.length})
             <span className="muted small" style={{ fontWeight: 600 }}>
               {' '}
-              · hors de ses révisions ; elles reprennent dans leur boîte
+              · {compact ? 'hors de ses révisions' : 'hors de mes révisions'} ; elles reprennent dans leur boîte
             </span>
           </h3>
           <div className="cardgrid">
-            {data.suspended.map(({ card, box }) => (
+            {mySuspended.map(({ card, box, byStudent }) => (
               <div key={card.id} className="thumb" style={{ opacity: 0.75 }} onClick={() => setOpen(card.id)}>
                 <div className="face">
                   <CardFace html={card.front} />
@@ -268,13 +286,17 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
                 <div className="meta" style={{ background: band(card).color }}>
                   <span className="band-label">{band(card).label}</span>
                   <span className="code">{card.code}</span>
-                  <span className="small">{box ? `boîte ${box}` : 'pas encore vue'}</span>
+                  <span className="small">
+                    {box ? `boîte ${box}` : 'pas encore vue'}
+                    {compact && byStudent ? ' · par l’élève' : ''}
+                  </span>
                   <span
                     className="small"
                     style={{ textDecoration: 'underline', marginLeft: 'auto' }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSuspended(studentId, card.id, false).then(() => toast(`Flashcard ${card.code} reprise`, { undo: () => setSuspended(studentId, card.id, true) }));
+                      const by = compact ? 'prof' : 'eleve';
+                      setSuspended(studentId, card.id, false, by).then(() => toast(`Flashcard ${card.code} reprise`, { undo: () => setSuspended(studentId, card.id, true, by) }));
                     }}
                   >
                     reprendre

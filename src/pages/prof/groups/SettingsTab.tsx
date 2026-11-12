@@ -86,6 +86,12 @@ export function TeachersTab({ group }: { group: Group }) {
         </span>{' '}
         — modifiable dans <Link to="/prof/reglages">Réglages › Couleurs des niveaux</Link>.
       </div>
+      <label style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+        <input type="checkbox" checked={!!group.studentsCanSuspend} onChange={(e) => db.groups.update(group.id, { studentsCanSuspend: e.target.checked })} />
+        <span>
+          Les élèves peuvent retirer des flashcards de leur pile <span className="small muted">(ils peuvent aussi les reprendre)</span>
+        </span>
+      </label>
       <h3 style={{ margin: '8px 0 0' }}>Co-enseignants</h3>
       <span className="small muted">
         Plusieurs professeurs peuvent gérer la même classe (mêmes élèves, sans doublon). L'invitation de collègues se fera avec la version en ligne.

@@ -51,8 +51,13 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
         const { ledger } = await loadLedger(teacherId, s.id);
         const reviews = (await db.reviews.where('studentId').equals(s.id).toArray()).filter((r) => r.date >= since);
         const dist = [0, 0, 0, 0, 0, 0, 0, 0];
-        for (const subj of await studentSubjects(s.id)) (await boxDistribution(s.id, subj)).forEach((n, i) => (dist[i] += n));
-        return { s, ledger, day: await studentDay(s.id), counts: heatmapCounts(reviews), dist, sessions: revisionSessions(reviews) };
+        let suspended = 0;
+        for (const subj of await studentSubjects(s.id)) {
+          const d = await boxDistribution(s.id, subj);
+          d.forEach((n, i) => (dist[i] += n));
+          suspended += d.suspended ?? 0;
+        }
+        return { s, ledger, day: await studentDay(s.id), counts: heatmapCounts(reviews), dist, suspended, sessions: revisionSessions(reviews) };
       }),
     );
     // Échéances : séances à venir et évaluations annoncées ; évaluations ajoutées ou modifiées depuis la dernière visite
@@ -126,11 +131,11 @@ export function TutoringTile({ group, teacherId }: { group: Group; teacherId: st
                 );
               })}
             </div>
-            {d.per.map(({ s, day, counts, dist, sessions }) => (
+            {d.per.map(({ s, day, counts, dist, suspended, sessions }) => (
               <div key={s.id} className="tile-cards" onClick={go('flashcards')} title="Flashcards">
                 {d.students.length > 1 && <b className="small">{s.firstName}</b>}
                 <Heatmap counts={counts} day={day} />
-                <Boxes dist={dist} compact />
+                <Boxes dist={dist} suspended={suspended} compact />
                 {/* Dernières séances de révision : date, heure, nombre de flashcards */}
                 <div className="report-sessions" title="Dernières séances de révision (date, heure · flashcards)">
                   {sessions.map((x) => (

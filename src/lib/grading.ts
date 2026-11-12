@@ -138,6 +138,7 @@ export async function resetCardsForFailures(ev: Evaluation): Promise<{ students:
       const key = `${r.studentId}|${cardId}`;
       const prev = await db.studentCards.get(key);
       await db.studentCards.put({
+        ...prev,
         id: key,
         studentId: r.studentId,
         cardId,

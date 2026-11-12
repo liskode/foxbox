@@ -208,10 +208,21 @@ export async function activeGroupsOf(studentId: string) {
   return (await db.groups.bulkGet(ms.map((m) => m.groupId))).filter((g) => g && !g.archived) as Group[];
 }
 
-export async function setSuspended(studentId: string, cardId: string, on: boolean) {
+// Suspendre / reprendre une flashcard pour un élève : notée dans sa progression (la boîte est conservée).
+// Reprendre efface aussi une ancienne suspension rangée dans le groupe (seul le professeur peut écrire le groupe).
+export async function setSuspended(studentId: string, cardId: string, on: boolean, by: 'eleve' | 'prof' = 'prof') {
+  const id = `${studentId}|${cardId}`;
+  const prev = await db.studentCards.get(id);
+  if (on) await db.studentCards.put({ id, studentId, cardId, box: 0, due: '', reps: 0, lapses: 0, ...prev, suspended: true, suspendedBy: by });
+  else if (prev?.suspended) await db.studentCards.put({ ...prev, suspended: false, suspendedBy: undefined });
+  if (on || by === 'eleve') return;
   for (const g of await activeGroupsOf(studentId)) {
-    const cur = g.suspended?.[studentId] ?? [];
-    const next = on ? [...new Set([...cur, cardId])] : cur.filter((x) => x !== cardId);
-    await db.groups.update(g.id, { suspended: { ...(g.suspended ?? {}), [studentId]: next } });
+    if (!g.suspended?.[studentId]?.includes(cardId)) continue;
+    await db.groups.update(g.id, { suspended: { ...g.suspended, [studentId]: g.suspended[studentId].filter((x) => x !== cardId) } });
   }
+}
+
+// L'élève peut-il retirer lui-même des flashcards de sa pile ? Oui si une de ses classes ou un de ses soutiens en cours l'autorise
+export async function canSelfSuspend(studentId: string) {
+  return (await activeGroupsOf(studentId)).some((g) => g.studentsCanSuspend);
 }

@@ -70,6 +70,7 @@ export interface Group {
   suspended?: Record<string, string[]>; // flashcards suspendues (classe ou soutien), par élève : sorties de ses révisions, sans être supprimées
   timezone?: string; // fuseau horaire de l'élève (s'il vit ailleurs : Ottawa, Dallas…)
   relations?: import('./relations').Relation[]; // interlocuteurs et leurs codes, recopiés depuis les Réglages
+  studentsCanSuspend?: boolean; // les élèves peuvent retirer eux-mêmes des flashcards de leur pile
   memberNames?: Record<string, string>; // soutien en groupe : prénoms des élèves, recopiés pour que chacun voie qui est dans le groupe
 }
 export interface Track {
@@ -180,6 +181,8 @@ export interface StudentCard {
   reps: number;
   lapses: number;
   lastReview?: string;
+  suspended?: boolean; // sortie des révisions de l'élève, sans être supprimée (elle reprend dans sa boîte)
+  suspendedBy?: 'eleve' | 'prof';
 }
 
 export interface Review {

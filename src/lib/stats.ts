@@ -1,6 +1,6 @@
 import { db, groupStudents, isClass, type Review, type StudentCard, type Student } from './db';
 import { addDays, diffDays, studyDay } from './dates';
-import { availableCards, studentDay } from './leitner';
+import { availableSplit, studentDay } from './leitner';
 
 export const WINDOW = 30;
 
@@ -76,13 +76,14 @@ export function streak(counts: Map<string, number>, day = studyDay()): number {
 }
 
 // Répartition par boîte : index 0 = jamais vue, 1..7 = boîtes.
-export async function boxDistribution(studentId: string, subject: string): Promise<number[]> {
-  const avail = await availableCards(studentId, subject);
+// Répartition dans les boîtes (0 = nouvelles) ; suspended : nombre de flashcards suspendues, hors boîtes
+export async function boxDistribution(studentId: string, subject: string): Promise<number[] & { suspended?: number }> {
+  const { avail, suspended } = await availableSplit(studentId, subject);
   const scs = await db.studentCards.where('studentId').equals(studentId).toArray();
   const scMap = new Map(scs.map((s) => [s.cardId, s]));
   const dist = [0, 0, 0, 0, 0, 0, 0, 0];
   for (const a of avail) dist[scMap.get(a.cardId)?.box ?? 0]++;
-  return dist;
+  return Object.assign(dist, { suspended: suspended.length });
 }
 
 export interface StudentRow {
