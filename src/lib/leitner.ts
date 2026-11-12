@@ -105,7 +105,7 @@ export async function availableCards(studentId: string, subject: string, day?: s
       for (const c of await db.cards.bulkGet(ss.cardIds)) if (c && own(c)) offer(c, ss.date);
     }
   }
-  // Flashcards suspendues par le professeur de soutien pour cet élève : elles ne sont plus proposées
+  // Flashcards suspendues par le professeur pour cet élève (classe ou soutien) : elles ne sont plus proposées
   for (const g of groups) for (const id of g.suspended?.[studentId] ?? []) result.delete(id);
   return [...result.values()];
 }

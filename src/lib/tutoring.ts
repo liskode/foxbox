@@ -202,8 +202,14 @@ export function sessionEnd(s: TutoringSession) {
 export const isUpcoming = (s: TutoringSession) => sessionEnd(s) > Date.now();
 
 // Suspendre une flashcard pour un élève (elle sort de ses révisions, garde sa boîte) ou la reprendre
+// Groupes en cours d'un élève (classes et soutien) : c'est là que sont rangées ses flashcards suspendues
+export async function activeGroupsOf(studentId: string) {
+  const ms = await db.memberships.where('studentId').equals(studentId).toArray();
+  return (await db.groups.bulkGet(ms.map((m) => m.groupId))).filter((g) => g && !g.archived) as Group[];
+}
+
 export async function setSuspended(studentId: string, cardId: string, on: boolean) {
-  for (const g of await tutoringsOf(studentId)) {
+  for (const g of await activeGroupsOf(studentId)) {
     const cur = g.suspended?.[studentId] ?? [];
     const next = on ? [...new Set([...cur, cardId])] : cur.filter((x) => x !== cardId);
     await db.groups.update(g.id, { suspended: { ...(g.suspended ?? {}), [studentId]: next } });

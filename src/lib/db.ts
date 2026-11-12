@@ -67,7 +67,7 @@ export interface Group {
   tracks?: Track[]; // matières suivies et niveau de chacune
   unitStatus?: Record<string, UnitStatus>; // état des points du programme fixé à la main (sinon : « vu » s'il a été travaillé)
   teacherPhotoId?: string; // photo du professeur, recopiée pour l'élève et les parents (messages)
-  suspended?: Record<string, string[]>; // flashcards suspendues, par élève : sorties de ses révisions, sans être supprimées
+  suspended?: Record<string, string[]>; // flashcards suspendues (classe ou soutien), par élève : sorties de ses révisions, sans être supprimées
   timezone?: string; // fuseau horaire de l'élève (s'il vit ailleurs : Ottawa, Dallas…)
   relations?: import('./relations').Relation[]; // interlocuteurs et leurs codes, recopiés depuis les Réglages
   memberNames?: Record<string, string>; // soutien en groupe : prénoms des élèves, recopiés pour que chacun voie qui est dans le groupe

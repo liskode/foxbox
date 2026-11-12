@@ -9,7 +9,7 @@ import { CardFace } from './CardFace';
 import { CardDetail } from './CardDetail';
 import { Icon } from './Icon';
 import { toast } from './Toast';
-import { setSuspended, tutoringsOf } from '../lib/tutoring';
+import { activeGroupsOf, setSuspended } from '../lib/tutoring';
 import { useCardBand } from '../lib/cardLevel';
 
 // Séances de révision : révisions espacées de moins de 30 min regroupées ; les plus récentes d'abord
@@ -72,10 +72,8 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
     }
     // Flashcards suspendues pour cet élève (soutien) : hors révisions, avec la boîte où elles en sont
     const suspended: { card: Card; box: number }[] = [];
-    // Suspendre n'existe qu'en soutien (la liste est rangée dans le groupe de soutien)
-    const tutored = compact && (await tutoringsOf(studentId)).length > 0;
-    if (tutored) {
-      const ids = [...new Set((await tutoringsOf(studentId)).flatMap((g) => g.suspended?.[studentId] ?? []))];
+    if (compact) {
+      const ids = [...new Set((await activeGroupsOf(studentId)).flatMap((g) => g.suspended?.[studentId] ?? []))];
       const cs = await db.cards.bulkGet(ids);
       for (const c of cs) if (c && !c.deleted && (c.subject === subj || subjects.length < 2)) suspended.push({ card: c, box: (await db.studentCards.get(`${studentId}|${c.id}`))?.box ?? 0 });
     }
@@ -83,7 +81,6 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
       day,
       byBox,
       suspended,
-      tutored,
       reviews,
       dist,
       hard: hard.map((h, i) => ({ agg: h, card: cards[i] })).filter((x) => x.card && !x.card.deleted),
@@ -231,7 +228,6 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
                           <span className="small" title="Prochaine révision">
                             {!due ? 'nouvelle' : due <= data.day ? 'à revoir' : `le ${due.slice(8, 10)}/${due.slice(5, 7)}`}
                           </span>
-                          {data.tutored && (
                           <span
                             className="small"
                             style={{ textDecoration: 'underline', marginLeft: 'auto' }}
@@ -245,7 +241,6 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
                           >
                             suspendre
                           </span>
-                          )}
                         </div>
                       </div>
                     ))}

@@ -182,6 +182,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'absences avec date, séance et motif',
       'connexions de l’élève et de ses parents : date, heure, durée',
       'flashcards, comme en soutien : objectif par jour et règle d’erreur modifiables dans le récapitulatif (série, jours, réussite, score, régularité, boîtes, dernières révisions), puis toutes ses flashcards boîte par boîte et les flashcards difficiles, avec le bandeau à la couleur du niveau',
+      '« suspendre » sur une flashcard : elle sort des révisions de cet élève sans être supprimée, et « reprendre » la remet dans sa boîte',
       'fiches identifiants à imprimer',
     ],
   },
