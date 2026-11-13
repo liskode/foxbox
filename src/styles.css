@@ -630,3 +630,16 @@ table.list tr.click:hover td { background: #faf7ef; }
 .class-tile { display: flex; flex-direction: column; gap: 0; padding: 8px 16px; border: 1.5px solid var(--soft-line); border-radius: 12px; text-decoration: none; color: inherit; }
 .class-tile b { font-size: 1.15rem; }
 .class-tile.add { align-items: center; justify-content: center; background: transparent; border-style: dashed; border-color: var(--muted-line); cursor: pointer; color: var(--ink-soft); min-height: 56px; }
+
+/* Communication : liste des élèves à gauche, conversation à droite */
+.comm-grid { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 16px; align-items: start; }
+@media (max-width: 800px) { .comm-grid { grid-template-columns: 1fr; } }
+.comm-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; text-align: left; background: none; border: none; border-radius: 8px; padding: 6px 8px; font: inherit; cursor: pointer; }
+.comm-row:hover { background: var(--paper, #fbfaf7); }
+.comm-row.on { background: #fdf0c8; }
+/* Rendez-vous parents : une colonne par jour */
+.meeting-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.meeting-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid var(--muted-line, #ece8e0); min-height: 36px; }
+.slot-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.slot-grid .btn { min-width: 76px; justify-content: center; }
+.slot-grid .btn.taken { opacity: 0.45; text-decoration: line-through; cursor: not-allowed; }

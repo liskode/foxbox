@@ -2,6 +2,7 @@
 // Lancées avant chaque publication : une erreur de calcul bloque la mise en ligne.
 import { speechLang, textToSpeak } from '../src/lib/speech';
 import { nextDocCode, renameDoc } from '../src/lib/units';
+import { slotsByDay } from '../src/lib/meetings';
 import { describe, expect, it } from 'vitest';
 import type { Billing, Evaluation, Payment, Result, StudentCard, TutoringSession } from '../src/lib/db';
 import { inkOn } from '../src/lib/gradeColors';
@@ -205,5 +206,14 @@ describe('code des documents de cours', () => {
     const units = [u(['MAT-2nde-016-C Résolutions.pdf', 'MAT-2nde-016-E Résolutions.pdf']), u(['MAT-1re-030-C X.pdf', 'Sujet.pdf'])];
     expect(nextDocCode(units, 'Mathématiques', '2nde')).toBe('MAT-2nde-017');
     expect(nextDocCode(units, 'Mathématiques', '3e')).toBe('MAT-3e-001');
+  });
+});
+
+describe('rendez-vous parents', () => {
+  it('découpe les plages en créneaux de la durée choisie, jour par jour', () => {
+    const days = slotsByDay({ duration: 15, ranges: [{ date: '2026-11-21', start: '09:00', end: '09:40' }, { date: '2026-11-20', start: '17:00', end: '17:30' }] });
+    expect(days.map((d) => d.date)).toEqual(['2026-11-20', '2026-11-21']);
+    expect(days[0].slots).toEqual(['2026-11-20T17:00', '2026-11-20T17:15']);
+    expect(days[1].slots).toEqual(['2026-11-21T09:00', '2026-11-21T09:15']); // 09:30 + 15 min dépasserait 09:40
   });
 });

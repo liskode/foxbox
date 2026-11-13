@@ -546,6 +546,33 @@ export interface Message {
   heardOf?: string; // accusé d'écoute d'un mémo vocal (id du message écouté)
   createdAt: number;
 }
+// Rencontre parents-professeurs : plages de disponibilité (un ou plusieurs jours) découpées en rendez-vous de `duration` minutes
+export interface Meeting {
+  id: string;
+  teacherId: string;
+  teacherName: string; // recopié pour les parents
+  title: string;
+  groupIds: string[]; // classes concernées : leurs parents peuvent réserver
+  ranges: { date: string; start: string; end: string }[]; // AAAA-MM-JJ, HH:MM
+  duration: number; // minutes
+  place?: string;
+  info?: string; // message aux parents
+  closesOn?: string; // dernier jour pour réserver ou changer (AAAA-MM-JJ)
+  createdAt: number;
+}
+// Rendez-vous d'une famille (un par élève et par rencontre : id = rencontre|élève)
+export interface MeetingBooking {
+  id: string;
+  meetingId: string;
+  teacherId: string;
+  studentId: string;
+  slot: string; // AAAA-MM-JJTHH:MM
+  parentId?: string;
+  parentName?: string;
+  studentName: string;
+  bookedBy: 'parent' | 'prof';
+  createdAt: number;
+}
 export interface MessageRead {
   id: string; // userId|teacherId|studentId|thread
   userId: string;
@@ -669,6 +696,8 @@ class FoxBoxDB extends Dexie {
   pfDeck!: Table<PfDeckCard, string>;
   pfReviews!: Table<PfReview, string>;
   pfMessages!: Table<PfMessage, string>;
+  meetings!: Table<Meeting, string>;
+  meetingBookings!: Table<MeetingBooking, string>;
 
   constructor() {
     super(ONLINE ? 'foxbox-online' : 'foxbox-v2');
@@ -726,6 +755,7 @@ class FoxBoxDB extends Dexie {
       pfMessages: 'id, visitorId',
     });
     this.version(14).stores({ selfChecks: 'id, evaluationId, studentId' });
+    this.version(15).stores({ meetings: 'id, teacherId', meetingBookings: 'id, meetingId, studentId' });
   }
 }
 

@@ -172,6 +172,17 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     ],
   },
   {
+    title: 'Communication',
+    text: 'Écrire aux élèves et aux parents de toutes les classes, et organiser les rencontres parents-professeurs.',
+    details: [
+      'messagerie comme en soutien : une conversation par élève, destinataires cochés (l’élève, ses parents), photos, documents, mémos vocaux ; conversations récentes et messages non lus',
+      'les élèves écrivent depuis leur onglet Messages, les parents depuis le leur (accès parent créé dans la fiche Famille)',
+      'rendez-vous parents : plages de disponibilité sur un ou plusieurs jours, durée d’un rendez-vous, classes concernées, lieu, message, date limite de réservation',
+      'les parents choisissent un créneau libre, le changent ou l’annulent ; ils voient les créneaux pris, jamais par qui ; deux familles ne peuvent pas prendre le même créneau',
+      'planning par jour : qui vient à quelle heure, inscrire soi-même une famille, annuler, familles sans rendez-vous, impression',
+    ],
+  },
+  {
     title: 'Élèves',
     text: 'Retrouver un élève en quelques lettres et accéder à tout ce qui le concerne.',
     details: [

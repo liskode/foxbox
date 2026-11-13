@@ -52,6 +52,8 @@ const SPECS: Record<string, TableSpec> = {
     cols: (m) => ({ teacher_id: m.teacherId, student_id: m.studentId, thread: m.thread, author_id: m.authorId, ...(m.recipients ? { recipient_ids: m.recipients } : {}) }),
   },
   messageReads: { remote: 'message_reads', cols: (r) => ({ user_id: r.userId }) },
+  meetings: { remote: 'meetings', cols: (m) => ({ teacher_id: m.teacherId, group_ids: m.groupIds }) },
+  meetingBookings: { remote: 'meeting_bookings', cols: (b) => ({ meeting_id: b.meetingId, teacher_id: b.teacherId, student_id: b.studentId, slot: b.slot }) },
   visits: { remote: 'visits', cols: (v) => ({ user_id: v.userId, student_ids: v.studentIds }) },
   assessments: { remote: 'assessments', cols: (a) => ({ student_id: a.studentId, author_id: a.authorId }) },
   pfNotions: { remote: 'pf_notions', cols: (n) => ({ owner_id: n.ownerId ?? me }) },

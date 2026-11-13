@@ -2,7 +2,7 @@
 // Identifiant : l'adresse e-mail du parent si elle est connue, sinon parent.prenom.nom (prénom et nom de l'enfant).
 import { db, uid, type FamilyContact, type Parent } from './db';
 import { normalize, randomPassword } from './students';
-import { ONLINE, callStudents } from './supabase';
+import { ONLINE, callStudents, supabase } from './supabase';
 import { localOnly, syncNow } from './sync';
 
 const nameOf = (c: FamilyContact) => [c.name, c.person].filter((x) => x?.trim()).join(' – ') || 'Parent';
@@ -62,4 +62,35 @@ export async function removeParentAccess(parentId: string, studentId: string) {
   const left = p.studentIds.filter((x) => x !== studentId);
   if (left.length) await db.parents.update(parentId, { studentIds: left });
   else await db.parents.delete(parentId);
+}
+
+// Classes et professeurs de chaque enfant du parent (messagerie, rendez-vous). En ligne, demandés au serveur :
+// les parents ne lisent pas les classes elles-mêmes.
+export interface ChildLink {
+  studentId: string;
+  groupId: string;
+  teacherId: string;
+  teacherName: string;
+  subject: string;
+}
+export async function childrenLinks(studentIds: string[]): Promise<ChildLink[]> {
+  if (ONLINE) {
+    const { data, error } = await supabase.rpc('my_children_teachers');
+    if (!error && data)
+      return (data as { student_id: string; group_id: string; teacher_id: string; teacher_name: string | null; subject: string | null }[]).map((r) => ({
+        studentId: r.student_id,
+        groupId: r.group_id,
+        teacherId: r.teacher_id,
+        teacherName: r.teacher_name ?? 'Professeur',
+        subject: r.subject ?? '',
+      }));
+  }
+  const out: ChildLink[] = [];
+  for (const studentId of studentIds)
+    for (const m of await db.memberships.where('studentId').equals(studentId).toArray()) {
+      const g = await db.groups.get(m.groupId);
+      if (!g || g.archived) continue;
+      for (const t of g.teacherIds) out.push({ studentId, groupId: g.id, teacherId: t, teacherName: (await db.teachers.get(t))?.name ?? 'Professeur', subject: g.subject });
+    }
+  return out;
 }

@@ -45,6 +45,8 @@ const StudentDocuments = lazy(() => import('./pages/eleve/Documents').then((m) =
 const StudentMessages = lazy(() => import('./pages/eleve/Messages').then((m) => ({ default: m.StudentMessages })));
 const ParentHome = lazy(() => import('./pages/parent/Home').then((m) => ({ default: m.ParentHome })));
 const ParentMessages = lazy(() => import('./pages/parent/Home').then((m) => ({ default: m.ParentMessages })));
+const ParentMeetings = lazy(() => import('./pages/parent/Meetings').then((m) => ({ default: m.ParentMeetings })));
+const Communication = lazy(() => import('./pages/prof/Communication').then((m) => ({ default: m.Communication })));
 const RelevePage = lazy(() => import('./pages/prof/SoutienPrint').then((m) => ({ default: m.RelevePage })));
 const AttestationPage = lazy(() => import('./pages/prof/SoutienPrint').then((m) => ({ default: m.AttestationPage })));
 const StudentSoutien = lazy(() => import('./pages/eleve/Soutien').then((m) => ({ default: m.StudentSoutien })));
@@ -250,7 +252,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
   const pfTab = useLiveQuery(async () => (pfAdmin && session ? !!(await db.teachers.get(session.id))?.modules?.physifox : false), [pfAdmin, session?.id], false);
   // Messages non lus : pastille sur « Soutien » (professeur, élève) ou « Messages » (parents)
   const unread = useLiveQuery(async () => (session && session.role !== 'visiteur' ? unreadTotal(session.id, session.role) : 0), [session?.id, session?.role], 0);
-  const badgeOn = role === 'parent' ? '/parent/messages' : role === 'prof' ? '/prof/soutien' : '/eleve/soutien';
+  const badgeOn = role === 'parent' ? '/parent/messages' : role === 'prof' ? '/prof/communication' : '/eleve/messages';
   // Journal des connexions (élèves et parents)
   useEffect(() => {
     if (session && session.role !== 'prof' && session.role !== 'visiteur') trackVisits(session);
@@ -270,6 +272,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
           ['/prof/correction', 'Évaluations'],
           ['/prof/flashcards', 'Flashcards'],
           ['/prof/eleves', 'Élèves'],
+          ['/prof/communication', 'Communication'],
           ...(soutien ? [['/prof/soutien', 'Soutien']] : []),
           ...(pfTab ? [['/prof/physifox', 'Physifox']] : []),
         ]
@@ -277,12 +280,14 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
         ? [
             ['/parent', 'Suivi'],
             ['/parent/messages', 'Messages'],
+            ['/parent/rdv', 'Rendez-vous'],
           ]
         : [
             ['/eleve', 'Flashcards'],
             ...(soutien ? [['/eleve/soutien', 'Soutien']] : []),
             ['/eleve/notes', 'Évaluations'],
             ['/eleve/documents', 'Documents de cours'],
+            ['/eleve/messages', 'Messages'],
           ];
   const icons: Record<string, string> = {
     '/eleve': 'cards',
@@ -291,6 +296,8 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
     '/eleve/documents': 'file',
     '/parent': 'clipboard',
     '/parent/messages': 'message',
+    '/parent/rdv': 'calendar',
+    '/eleve/messages': 'message',
   };
   const home = role === 'parent' ? '/parent' : '/eleve';
   const badge = (to: string) => (to === badgeOn && unread > 0 ? <span className="badge">{unread}</span> : null);
@@ -375,6 +382,7 @@ export function App() {
           <Route path="/prof/cartes" element={<Navigate to="/prof/flashcards" replace />} />
           <Route path="/prof/reglages" element={<Shell role="prof"><Settings /></Shell>} />
           <Route path="/prof/eleves" element={<Shell role="prof"><Students /></Shell>} />
+          <Route path="/prof/communication" element={<Shell role="prof"><Communication /></Shell>} />
           <Route path="/prof/progression" element={<Shell role="prof"><Sequences /></Shell>} />
           <Route path="/prof/progression/:seqId" element={<Shell role="prof"><Sequences /></Shell>} />
           <Route path="/prof/sequences" element={<Navigate to="/prof/progression" replace />} />
@@ -417,6 +425,7 @@ export function App() {
           <Route path="/eleve/messages" element={<Shell role="eleve"><StudentMessages /></Shell>} />
           <Route path="/parent" element={<Shell role="parent"><ParentHome /></Shell>} />
           <Route path="/parent/messages" element={<Shell role="parent"><ParentMessages /></Shell>} />
+          <Route path="/parent/rdv" element={<Shell role="parent"><ParentMeetings /></Shell>} />
           <Route path="/parent/releve/:studentId" element={<Shell role="parent"><RelevePage /></Shell>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

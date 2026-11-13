@@ -1,6 +1,7 @@
 // Espace parents : suivi du soutien de chaque enfant (séances, travail, documents, note pour les parents, règlements)
 // et fil de discussion avec le professeur. Pensé pour le téléphone.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { childrenLinks, type ChildLink } from '../../lib/parents';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
@@ -195,9 +196,20 @@ function ParentSession({ s, child, units, check }: { s: TutoringSession; child: 
 export function ParentMessages() {
   const fam = useFamily();
   const [sel, setSel] = useState<string | null>(null);
+  // Professeurs de chaque enfant (classes et soutien), demandés au serveur
+  const [links, setLinks] = useState<ChildLink[] | null>(null);
+  const ids = fam?.children.map((c) => c.child.id).join(',') ?? '';
+  useEffect(() => {
+    if (ids) childrenLinks(ids.split(',')).then(setLinks);
+  }, [ids]);
   if (!fam) return null;
   const cur = fam.children.find((c) => c.child.id === sel) ?? fam.children[0];
-  const teachers = [...new Set(cur?.groups.map((g) => g.teacherIds[0]) ?? [])];
+  const mine = (links ?? []).filter((l) => l.studentId === cur?.child.id);
+  const teachers = [...new Set([...(cur?.groups.map((g) => g.teacherIds[0]) ?? []), ...mine.map((l) => l.teacherId)])];
+  const teacherLabel = (t: string) => {
+    const ls = mine.filter((l) => l.teacherId === t);
+    return ls.length ? `${ls[0].teacherName} · ${[...new Set(ls.map((l) => l.subject))].join(', ')}` : undefined;
+  };
   return (
     <div className="page narrow stack">
       <div>
@@ -217,6 +229,7 @@ export function ParentMessages() {
             studentId={cur.child.id}
             me={{ id: fam.parent.id, name: fam.parent.name }}
             role="parent"
+            title={teachers.length > 1 ? teacherLabel(t) : undefined}
             hint={`Au sujet de ${cur.child.firstName}. Seuls les destinataires cochés lisent votre message.`}
           />
         ))}
