@@ -1,7 +1,7 @@
 // Espace élève : questions à ses professeurs (classes et soutien), avec photo, document ou mémo vocal.
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, type Group } from '../../lib/db';
+import { db, isTutoring, type Group } from '../../lib/db';
 import { tutoringsOf } from '../../lib/tutoring';
 import { Chat } from '../../components/Chat';
 
@@ -14,11 +14,13 @@ export function StudentMessages() {
     const all = ((await db.groups.bulkGet(ms.map((m) => m.groupId))).filter((g) => g && !g.archived) as Group[]).sort((a, b) => a.name.localeCompare(b.name));
     const teacherIds = [...new Set(all.map((g) => g.teacherIds[0]))];
     const subjects = (t: string) => [...new Set(all.filter((g) => g.teacherIds[0] === t).map((g) => g.subject))].join(', ');
+    // L'élève peut écrire en soutien, ou si le professeur l'a permis pour l'une de ses classes
+    const canWrite = (t: string) => all.some((g) => g.teacherIds[0] === t && (isTutoring(g) || g.studentsCanWrite));
     // Soutien en groupe (plusieurs élèves) : fil commun, en plus de la conversation privée avec le professeur
     const shared = groups.filter((g) => Object.keys(g.memberNames ?? {}).length > 1);
     return {
       student: await db.students.get(session!.id),
-      teachers: await Promise.all(teacherIds.map(async (id) => ({ id, name: (await db.teachers.get(id))?.name, subjects: subjects(id) }))),
+      teachers: await Promise.all(teacherIds.map(async (id) => ({ id, name: (await db.teachers.get(id))?.name, subjects: subjects(id), canWrite: canWrite(id) }))),
       shared,
     };
   }, [session]);
@@ -49,6 +51,7 @@ export function StudentMessages() {
           studentId={st.id}
           me={{ id: st.id, name: st.firstName }}
           role="eleve"
+          readOnly={t.canWrite ? undefined : "Ton professeur n'a pas ouvert la messagerie pour ta classe : tu peux lire ses messages, mais pas lui répondre ici."}
           title={data.teachers.length > 1 ? `Avec ${t.name ?? `ton professeur de ${t.subjects}`}` : data.shared.length ? 'Conversation privée avec ton professeur' : undefined}
           hint="Une question, un exercice qui bloque ? Écris, joins une photo ou enregistre un mémo vocal. Seuls les destinataires cochés lisent ton message."
         />

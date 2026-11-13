@@ -71,6 +71,7 @@ export interface Group {
   timezone?: string; // fuseau horaire de l'élève (s'il vit ailleurs : Ottawa, Dallas…)
   relations?: import('./relations').Relation[]; // interlocuteurs et leurs codes, recopiés depuis les Réglages
   studentsCanSuspend?: boolean; // les élèves peuvent retirer eux-mêmes des flashcards de leur pile
+  studentsCanWrite?: boolean; // classe : les élèves peuvent écrire au professeur (en soutien, toujours)
   memberNames?: Record<string, string>; // soutien en groupe : prénoms des élèves, recopiés pour que chacun voie qui est dans le groupe
   former?: FormerStudent[]; // élèves partis en cours d'année (changement de classe, autre établissement) : historique conservé
 }

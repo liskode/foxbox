@@ -98,6 +98,7 @@ export function Chat({
   title,
   hint,
   group,
+  readOnly,
 }: {
   teacherId: string;
   studentId: string; // fil de groupe : identifiant du groupe
@@ -106,6 +107,7 @@ export function Chat({
   title?: string;
   hint?: string;
   group?: { names: string[] }; // fil du groupe de soutien : tout le monde lit tout ; prénoms des élèves
+  readOnly?: string; // lecture seule (élève d'une classe où le professeur n'a pas ouvert la messagerie) : raison affichée
 }) {
   const msgs = useLiveQuery(() => conversation(teacherId, studentId, me.id), [teacherId, studentId, me.id], []);
   // Destinataires possibles. Professeur : l'élève et ses parents. Élève ou parent : les personnes du dernier
@@ -263,6 +265,10 @@ export function Chat({
         })}
         <div ref={end} />
       </div>
+      {readOnly ? (
+        <div className="small muted">{readOnly}</div>
+      ) : (
+        <>
       {group && (
         <div className="small">
           <b>À :</b> tout le groupe ({[me.id === teacherId ? '' : 'le professeur', ...group.names].filter(Boolean).join(', ')})
@@ -337,6 +343,8 @@ export function Chat({
           {busy ? 'Envoi…' : 'Envoyer'}
         </button>
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -219,6 +219,12 @@ function MeetingForm({ meeting, onDone }: { meeting: Meeting; onDone: (id?: stri
   const set = (patch: Partial<Meeting>) => setM({ ...m, ...patch });
   const setRange = (i: number, patch: Partial<Meeting['ranges'][number]>) => set({ ranges: m.ranges.map((r, j) => (j === i ? { ...r, ...patch } : r)) });
   const total = slotsByDay(m).reduce((n, d) => n + d.slots.length, 0);
+  // Rencontres à prévoir : un rendez-vous par élève des classes choisies
+  const needed = useLiveQuery(
+    async () => new Set((await db.memberships.where('groupId').anyOf(m.groupIds).toArray()).map((x) => x.studentId)).size,
+    [m.groupIds.join()],
+    0,
+  );
   const valid = m.title.trim() && m.groupIds.length && total > 0;
   async function save() {
     await db.meetings.put({ ...m, title: m.title.trim() });
@@ -286,7 +292,12 @@ function MeetingForm({ meeting, onDone }: { meeting: Meeting; onDone: (id?: stri
           Réservations jusqu'au (facultatif)
           <input type="date" value={m.closesOn ?? ''} onChange={(e) => set({ closesOn: e.target.value || undefined })} />
         </label>
-        <span className="tag ok">{total} créneaux</span>
+        <span className="stack" style={{ gap: 4, alignItems: 'flex-start' }}>
+          <span className="tag plain">{needed} rencontre(s) (élèves des classes choisies)</span>
+          <span className={'tag ' + (total >= needed ? 'ok' : 'bad')}>
+            {total} créneaux{total < needed ? ` : il en manque ${needed - total}` : ''}
+          </span>
+        </span>
         {m.closesOn && m.closesOn < today() && <span className="tag bad">date limite passée : les parents ne peuvent pas réserver</span>}
       </div>
       <label className="field">
