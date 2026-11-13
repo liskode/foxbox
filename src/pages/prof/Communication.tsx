@@ -436,7 +436,18 @@ function MeetingView({ meeting: m, onBack, onEdit }: { meeting: Meeting; onBack:
       )}
       <div className="panel calm stack" style={{ gap: 4 }}>
         <h3 className="panel-title">Sans rendez-vous ({without.length})</h3>
-        <span className="small">{without.map((s) => `${s.firstName} ${s.lastName}`).join(' · ') || 'Toutes les familles ont réservé.'}</span>
+        {!without.length && <span className="small">Toutes les familles ont réservé.</span>}
+        {[...new Set(without.map((s) => s.group))].map((g) => {
+          const list = without.filter((s) => s.group === g).sort((a, b) => a.firstName.localeCompare(b.firstName, 'fr') || a.lastName.localeCompare(b.lastName, 'fr'));
+          return (
+            <div key={g} className="small">
+              <b>
+                {g} ({list.length}) :
+              </b>{' '}
+              {list.map((s) => `${s.firstName} ${s.lastName}`).join(' · ')}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
