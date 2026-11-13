@@ -107,7 +107,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'fin de programme prévue ou retard en semaines',
       'séances d’évaluation',
       'masquer ce qui est terminé',
-      'réordonner (↑ ↓) avec renumérotation',
+      'réordonner (↑ ↓) avec renumérotation ; les documents dont le nom commence par le numéro (« 2112 … - Cours.pdf ») sont renommés en même temps',
     ],
   },
   {

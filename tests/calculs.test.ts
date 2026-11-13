@@ -1,6 +1,7 @@
 // Vérifications automatiques des calculs sensibles (notes, compétences, boîtes de flashcards, facturation du soutien).
 // Lancées avant chaque publication : une erreur de calcul bloque la mise en ligne.
 import { speechLang, textToSpeak } from '../src/lib/speech';
+import { renameDoc } from '../src/lib/units';
 import { describe, expect, it } from 'vitest';
 import type { Billing, Evaluation, Payment, Result, StudentCard, TutoringSession } from '../src/lib/db';
 import { inkOn } from '../src/lib/gradeColors';
@@ -187,5 +188,13 @@ describe('lecture à voix haute', () => {
     expect(textToSpeak('**Promiňte** (vouvoiement) / **Promiň** (tutoiement)')).toBe('Promiňte. Promiň');
     expect(textToSpeak('**Dal bych si kávu, prosím.** (*Dala bych si* pour une femme)')).toBe('Dal bych si kávu, prosím.');
     expect(textToSpeak('nula, jedna')).toBe('nula, jedna');
+  });
+});
+
+describe('renumérotation des séances', () => {
+  it('renomme les documents qui commencent par l’ancien numéro', () => {
+    expect(renameDoc('2112 Fonctions - Cours.pdf', '2112', '2113')).toBe('2113 Fonctions - Cours.pdf');
+    expect(renameDoc('21125 Autre.pdf', '2112', '2113')).toBe('21125 Autre.pdf');
+    expect(renameDoc('Sujet.pdf', '2112', '2113')).toBe('Sujet.pdf');
   });
 });

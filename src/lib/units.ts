@@ -133,12 +133,20 @@ async function siblingsOf(u: Unit) {
   return sib.sort(byProgression);
 }
 
+// Nom d'un document qui commence par l'ancien code (« 2112 Titre - Cours.pdf ») : prend le nouveau code
+export const renameDoc = (name: string, from?: string, to?: string) =>
+  from && to && from !== to && (name === from || name.startsWith(from + ' ')) ? to + name.slice(from.length) : name;
+
+// Change le rang et le code d'une séquence ou d'une séance ; les documents de la séance suivent le nouveau code
+async function setPlace(u: Unit, order: number, code?: string) {
+  if (u.order === order && u.code === code) return;
+  const documents = u.documents?.map((d) => ({ ...d, name: renameDoc(d.name, u.code, code) }));
+  await db.units.update(u.id, { order, code, ...(documents ? { documents } : {}) });
+}
+
 async function renumberSeances(seq: Unit) {
   const kids = (await db.units.where('parentId').equals(seq.id).toArray()).sort((a, b) => a.order - b.order);
-  for (const [i, k] of kids.entries()) {
-    const code = seq.code ? `${seq.code}${i + 1}` : k.code;
-    if (k.order !== i + 1 || k.code !== code) await db.units.update(k.id, { order: i + 1, code });
-  }
+  for (const [i, k] of kids.entries()) await setPlace(k, i + 1, seq.code ? `${seq.code}${i + 1}` : k.code);
 }
 
 // Renumérote un niveau : order = rang dans la progression, code = niveau + thème + rang dans le thème
@@ -150,7 +158,7 @@ export async function renumberLevel(seqs: Unit[]) {
     perTheme.set(t, n);
     const code = x.level ? `${x.level[0]}${t}${n}` : x.code;
     if (x.order !== k + 1 || x.code !== code) {
-      await db.units.update(x.id, { order: k + 1, code });
+      await setPlace(x, k + 1, code);
       await renumberSeances({ ...x, code });
     }
   }
@@ -164,10 +172,7 @@ export async function moveUnit(u: Unit, delta: -1 | 1) {
   [sib[i], sib[j]] = [sib[j], sib[i]];
   if (u.kind === 'sequence') return renumberLevel(sib);
   const parent = await db.units.get(u.parentId!);
-  for (const [k, x] of sib.entries()) {
-    const code = parent?.code ? `${parent.code}${k + 1}` : x.code;
-    if (x.order !== k + 1 || x.code !== code) await db.units.update(x.id, { order: k + 1, code });
-  }
+  for (const [k, x] of sib.entries()) await setPlace(x, k + 1, parent?.code ? `${parent.code}${k + 1}` : x.code);
 }
 
 export async function canMove(u: Unit) {
