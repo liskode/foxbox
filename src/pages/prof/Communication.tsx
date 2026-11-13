@@ -398,10 +398,18 @@ function MeetingView({ meeting: m, onBack, onEdit }: { meeting: Meeting; onBack:
                       }}
                     >
                       <option value="">libre · inscrire une famille…</option>
-                      {without.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.lastName} {s.firstName} ({s.group})
-                        </option>
+                      {/* Par classe, puis par prénom : taper les premières lettres du prénom trouve l'élève */}
+                      {[...new Set(without.map((s) => s.group))].map((g) => (
+                        <optgroup key={g} label={g}>
+                          {without
+                            .filter((s) => s.group === g)
+                            .sort((a, b) => a.firstName.localeCompare(b.firstName, 'fr') || a.lastName.localeCompare(b.lastName, 'fr'))
+                            .map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.firstName} {s.lastName} ({g})
+                              </option>
+                            ))}
+                        </optgroup>
                       ))}
                     </select>
                   )}
