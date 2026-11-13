@@ -180,3 +180,18 @@ export async function canMove(u: Unit) {
   const i = sib.findIndex((x) => x.id === u.id);
   return { up: i > 0, down: i >= 0 && i < sib.length - 1 };
 }
+
+// ----- Code des documents de cours : matière-niveau-numéro-type (MAT-2nde-017-C), unique et définitif.
+// Il ne suit pas la place de la séance : le PDF, sa source (Overleaf) et FoxBox gardent le même code.
+const DOC_PREFIX: Record<string, string> = { Mathématiques: 'MAT', 'Physique-Chimie': 'PC', SVT: 'SVT', Technologie: 'TEC', 'BTS CPI': 'CPI', Tchèque: 'TCH' };
+export const docPrefix = (subject: string, level: string) =>
+  `${DOC_PREFIX[subject] ?? subject.normalize('NFD').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()}-${level}`;
+
+// Prochain code libre pour la matière et le niveau, d'après les documents déjà rangés dans les séances
+export function nextDocCode(units: Unit[], subject: string, level: string) {
+  const prefix = docPrefix(subject, level) + '-';
+  let max = 0;
+  for (const u of units)
+    for (const d of u.documents ?? []) if (d.name.startsWith(prefix)) max = Math.max(max, parseInt(d.name.slice(prefix.length), 10) || 0);
+  return `${prefix}${String(max + 1).padStart(3, '0')}`;
+}

@@ -1,7 +1,7 @@
 // Vérifications automatiques des calculs sensibles (notes, compétences, boîtes de flashcards, facturation du soutien).
 // Lancées avant chaque publication : une erreur de calcul bloque la mise en ligne.
 import { speechLang, textToSpeak } from '../src/lib/speech';
-import { renameDoc } from '../src/lib/units';
+import { nextDocCode, renameDoc } from '../src/lib/units';
 import { describe, expect, it } from 'vitest';
 import type { Billing, Evaluation, Payment, Result, StudentCard, TutoringSession } from '../src/lib/db';
 import { inkOn } from '../src/lib/gradeColors';
@@ -196,5 +196,14 @@ describe('renumérotation des séances', () => {
     expect(renameDoc('2112 Fonctions - Cours.pdf', '2112', '2113')).toBe('2113 Fonctions - Cours.pdf');
     expect(renameDoc('21125 Autre.pdf', '2112', '2113')).toBe('21125 Autre.pdf');
     expect(renameDoc('Sujet.pdf', '2112', '2113')).toBe('Sujet.pdf');
+  });
+});
+
+describe('code des documents de cours', () => {
+  it('propose le numéro suivant pour la matière et le niveau', () => {
+    const u = (names: string[]) => ({ documents: names.map((name) => ({ mediaId: name, name, size: 1 })) }) as never;
+    const units = [u(['MAT-2nde-016-C Résolutions.pdf', 'MAT-2nde-016-E Résolutions.pdf']), u(['MAT-1re-030-C X.pdf', 'Sujet.pdf'])];
+    expect(nextDocCode(units, 'Mathématiques', '2nde')).toBe('MAT-2nde-017');
+    expect(nextDocCode(units, 'Mathématiques', '3e')).toBe('MAT-3e-001');
   });
 });

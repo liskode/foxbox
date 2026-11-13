@@ -1,5 +1,6 @@
 // Comptes élèves : génération des identifiants et import CSV.
-import { db, uid, type Student } from './db';
+import { db, uid, type Group, type Student } from './db';
+import { today } from './dates';
 import { DEFAULT_GOAL } from './leitner';
 import { ONLINE, callStudents } from './supabase';
 import { syncNow, localOnly } from './sync';
@@ -49,6 +50,25 @@ export async function addToGroup(studentId: string, groupId: string, subject: st
   if (s && s.goals[subject] === undefined) {
     await db.students.update(studentId, { goals: { ...s.goals, [subject]: DEFAULT_GOAL } });
   }
+}
+
+// Départ en cours d'année : l'élève sort de la classe (listes, appel, révisions de la classe) mais son compte, ses notes,
+// ses absences et ses flashcards sont conservés ; il reste visible dans « Partis en cours d'année ».
+// toGroupId : il passe dans cette autre classe ; sinon il quitte l'établissement.
+export async function leaveGroup(group: Group, studentId: string, toGroupId?: string) {
+  const former = (group.former ?? []).filter((f) => f.studentId !== studentId);
+  await db.groups.update(group.id, { former: [...former, { studentId, leftAt: today(), ...(toGroupId ? { toGroupId } : {}) }] });
+  await db.memberships.delete(`${group.id}|${studentId}`);
+  const to = toGroupId ? await db.groups.get(toGroupId) : undefined;
+  if (to) await addToGroup(studentId, to.id, to.subject);
+}
+
+// Retour dans la classe (départ annulé) : il quitte la classe où il était passé
+export async function rejoinGroup(group: Group, studentId: string) {
+  const to = group.former?.find((f) => f.studentId === studentId)?.toGroupId;
+  await db.groups.update(group.id, { former: (group.former ?? []).filter((f) => f.studentId !== studentId) });
+  if (to) await db.memberships.delete(`${to}|${studentId}`);
+  await addToGroup(studentId, group.id, group.subject);
 }
 
 export interface ParsedRow {

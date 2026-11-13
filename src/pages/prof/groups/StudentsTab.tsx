@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { askForm } from '../../../components/Dialog';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, byName, groupStudents, type Group, type Rule } from '../../../lib/db';
-import { parseCsv, importStudents, resetPassword, deleteStudent, type ParsedRow } from '../../../lib/students';
+import { db, byName, groupStudents, isClass, type Group, type Rule, type Student } from '../../../lib/db';
+import { parseCsv, importStudents, resetPassword, deleteStudent, leaveGroup, rejoinGroup, type ParsedRow } from '../../../lib/students';
+import { toast } from '../../../components/Toast';
+import { frDate } from '../../../lib/dates';
 import { DEFAULT_GOAL } from '../../../lib/leitner';
 import { Avatar } from '../../../components/Avatar';
 import { importPhotos } from '../../../lib/photos';
@@ -19,6 +21,17 @@ export function StudentsTab({ group }: { group: Group }) {
       return (await groupStudents(group.id)).sort(byName);
     },
     [group.id],
+    [],
+  );
+  // Élèves partis en cours d'année, et classe où ils sont passés
+  const former = useLiveQuery(
+    async () => {
+      const list = group.former ?? [];
+      const st = await db.students.bulkGet(list.map((f) => f.studentId));
+      const to = await db.groups.bulkGet(list.map((f) => f.toGroupId ?? ''));
+      return list.map((f, i) => ({ ...f, student: st[i], to: to[i] })).filter((x) => x.student).sort((a, b) => b.leftAt.localeCompare(a.leftAt));
+    },
+    [group.former],
     [],
   );
   const [preview, setPreview] = useState<ParsedRow[] | null>(null);
@@ -63,6 +76,28 @@ export function StudentsTab({ group }: { group: Group }) {
     a.download = `${group.name.replace(/_.*/, '')} - liste des élèves.txt`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  // Départ en cours d'année : autre classe ou autre établissement ; tout l'historique est conservé
+  async function leave(s: Student) {
+    const others = (await db.groups.toArray())
+      .filter((g) => isClass(g) && !g.archived && g.id !== group.id)
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
+    const r = await askForm(`Départ de ${s.firstName} ${s.lastName}`, [
+      {
+        key: 'to',
+        label: `${s.firstName} quitte ${group.name} aujourd'hui. Ses notes, absences et flashcards sont conservées.`,
+        options: [{ value: '', label: "Quitte l'établissement" }, ...others.map((g) => ({ value: g.id, label: `Passe en ${g.name}` }))],
+      },
+    ]);
+    if (!r) return;
+    await leaveGroup(group, s.id, r.to || undefined);
+    toast(`${s.firstName} ${s.lastName} a quitté ${group.name}`, {
+      undo: async () => {
+        const g = await db.groups.get(group.id);
+        if (g) await rejoinGroup(g, s.id);
+      },
+    });
   }
 
   async function addOne() {
@@ -214,14 +249,7 @@ export function StudentsTab({ group }: { group: Group }) {
                   >
                     <Icon name="key" size={16} />
                   </button>{' '}
-                  <button
-                    className="btn small ghost"
-                    title="Retirer de la classe (le compte et les flashcards sont conservés)"
-                    onClick={async () =>
-                      (await confirmBox(`Retirer ${s.firstName} ${s.lastName} de ${group.name} ? (son compte et ses flashcards sont conservés)`)) &&
-                      db.memberships.delete(`${group.id}|${s.id}`)
-                    }
-                  >
+                  <button className="btn small ghost" title="Départ en cours d'année (autre classe ou autre établissement) : l'historique est conservé" onClick={() => leave(s)}>
                     <Icon name="door" size={14} />
                   </button>{' '}
                   <button
@@ -241,6 +269,29 @@ export function StudentsTab({ group }: { group: Group }) {
           </tbody>
         </table>
       </div>
+      {former.length > 0 && (
+        <div className="panel calm stack" style={{ gap: 8 }}>
+          <h3 className="panel-title">Partis en cours d'année ({former.length})</h3>
+          {former.map((f) => (
+            <div key={f.studentId} className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+              <Avatar student={f.student!} size={32} />
+              <Link to={`/prof/eleves/${f.studentId}`} style={{ minWidth: 150 }}>
+                <b>{f.student!.lastName}</b> {f.student!.firstName}
+              </Link>
+              <span className="small muted" style={{ flex: 1 }}>
+                le {frDate(f.leftAt)} · {f.to ? `passé(e) en ${f.to.name}` : "a quitté l'établissement"}
+              </span>
+              <button className="btn small ghost" onClick={() => rejoinGroup(group, f.studentId)} title="Remettre dans la classe">
+                Réintégrer
+              </button>
+            </div>
+          ))}
+          <span className="small muted">
+            Ils n'apparaissent plus dans les listes, l'appel ni les nouvelles évaluations de la classe ; leur fiche (notes, absences, flashcards) reste
+            consultable. Pour effacer définitivement un élève, utilisez le bouton de suppression de sa fiche.
+          </span>
+        </div>
+      )}
     </div>
   );
 }

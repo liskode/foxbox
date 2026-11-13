@@ -10,6 +10,7 @@ import { removePhoto } from '../../lib/photos';
 import { NoteEditor, FlagChecks } from '../../components/StudentNote';
 import { StudentEvaluations, StudentCompetenceHisto, StudentCompetenceDetail, StudentAbsences } from '../../components/StudentEvaluations';
 import { Icon } from '../../components/Icon';
+import { frDate } from '../../lib/dates';
 import { StudentVisits } from '../../components/Visits';
 
 export function StudentPage() {
@@ -22,6 +23,15 @@ export function StudentPage() {
     },
     [id],
     [],
+  );
+  // Classes quittées en cours d'année (changement de classe, autre établissement)
+  const left = useLiveQuery(
+    async () =>
+      (await db.groups.toArray()).flatMap((g) =>
+        (g.former ?? []).filter((f) => f.studentId === id).map((f) => `a quitté ${g.name} le ${frDate(f.leftAt)}`),
+      ),
+    [id],
+    [] as string[],
   );
   const [edit, setEdit] = useState<{ first: string; last: string } | null>(null);
   const [msg, setMsg] = useState('');
@@ -137,7 +147,7 @@ export function StudentPage() {
             )}
             {msg && <div className="notice small">{msg}</div>}
             <div className="muted">
-              {groups.map((g) => `${g.name} (${g.subject})`).join(' · ')} · identifiant{' '}
+              {[...groups.map((g) => `${g.name} (${g.subject})`), ...left].join(' · ')} · identifiant{' '}
               <span
                 className="code"
                 title={student.password ? `Mot de passe : ${student.password}` : 'Mot de passe inconnu'}

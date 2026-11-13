@@ -72,6 +72,12 @@ export interface Group {
   relations?: import('./relations').Relation[]; // interlocuteurs et leurs codes, recopiés depuis les Réglages
   studentsCanSuspend?: boolean; // les élèves peuvent retirer eux-mêmes des flashcards de leur pile
   memberNames?: Record<string, string>; // soutien en groupe : prénoms des élèves, recopiés pour que chacun voie qui est dans le groupe
+  former?: FormerStudent[]; // élèves partis en cours d'année (changement de classe, autre établissement) : historique conservé
+}
+export interface FormerStudent {
+  studentId: string;
+  leftAt: string; // date du départ (AAAA-MM-JJ)
+  toGroupId?: string; // classe où il est passé ; absent : il a quitté l'établissement
 }
 export interface Track {
   subject: string;
