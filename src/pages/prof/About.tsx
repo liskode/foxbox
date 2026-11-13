@@ -310,6 +310,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'le jour de révision change à 3 h du matin (et non à minuit), à l’heure de l’élève : celle du fuseau fixé dans son suivi de soutien, sinon celle de son appareil',
       'pensé pour le téléphone : flashcard en grand, boutons de réponse sous le pouce, menu en bas de l’écran',
       'réponses « Je ne sais pas », « J’hésite… », « Facile »',
+      'langues : bouton haut-parleur au verso des flashcards de vocabulaire, qui lit la réponse avec la voix de l’appareil (tchèque : voix « Zuzana » sur iPhone, iPad et Mac) ; aussi sur la fiche d’une flashcard côté professeur',
       'progrès : série, régularité, boîtes (avec les flashcards suspendues)',
       'si sa classe ou son soutien l’autorise : bouton « Retirer cette flashcard de ma pile » au-dessus de la flashcard pendant la révision, et bloc « Retirées de ma pile » sur l’accueil pour les reprendre',
       'onglet Évaluations (élèves suivis en soutien) : « Signaler un DS à venir » (date, matière, programme par points cochés, texte ou capture Pronote), puis copie, corrigé et note ; graphique de progression par matière ; notes des évaluations rendues en classe',

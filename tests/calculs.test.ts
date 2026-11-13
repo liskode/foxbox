@@ -1,5 +1,6 @@
 // Vérifications automatiques des calculs sensibles (notes, compétences, boîtes de flashcards, facturation du soutien).
 // Lancées avant chaque publication : une erreur de calcul bloque la mise en ligne.
+import { speechLang, textToSpeak } from '../src/lib/speech';
 import { describe, expect, it } from 'vitest';
 import type { Billing, Evaluation, Payment, Result, StudentCard, TutoringSession } from '../src/lib/db';
 import { inkOn } from '../src/lib/gradeColors';
@@ -175,4 +176,16 @@ it('texte lisible sur une couleur réglable', () => {
   expect(inkOn('#000')).toBe('#fff');
   expect(inkOn('#2e7d32')).toBe('#fff'); // vert foncé → blanc
   expect(inkOn('var(--paper)')).toBeUndefined();
+});
+
+describe('lecture à voix haute', () => {
+  it('lit seulement le vocabulaire des langues, et seulement le texte en gras', () => {
+    expect(speechLang({ subject: 'Tchèque', theme: 'Vocabulaire' })).toBe('cs');
+    expect(speechLang({ subject: 'Tchèque', theme: 'Grammaire' })).toBeUndefined();
+    expect(speechLang({ subject: 'Mathématiques', theme: 'Vocabulaire' })).toBeUndefined();
+    expect(textToSpeak('**Dobrý den**')).toBe('Dobrý den');
+    expect(textToSpeak('**Promiňte** (vouvoiement) / **Promiň** (tutoiement)')).toBe('Promiňte. Promiň');
+    expect(textToSpeak('**Dal bych si kávu, prosím.** (*Dala bych si* pour une femme)')).toBe('Dal bych si kávu, prosím.');
+    expect(textToSpeak('nula, jedna')).toBe('nula, jedna');
+  });
 });

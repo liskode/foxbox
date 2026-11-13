@@ -11,6 +11,7 @@ import { CardFace } from './CardFace';
 import { unitLabel } from '../lib/units';
 import { RateBar, ThemeChip } from './widgets';
 import { Icon } from './Icon';
+import { SpeakButton } from './SpeakButton';
 
 
 // Image déjà présente dans FoxBox (même nom et même taille) : on la réutilise au lieu d'en créer un doublon
@@ -328,7 +329,9 @@ export function CardDetail({
                 <CardFace html={card.front} />
               </div>
               <div className="panel stack">
-                <h3>Verso</h3>
+                <h3 className="spread" style={{ margin: 0 }}>
+                  Verso <SpeakButton card={card} />
+                </h3>
                 <CardFace html={card.back} />
               </div>
             </div>

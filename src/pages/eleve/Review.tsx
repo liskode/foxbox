@@ -8,6 +8,7 @@ import { Icon } from '../../components/Icon';
 import { useCardBand } from '../../lib/cardLevel';
 import { canSelfSuspend, setSuspended } from '../../lib/tutoring';
 import { toast } from '../../components/Toast';
+import { speak, speechLang, textToSpeak, useVoice } from '../../lib/speech';
 
 export function ReviewSession() {
   const { session } = useAuth();
@@ -72,6 +73,10 @@ export function ReviewSession() {
     return () => window.removeEventListener('keydown', onKey);
   }, [answer, flip]);
 
+  // Vocabulaire d'une langue : voix de l'appareil pour lire la réponse
+  const current = queue?.[i];
+  const voice = useVoice(current ? speechLang(current) : undefined);
+
   if (!queue) return null;
   const card = queue[i];
 
@@ -130,6 +135,19 @@ export function ReviewSession() {
         )}
         <div className="flip banded" onClick={flip} style={{ cursor: flipped ? 'default' : 'pointer' }}>
           <CardFace html={flipped ? card.back : card.front} full />
+          {/* Vocabulaire d'une langue : écouter la réponse */}
+          {flipped && voice && (
+            <button
+              className="speak-btn"
+              title="Écouter la réponse"
+              onClick={(e) => {
+                e.stopPropagation();
+                speak(textToSpeak(card.back), voice);
+              }}
+            >
+              <Icon name="volume" size={22} />
+            </button>
+          )}
           {/* couleur du niveau où la flashcard a été vue pour la première fois */}
           <div className="flip-band" style={{ background: band(card).color }}>
             <span className="band-label">{band(card).label}</span>

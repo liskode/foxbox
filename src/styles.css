@@ -178,6 +178,7 @@ button.chip { cursor: pointer; font-family: inherit; color: var(--ink); }
 .flip.banded { position: relative; padding-bottom: 52px; overflow: hidden; }
 .flip-band { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 16px; border-top: 1.5px solid var(--soft-line); display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
 .flip-band .band-label { flex-basis: auto; font-size: 0.7rem; }
+.speak-btn { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .flip-band .code { font-size: 0.7rem; font-weight: 800; color: var(--ink-soft); }
 .thumb .check {
   position: absolute; top: 6px; left: 6px; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line);
