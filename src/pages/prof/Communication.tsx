@@ -1,10 +1,10 @@
 // Communication : messagerie avec les élèves et les parents de toutes les classes (comme en soutien),
 // et rendez-vous parents-professeurs (plages de disponibilité découpées en créneaux, réservés par les parents).
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from '../../lib/auth';
-import { db, byName, groupStudents, isClass, uid, type Group, type Meeting, type Student } from '../../lib/db';
+import { db, byName, groupStudents, isClass, uid, type FamilyContact, type Group, type Meeting, type Student } from '../../lib/db';
 import { unreadIn } from '../../lib/messages';
 import { slotsByDay, slotEnd, slotTime, teacherBook, isClosed } from '../../lib/meetings';
 import { dayName } from '../../components/Soutien';
@@ -316,7 +316,10 @@ function MeetingView({ meeting: m, onBack, onEdit }: { meeting: Meeting; onBack:
       const groups = (await db.groups.bulkGet(m.groupIds)).filter(Boolean) as Group[];
       const students: (Student & { group: string })[] = [];
       for (const g of groups) for (const s of (await groupStudents(g.id)).sort(byName)) students.push({ ...s, group: g.name });
-      return { bookings, groups, students };
+      // Coordonnées de la famille (fiche Famille, privées) : pour joindre une famille absente
+      const contacts = new Map<string, FamilyContact[]>();
+      for (const b of bookings) contacts.set(b.studentId, (await db.notes.get(`${m.teacherId}|${b.studentId}`))?.family?.contacts ?? []);
+      return { bookings, groups, students, contacts };
     },
     [m],
   );
@@ -365,59 +368,87 @@ function MeetingView({ meeting: m, onBack, onEdit }: { meeting: Meeting; onBack:
           {data.students.length}
         </span>
       </div>
-      <div className="meeting-days">
-        {days.map((d) => (
-          <div key={d.date} className="panel stack" style={{ gap: 0 }}>
-            <h3 className="panel-title" style={{ marginBottom: 8 }}>
-              {dayName(d.date)} {frDate(d.date)}
-            </h3>
-            {d.slots.map((slot) => {
-              const b = bySlot.get(slot);
-              return (
-                <div key={slot} className="meeting-row">
-                  <span className="small slot-time">
-                    {slotTime(slot)}
-                  </span>
-                  {b ? (
-                    <>
-                      <span style={{ flex: 1 }}>
-                        <Link to={`/prof/eleves/${b.studentId}`}>{b.studentName}</Link>
-                        <span className="small muted"> · {b.bookedBy === 'prof' ? 'inscrit par vous' : b.parentName}</span>
-                      </span>
-                      <button className="btn small ghost noprint" title="Annuler ce rendez-vous" onClick={() => cancel(b.id, b.studentName)}>
-                        <Icon name="x" size={14} />
-                      </button>
-                    </>
-                  ) : (
-                    <select
-                      className="noprint"
-                      value=""
-                      style={{ color: 'var(--muted, #8a867d)' }}
-                      onChange={async (e) => {
-                        if (e.target.value) await teacherBook(m, e.target.value, slot);
-                      }}
-                    >
-                      <option value="">libre · inscrire une famille…</option>
-                      {/* Par classe, puis par prénom : taper les premières lettres du prénom trouve l'élève */}
-                      {[...new Set(without.map((s) => s.group))].map((g) => (
-                        <optgroup key={g} label={g}>
-                          {without
-                            .filter((s) => s.group === g)
-                            .sort((a, b) => a.firstName.localeCompare(b.firstName, 'fr') || a.lastName.localeCompare(b.lastName, 'fr'))
-                            .map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.firstName} {s.lastName} ({g})
-                              </option>
+      {/* Planning : une ligne par rendez-vous, dans l'ordre des jours et des heures */}
+      <div className="panel" style={{ overflowX: 'auto' }}>
+        <table className="list meeting-table">
+          <tbody>
+            {days.map((d) => (
+              <Fragment key={d.date}>
+                <tr>
+                  <th colSpan={5} className="meeting-day">
+                    {dayName(d.date)} {frDate(d.date)}
+                  </th>
+                </tr>
+                {d.slots.map((slot) => {
+                  const b = bySlot.get(slot);
+                  const st = b && data.students.find((s) => s.id === b.studentId);
+                  return (
+                    <tr key={slot}>
+                      <td className="slot-time">{slotTime(slot)}</td>
+                      {b ? (
+                        <>
+                          <td>
+                            <Link to={`/prof/eleves/${b.studentId}`}>
+                              <b>{b.studentName}</b>
+                            </Link>
+                            {st && <span className="small muted"> · {st.group}</span>}
+                            <div className="small muted">{b.bookedBy === 'prof' ? 'inscrit par vous' : `réservé par ${b.parentName ?? 'un parent'}`}</div>
+                          </td>
+                          <td className="small">
+                            {(data.contacts.get(b.studentId) ?? []).map((c) => (
+                              <div key={c.id}>
+                                {[c.name, c.person].filter(Boolean).join(' – ')}
+                                {c.phone && (
+                                  <>
+                                    {' · '}
+                                    <a href={`tel:${c.phone.replace(/\s/g, '')}`}>{c.phone}</a>
+                                  </>
+                                )}
+                              </div>
                             ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                            {!data.contacts.get(b.studentId)?.length && <span className="muted">pas de coordonnées (fiche Famille)</span>}
+                          </td>
+                          <td className="noprint" style={{ width: 40 }}>
+                            <button className="btn small ghost" title="Annuler ce rendez-vous" onClick={() => cancel(b.id, b.studentName)}>
+                              <Icon name="x" size={14} />
+                            </button>
+                          </td>
+                        </>
+                      ) : (
+                        <td colSpan={3}>
+                          <span className="small muted print-only">libre</span>
+                          <select
+                            className="noprint"
+                            value=""
+                            style={{ color: 'var(--muted, #8a867d)', maxWidth: 360, width: '100%' }}
+                            onChange={async (e) => {
+                              if (e.target.value) await teacherBook(m, e.target.value, slot);
+                            }}
+                          >
+                            <option value="">libre · inscrire une famille…</option>
+                            {/* Par classe, puis par prénom : taper les premières lettres du prénom trouve l'élève */}
+                            {[...new Set(without.map((s) => s.group))].map((g) => (
+                              <optgroup key={g} label={g}>
+                                {without
+                                  .filter((s) => s.group === g)
+                                  .sort((a, b) => a.firstName.localeCompare(b.firstName, 'fr') || a.lastName.localeCompare(b.lastName, 'fr'))
+                                  .map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                      {s.firstName} {s.lastName} ({g})
+                                    </option>
+                                  ))}
+                              </optgroup>
+                            ))}
+                          </select>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
       </div>
       {orphans.length > 0 && (
         <div className="panel note stack" style={{ gap: 4 }}>

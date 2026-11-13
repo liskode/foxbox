@@ -643,6 +643,11 @@ table.list tr.click:hover td { background: #faf7ef; }
 .meeting-row .slot-time { flex: 0 0 64px; white-space: nowrap; font-weight: 800; }
 .meeting-row select { flex: 1 1 auto; min-width: 0; width: 100%; }
 .meeting-days > .panel { min-width: 0; }
+.meeting-table td { vertical-align: middle; }
+.meeting-table td.slot-time { width: 72px; white-space: nowrap; font-weight: 800; }
+.meeting-table th.meeting-day { text-align: left; font-size: 1rem; padding-top: 16px; border-bottom: 2px solid var(--line, #1d1d1b); }
 .slot-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .slot-grid .btn { min-width: 76px; justify-content: center; }
 .slot-grid .btn.taken { opacity: 0.45; text-decoration: line-through; cursor: not-allowed; }
+.print-only { display: none; }
+@media print { .print-only { display: inline; } }

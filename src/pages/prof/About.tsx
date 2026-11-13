@@ -179,7 +179,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'les élèves écrivent depuis leur onglet Messages, les parents depuis le leur (accès parent créé dans la fiche Famille)',
       'rendez-vous parents : plages de disponibilité sur un ou plusieurs jours, durée d’un rendez-vous, classes concernées, lieu, message, date limite de réservation',
       'les parents choisissent un créneau libre, le changent ou l’annulent ; ils voient les créneaux pris, jamais par qui ; deux familles ne peuvent pas prendre le même créneau',
-      'planning par jour : qui vient à quelle heure, inscrire soi-même une famille, annuler, familles sans rendez-vous, impression',
+      'planning : une ligne par rendez-vous, dans l’ordre des jours et des heures, avec l’élève, sa classe et les coordonnées de la famille (téléphone cliquable, fiche Famille) ; inscrire soi-même une famille (élèves par classe puis par prénom), annuler ; familles sans rendez-vous par classe ; impression',
     ],
   },
   {
