@@ -287,6 +287,7 @@ function MeetingForm({ meeting, onDone }: { meeting: Meeting; onDone: (id?: stri
           <input type="date" value={m.closesOn ?? ''} onChange={(e) => set({ closesOn: e.target.value || undefined })} />
         </label>
         <span className="tag ok">{total} créneaux</span>
+        {m.closesOn && m.closesOn < today() && <span className="tag bad">date limite passée : les parents ne peuvent pas réserver</span>}
       </div>
       <label className="field">
         Lieu (facultatif)
@@ -374,7 +375,7 @@ function MeetingView({ meeting: m, onBack, onEdit }: { meeting: Meeting; onBack:
               const b = bySlot.get(slot);
               return (
                 <div key={slot} className="meeting-row">
-                  <span className="small" style={{ fontWeight: 800, width: 64 }}>
+                  <span className="small slot-time">
                     {slotTime(slot)}
                   </span>
                   {b ? (
@@ -391,7 +392,7 @@ function MeetingView({ meeting: m, onBack, onEdit }: { meeting: Meeting; onBack:
                     <select
                       className="noprint"
                       value=""
-                      style={{ flex: 1, color: 'var(--muted, #8a867d)' }}
+                      style={{ color: 'var(--muted, #8a867d)' }}
                       onChange={async (e) => {
                         if (e.target.value) await teacherBook(m, e.target.value, slot);
                       }}

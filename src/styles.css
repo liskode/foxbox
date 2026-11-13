@@ -640,6 +640,9 @@ table.list tr.click:hover td { background: #faf7ef; }
 /* Rendez-vous parents : une colonne par jour */
 .meeting-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-items: start; }
 .meeting-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid var(--muted-line, #ece8e0); min-height: 36px; }
+.meeting-row .slot-time { flex: 0 0 64px; white-space: nowrap; font-weight: 800; }
+.meeting-row select { flex: 1 1 auto; min-width: 0; width: 100%; }
+.meeting-days > .panel { min-width: 0; }
 .slot-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .slot-grid .btn { min-width: 76px; justify-content: center; }
 .slot-grid .btn.taken { opacity: 0.45; text-decoration: line-through; cursor: not-allowed; }
