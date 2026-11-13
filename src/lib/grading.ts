@@ -61,13 +61,19 @@ export function stats(values: number[]) {
   return { mean: round1(mean), sd: round1(sd), min: round1(Math.min(...values)), max: round1(Math.max(...values)), n: values.length };
 }
 
-export async function studentsOf(ev: Evaluation): Promise<{ student: Student; groupId: string }[]> {
-  const out: { student: Student; groupId: string }[] = [];
+// Élèves de l'évaluation, classe par classe ; ceux partis en cours d'année après la date de l'évaluation (ou qui ont
+// une copie) restent affichés, grisés (former), pour consulter leurs résultats
+export async function studentsOf(ev: Evaluation): Promise<{ student: Student; groupId: string; former?: boolean }[]> {
+  const out: { student: Student; groupId: string; former?: boolean }[] = [];
   const seen = new Set<string>();
+  const graded = new Set((await db.results.where('evaluationId').equals(ev.id).toArray()).map((r) => r.studentId));
   for (const gid of ev.groupIds) {
     const ss = await groupStudents(gid);
-    ss.sort(byName);
-    for (const s of ss) if (!seen.has(s.id)) (seen.add(s.id), out.push({ student: s, groupId: gid }));
+    const g = await db.groups.get(gid);
+    const gone = (g?.former ?? []).filter((f) => !ss.some((s) => s.id === f.studentId) && (graded.has(f.studentId) || dateFor(ev, gid) <= f.leftAt));
+    const formerStudents = ((await db.students.bulkGet(gone.map((f) => f.studentId))).filter(Boolean) as Student[]).map((s) => ({ s, former: true }));
+    const list = [...ss.map((s) => ({ s, former: false })), ...formerStudents].sort((a, b) => byName(a.s, b.s));
+    for (const { s, former } of list) if (!seen.has(s.id)) (seen.add(s.id), out.push({ student: s, groupId: gid, ...(former ? { former } : {}) }));
   }
   return out;
 }

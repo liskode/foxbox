@@ -94,7 +94,9 @@ export function StudentsTab({ group }: { group: Group }) {
     <div className="stack">
       <div className="panel stack">
         <div className="spread">
-          <h3 style={{ margin: 0 }}>{students.length} élève(s)</h3>
+          <h3 style={{ margin: 0 }}>
+            {students.length} élève(s){former.length ? <span className="small muted"> · {former.length} parti(s) en cours d'année</span> : null}
+          </h3>
           <div className="row">
             <label className="btn">
               Importer un CSV
@@ -240,32 +242,32 @@ export function StudentsTab({ group }: { group: Group }) {
                 </td>
               </tr>
             ))}
+            {/* Élèves partis en cours d'année : grisés, leur fiche (notes, absences) reste consultable */}
+            {former.map((f) => (
+              <tr key={f.studentId} style={{ opacity: 0.5 }}>
+                <td>
+                  <span className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+                    <Avatar student={f.student!} size={40} />
+                    <Link to={`/prof/eleves/${f.studentId}`} style={{ lineHeight: 1.15, minWidth: 150 }}>
+                      <b>{f.student!.lastName}</b>
+                      <br />
+                      {f.student!.firstName}
+                    </Link>
+                  </span>
+                </td>
+                <td colSpan={4} className="small">
+                  Parti(e) le {frDate(f.leftAt)} · {f.to ? `passé(e) en ${f.to.name}` : "autre établissement"}
+                </td>
+                <td>
+                  <button className="btn small ghost" onClick={() => rejoinGroup(group, f.studentId)} title="Remettre dans la classe">
+                    Réintégrer
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-      {former.length > 0 && (
-        <div className="panel calm stack" style={{ gap: 8 }}>
-          <h3 className="panel-title">Partis en cours d'année ({former.length})</h3>
-          {former.map((f) => (
-            <div key={f.studentId} className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
-              <Avatar student={f.student!} size={32} />
-              <Link to={`/prof/eleves/${f.studentId}`} style={{ minWidth: 150 }}>
-                <b>{f.student!.lastName}</b> {f.student!.firstName}
-              </Link>
-              <span className="small muted" style={{ flex: 1 }}>
-                le {frDate(f.leftAt)} · {f.to ? `passé(e) en ${f.to.name}` : "a quitté l'établissement"}
-              </span>
-              <button className="btn small ghost" onClick={() => rejoinGroup(group, f.studentId)} title="Remettre dans la classe">
-                Réintégrer
-              </button>
-            </div>
-          ))}
-          <span className="small muted">
-            Ils n'apparaissent plus dans les listes, l'appel ni les nouvelles évaluations de la classe ; leur fiche (notes, absences, flashcards) reste
-            consultable. Pour effacer définitivement un élève, utilisez le bouton de suppression de sa fiche.
-          </span>
-        </div>
-      )}
     </div>
   );
 }

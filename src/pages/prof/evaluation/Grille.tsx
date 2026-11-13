@@ -174,8 +174,8 @@ export function GrilleTab({ ev }: { ev: Evaluation }) {
                     </button>
                   </th>
                   {!folded.has(g.id) &&
-                    items.map(({ student, si }) => (
-                      <th key={student.id} style={{ ...sticky, top: 0, zIndex: 2, padding: 2, width: 46 }}>
+                    items.map(({ student, si, former }) => (
+                      <th key={student.id} style={{ ...sticky, top: 0, zIndex: 2, padding: 2, width: 46, opacity: former ? 0.45 : 1 }}>
                         <div
                           className="stack"
                           style={{ alignItems: 'center', gap: 2 }}

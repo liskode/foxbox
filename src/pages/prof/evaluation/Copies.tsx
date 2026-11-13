@@ -145,7 +145,7 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
           style={{ position: 'sticky', top: 0, zIndex: 1, marginBottom: 6 }}
         />
         {q.trim() && !shown.length && <span className="small muted">Aucun élève trouvé.</span>}
-        {shown.map(({ student }) => {
+        {shown.map(({ student, former }) => {
           const rr = results.get(student.id);
           const done = rr?.absent || score(ev, rr);
           return (
@@ -166,7 +166,7 @@ export function CopiesTab({ ev }: { ev: Evaluation }) {
               }}
             >
               <Avatar student={student} size={26} />
-              <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 700 }}>
+              <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 700, opacity: former ? 0.45 : 1 }} title={former ? 'Parti(e) en cours d’année' : undefined}>
                 {student.lastName} {student.firstName} <CurFlags id={student.id} />
               </span>
               {(replies.get(student.id) ?? 0) > 0 && (
