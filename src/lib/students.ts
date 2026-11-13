@@ -1,6 +1,5 @@
 // Comptes élèves : génération des identifiants et import CSV.
 import { db, uid, type Group, type Student } from './db';
-import { today } from './dates';
 import { DEFAULT_GOAL } from './leitner';
 import { ONLINE, callStudents } from './supabase';
 import { syncNow, localOnly } from './sync';
@@ -54,13 +53,18 @@ export async function addToGroup(studentId: string, groupId: string, subject: st
 
 // Départ en cours d'année : l'élève sort de la classe (listes, appel, révisions de la classe) mais son compte, ses notes,
 // ses absences et ses flashcards sont conservés ; il reste visible dans « Partis en cours d'année ».
-// toGroupId : il passe dans cette autre classe ; sinon il quitte l'établissement.
-export async function leaveGroup(group: Group, studentId: string, toGroupId?: string) {
+// toGroupId : il passe dans cette autre classe ; sinon il quitte l'établissement. Une ligne est ajoutée à la note privée.
+export async function leaveGroup(group: Group, studentId: string, leftAt: string, toGroupId: string | undefined, teacherId: string) {
   const former = (group.former ?? []).filter((f) => f.studentId !== studentId);
-  await db.groups.update(group.id, { former: [...former, { studentId, leftAt: today(), ...(toGroupId ? { toGroupId } : {}) }] });
+  await db.groups.update(group.id, { former: [...former, { studentId, leftAt, ...(toGroupId ? { toGroupId } : {}) }] });
   await db.memberships.delete(`${group.id}|${studentId}`);
   const to = toGroupId ? await db.groups.get(toGroupId) : undefined;
   if (to) await addToGroup(studentId, to.id, to.subject);
+  const [y, m, d] = leftAt.split('-');
+  const line = `Élève ayant quitté la classe ${group.name} le ${d}/${m}/${y} ${to ? `pour la classe de ${to.name}` : 'pour un autre établissement'}.`;
+  const id = `${teacherId}|${studentId}`;
+  const note = (await db.notes.get(id)) ?? { id, teacherId, studentId, text: '', updatedAt: 0 };
+  await db.notes.put({ ...note, text: note.text.trim() ? `${note.text.trimEnd()}\n${line}` : line, updatedAt: Date.now() });
 }
 
 // Retour dans la classe (départ annulé) : il quitte la classe où il était passé

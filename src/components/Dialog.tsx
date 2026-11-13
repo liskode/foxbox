@@ -9,6 +9,7 @@ export interface Field {
   placeholder?: string;
   options?: { value: string; label: string }[]; // choix sur boutons
   optional?: boolean;
+  type?: 'date'; // sélecteur de date (valeur AAAA-MM-JJ)
 }
 interface Request {
   title: string;
@@ -117,6 +118,7 @@ export function DialogHost() {
               ) : (
                 <input
                   ref={isFirst ? first : undefined}
+                  type={f.type ?? 'text'}
                   value={values[f.key] ?? ''}
                   placeholder={f.placeholder}
                   onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}

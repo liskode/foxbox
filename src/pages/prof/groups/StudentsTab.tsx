@@ -4,9 +4,8 @@ import { useState } from 'react';
 import { askForm } from '../../../components/Dialog';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, byName, groupStudents, isClass, type Group, type Rule, type Student } from '../../../lib/db';
-import { parseCsv, importStudents, resetPassword, deleteStudent, leaveGroup, rejoinGroup, type ParsedRow } from '../../../lib/students';
-import { toast } from '../../../components/Toast';
+import { db, byName, groupStudents, type Group, type Rule } from '../../../lib/db';
+import { parseCsv, importStudents, resetPassword, deleteStudent, rejoinGroup, type ParsedRow } from '../../../lib/students';
 import { frDate } from '../../../lib/dates';
 import { DEFAULT_GOAL } from '../../../lib/leitner';
 import { Avatar } from '../../../components/Avatar';
@@ -76,28 +75,6 @@ export function StudentsTab({ group }: { group: Group }) {
     a.download = `${group.name.replace(/_.*/, '')} - liste des élèves.txt`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  }
-
-  // Départ en cours d'année : autre classe ou autre établissement ; tout l'historique est conservé
-  async function leave(s: Student) {
-    const others = (await db.groups.toArray())
-      .filter((g) => isClass(g) && !g.archived && g.id !== group.id)
-      .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
-    const r = await askForm(`Départ de ${s.firstName} ${s.lastName}`, [
-      {
-        key: 'to',
-        label: `${s.firstName} quitte ${group.name} aujourd'hui. Ses notes, absences et flashcards sont conservées.`,
-        options: [{ value: '', label: "Quitte l'établissement" }, ...others.map((g) => ({ value: g.id, label: `Passe en ${g.name}` }))],
-      },
-    ]);
-    if (!r) return;
-    await leaveGroup(group, s.id, r.to || undefined);
-    toast(`${s.firstName} ${s.lastName} a quitté ${group.name}`, {
-      undo: async () => {
-        const g = await db.groups.get(group.id);
-        if (g) await rejoinGroup(g, s.id);
-      },
-    });
   }
 
   async function addOne() {
@@ -248,9 +225,6 @@ export function StudentsTab({ group }: { group: Group }) {
                     }}
                   >
                     <Icon name="key" size={16} />
-                  </button>{' '}
-                  <button className="btn small ghost" title="Départ en cours d'année (autre classe ou autre établissement) : l'historique est conservé" onClick={() => leave(s)}>
-                    <Icon name="door" size={14} />
                   </button>{' '}
                   <button
                     className="btn small danger"

@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
-import { showInfo, alertBox, confirmBox } from '../../components/Dialog';
+import { showInfo, alertBox, confirmBox, askForm } from '../../components/Dialog';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { renameStudent, deleteStudent, resetPassword } from '../../lib/students';
+import { renameStudent, deleteStudent, resetPassword, leaveGroup } from '../../lib/students';
+import { useAuth } from '../../lib/auth';
+import { toast } from '../../components/Toast';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, byName, groupStudents } from '../../lib/db';
+import { db, byName, groupStudents, isClass } from '../../lib/db';
 import { StudentReport } from '../../components/StudentReport';
 import { Avatar } from '../../components/Avatar';
 import { removePhoto } from '../../lib/photos';
 import { NoteEditor, FlagChecks } from '../../components/StudentNote';
 import { StudentEvaluations, StudentCompetenceHisto, StudentCompetenceDetail, StudentAbsences } from '../../components/StudentEvaluations';
 import { Icon } from '../../components/Icon';
-import { frDate } from '../../lib/dates';
+import { frDate, today } from '../../lib/dates';
 import { StudentVisits } from '../../components/Visits';
 
 export function StudentPage() {
@@ -33,6 +35,7 @@ export function StudentPage() {
     [id],
     [] as string[],
   );
+  const { session } = useAuth();
   const [edit, setEdit] = useState<{ first: string; last: string } | null>(null);
   const [msg, setMsg] = useState('');
   const nav = useNavigate();
@@ -68,6 +71,30 @@ export function StudentPage() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
+
+  // Départ en cours d'année : date, classe quittée, nouvelle classe ou autre établissement ; une ligne est ajoutée à la note
+  async function leave() {
+    if (!student) return;
+    const mine = groups.filter((g) => isClass(g) && !g.archived);
+    const others = (await db.groups.toArray())
+      .filter((g) => isClass(g) && !g.archived && (mine.length > 1 || g.id !== mine[0].id))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
+    const r = await askForm(`Départ de ${student.firstName} ${student.lastName}`, [
+      { key: 'date', label: 'Date du départ', type: 'date', value: today() },
+      ...(mine.length > 1 ? [{ key: 'from', label: 'Classe quittée', options: mine.map((g) => ({ value: g.id, label: g.name })) }] : []),
+      {
+        key: 'to',
+        label: 'Destination (notes, absences et flashcards sont conservées)',
+        options: [{ value: '', label: "Autre établissement" }, ...others.map((g) => ({ value: g.id, label: `Classe de ${g.name}` }))],
+      },
+    ]);
+    if (!r) return;
+    const from = mine.find((g) => g.id === (r.from || mine[0].id))!;
+    if (r.to === from.id) return alertBox(`${student.firstName} est déjà en ${from.name}.`);
+    await leaveGroup(from, student.id, r.date || today(), r.to || undefined, session!.id);
+    toast(`${student.firstName} ${student.lastName} a quitté ${from.name}`);
+  }
+
   if (student === undefined) return null;
   if (!student) return <div className="page muted">Élève introuvable.</div>;
 
@@ -193,7 +220,12 @@ export function StudentPage() {
         <StudentReport studentId={student.id} teacherView compact />
       </section>
       <StudentVisits student={student} />
-      <div>
+      <div className="row">
+        {groups.some((g) => isClass(g) && !g.archived) && (
+          <button className="btn" onClick={leave}>
+            <Icon name="door" size={16} /> Élève parti le…
+          </button>
+        )}
         <button
           className="btn danger"
           onClick={async () => {

@@ -177,7 +177,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     details: [
       'recherche par nom ou prénom sans accents',
       'fiche élève : photo, identifiant et mot de passe (réinitialisable)',
-      'départ en cours d’année (bouton porte, onglet Élèves de la classe) : changement de classe ou autre établissement ; l’élève sort des listes, de l’appel et des nouvelles évaluations, mais ses notes, absences et flashcards sont conservées ; liste « Partis en cours d’année » avec la date et « Réintégrer »',
+      'bouton « Élève parti le… » sur la fiche élève (à côté de Supprimer) : date du départ, nouvelle classe ou autre établissement ; l’élève sort des listes, de l’appel et des nouvelles évaluations, mais ses notes, absences et flashcards sont conservées ; une ligne est ajoutée à sa note (« Élève ayant quitté la classe … le … ») ; liste « Partis en cours d’année » dans l’onglet Élèves de la classe, avec « Réintégrer »',
       'note privée',
       'aménagements (tiers temps, ULIS, ordinateur)',
       'évaluations et histogramme des compétences',
