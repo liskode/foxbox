@@ -90,7 +90,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     text: 'Les séquences et séances de chaque niveau, dans l’ordre réel de la progression, avec l’avancement de chaque classe et les dates prévues.',
     details: [
       'une colonne par niveau, thèmes du programme et « hors thème »',
-      'plusieurs matières (physique-chimie, mathématiques…) avec leurs thèmes, et niveaux du lycée pour le soutien',
+      'plusieurs matières (physique-chimie, mathématiques, tchèque…) avec leurs thèmes, niveaux du lycée pour le soutien et niveau A pour les langues (thèmes Vocabulaire et Grammaire)',
       'codes de séquence et de séance (431, 4311…)',
       'physique-chimie de la 6e à la terminale (programme de spécialité de terminale)',
       'en 2nde, 1re et terminale, une séance 0 « Prérequis » en tête de chaque séquence (2110, T110…) : révision des flashcards des niveaux précédents utiles pour la séquence, d’après leur point d’introduction',
@@ -241,7 +241,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'onglet Flashcards : objectif par jour et règle d’erreur modifiables, série, jours, réussite et score, régularité, boîtes et 7 dernières séances de révision (date, heure) sur une ligne, puis toutes les flashcards en cours, boîte par boîte (de 1 à 7), et celles en attente (pas encore vues), avec le bandeau à la couleur du niveau',
       'suspendre une flashcard pour un élève : elle sort de ses révisions sans être supprimée, et reprend plus tard dans sa boîte',
       'case « Peut retirer des flashcards de sa pile » dans le récapitulatif de l’onglet Flashcards',
-      'une ou plusieurs matières, chacune avec son niveau (du collège à la Terminale)',
+      'une ou plusieurs matières, chacune avec son niveau (du collège à la Terminale, ou niveau A pour une langue)',
       'un élève déjà dans une classe garde le même compte',
       'séances : date, heure, durée, à domicile (avec l’adresse) ou en ligne',
       'séances de groupe : contenu, documents, programme et flashcards communs ; présents cochés ; seuls les présents reçoivent le contenu de la séance (un absent peut le recevoir d’un clic, « Lui envoyer le contenu ») ; un élève arrivé en cours d’année peut recevoir les séances précédentes ; notes, révisions et règlements restent propres à chaque élève, et les absents ne sont pas facturés',

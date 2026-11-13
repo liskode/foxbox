@@ -736,7 +736,7 @@ export async function groupStudents(groupId: string): Promise<Student[]> {
   return (await db.students.bulkGet(ms.map((m) => m.studentId))).filter(Boolean) as Student[];
 }
 
-export const SUBJECTS = ['Physique-Chimie', 'SVT', 'Technologie', 'Mathématiques', 'BTS CPI'];
+export const SUBJECTS = ['Physique-Chimie', 'SVT', 'Technologie', 'Mathématiques', 'BTS CPI', 'Tchèque'];
 
 // Compte professeur de démonstration (à remplacer par Supabase Auth en production)
 export const DEMO_TEACHER = { id: 'prof-demo', name: 'E. Renard', login: 'prof', password: 'foxbox' };

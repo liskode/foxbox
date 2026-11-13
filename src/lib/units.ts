@@ -6,7 +6,9 @@ export const LEVELS = ['6e', '5e', '4e', '3e'];
 export const LYCEE = ['2nde', '1re', 'Tle'];
 // Après le bac (BTS…)
 export const POSTBAC = ['1re année', '2e année'];
-export const ALL_LEVELS = [...LEVELS, ...LYCEE, ...POSTBAC];
+// Langues vivantes : niveau A du cadre européen (A1-A2)
+export const LANGUES = ['A'];
+export const ALL_LEVELS = [...LEVELS, ...LYCEE, ...POSTBAC, ...LANGUES];
 
 // Thèmes du programme de cycle 4 (5e, 4e, 3e)
 export const THEME_NAMES: Record<string, string> = {
@@ -42,9 +44,14 @@ export const THEME_NAMES_BTS_CPI: Record<string, string> = {
   '2': 'Génie mécanique',
   '3': 'Physique-chimie',
 };
+// Langues vivantes (tchèque…)
+export const THEME_NAMES_LANGUES: Record<string, string> = {
+  '1': 'Vocabulaire',
+  '2': 'Grammaire',
+};
 export const HORS_THEME = 'Hors thème (présentation, révisions)';
 export const themesFor = (level?: string, subject?: string): Record<string, string> => ({
-  ...(subject === 'BTS CPI' ? THEME_NAMES_BTS_CPI : subject === 'Mathématiques' ? THEME_NAMES_MATHS : level === '6e' ? THEME_NAMES_C3 : LYCEE.includes(level ?? '') ? THEME_NAMES_LYCEE : THEME_NAMES),
+  ...(subject === 'BTS CPI' ? THEME_NAMES_BTS_CPI : subject === 'Mathématiques' ? THEME_NAMES_MATHS : subject === 'Tchèque' ? THEME_NAMES_LANGUES : level === '6e' ? THEME_NAMES_C3 : LYCEE.includes(level ?? '') ? THEME_NAMES_LYCEE : THEME_NAMES),
   '0': HORS_THEME,
 });
 export const themeLabel = (t?: string, level?: string, subject?: string) =>
@@ -79,6 +86,7 @@ export const DEFAULT_LEVEL_COLORS: Record<string, string> = {
   '2nde': '#e0dbf1', // Lavande
   '1re': '#cfece4', // Turquoise
   Tle: '#f4d8e2', // Rose
+  A: '#d8e6f3', // Bleuet (langues, niveau A)
 };
 
 // Niveau déduit du nom de la classe (« 4A_2627 » → 4e, « 2B » → 2nde, « 1G3 » → 1re, « TG1 » ou « Tle A » → Tle)

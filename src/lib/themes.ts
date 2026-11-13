@@ -16,6 +16,10 @@ export const THEMES_BY_SUBJECT: Record<string, Record<string, string>> = {
     '4': 'Géométrie',
     '5': 'Algorithmique',
   },
+  Tchèque: {
+    '1': 'Vocabulaire',
+    '2': 'Grammaire',
+  },
   'BTS CPI': {
     '1': 'Mathématiques',
     '2': 'Mécanique',
