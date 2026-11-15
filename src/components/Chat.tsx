@@ -331,8 +331,9 @@ export function Chat({
             multiple
             hidden
             onChange={(e) => {
-              const l = e.target.files;
-              if (l?.length) setFiles((f) => [...f, ...l]);
+              // Copie de la liste avant de vider le champ (Chrome, Edge : la liste se vide avec lui)
+              const l = [...(e.target.files ?? [])];
+              if (l.length) setFiles((f) => [...f, ...l]);
               e.target.value = '';
             }}
           />
