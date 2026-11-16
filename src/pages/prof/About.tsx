@@ -97,7 +97,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'flashcard suspendue dans une séance : elle y reste, grisée et visible du professeur seul, mais n’est pas donnée aux élèves (boutons « Suspendre » / « Réactiver »)',
       'nouvelle flashcard ajoutée à une séance : elle prend la séquence comme point d’introduction et rejoint automatiquement, suspendue, les séances 0 des niveaux supérieurs',
       'durée de chaque séance',
-      'descriptif et documents PDF téléchargeables par les élèves',
+      'descriptif et documents pour les élèves : PDF téléchargeables et animations HTML (par exemple faites avec Claude), qui s’ouvrent en plein écran dans FoxBox, isolées du reste du site',
       'flashcards rattachées à chaque séance (au moment d’en ajouter, celles déjà dans une autre séance de la progression du niveau sont grisées avec la séance où elles sont, mais peuvent être ajoutées aussi ; une case permet de les masquer ; en soutien, celles déjà données à l’élève)',
       'filtre « Niveaux précédents, absentes de cette progression » au moment d’ajouter des flashcards : retrouver celles retirées d’une séance 0',
       'au moment de choisir des flashcards, verso affiché au survol de la souris',

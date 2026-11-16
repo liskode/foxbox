@@ -651,3 +651,8 @@ table.list tr.click:hover td { background: #faf7ef; }
 .slot-grid .btn.taken { opacity: 0.45; text-decoration: line-through; cursor: not-allowed; }
 .print-only { display: none; }
 @media print { .print-only { display: inline; } }
+
+/* Animation HTML d'une séance, affichée par-dessus la page */
+.anim-layer { position: fixed; inset: 0; z-index: 1000; background: var(--paper); display: flex; flex-direction: column; }
+.anim-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 16px; border-bottom: 1px solid rgba(0,0,0,.15); }
+.anim-layer iframe { flex: 1; width: 100%; border: 0; background: #fff; }
