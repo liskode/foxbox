@@ -5,12 +5,13 @@ import { useAuth } from '../../../lib/auth';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Group } from '../../../lib/db';
+import { db, shortName, type Group } from '../../../lib/db';
 import { deleteGroup } from '../../../lib/students';
 import { levelColors, levelOfName } from '../../../lib/units';
 import { canEditGroup, isOwner, rightOf, type Right } from '../../../lib/access';
 import { ReadOnlyZone } from '../../../components/ReadOnly';
-import { supabase, ONLINE } from '../../../lib/supabase';
+import { callStudents, ONLINE } from '../../../lib/supabase';
+import { syncNow } from '../../../lib/sync';
 import { isDemo } from '../../../lib/demoMode';
 
 export function DeleteGroup({ group }: { group: Group }) {
@@ -132,6 +133,9 @@ function CoTeachers({ group }: { group: Group }) {
   const me = session!.id;
   const teachers = useLiveQuery(() => db.teachers.toArray(), [], []);
   const [email, setEmail] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newRight, setNewRight] = useState<'lecture' | 'modification'>('modification');
+  const [sent, setSent] = useState<{ name: string; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const ownerName = teachers.find((t) => t.id === group.teacherIds[0])?.name ?? 'un collègue';
   if (!isOwner(group, me))
@@ -150,18 +154,31 @@ function CoTeachers({ group }: { group: Group }) {
     const label = r === 'aucun' ? 'n’a plus accès à la classe' : r === 'lecture' ? 'a accès à la classe en lecture seule' : 'peut modifier la classe';
     toast(`${name} ${label}`, { undo: () => db.groups.update(group.id, before) });
   }
-  async function invite() {
+  // Ajout d'un collègue par son e-mail : son compte est créé s'il n'en a pas, il rejoint la classe avec le droit choisi
+  async function add() {
     const mail = email.trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return alertBox('Adresse e-mail invalide.');
     setBusy(true);
-    const { error } = await supabase.rpc('invite_teacher', { email: mail });
-    setBusy(false);
-    if (error) return alertBox(`Invitation impossible : ${error.message}`);
-    setEmail('');
-    alertBox(
-      `Adresse ${mail} autorisée. Votre collègue crée son compte professeur à l'adresse ${location.origin}${location.pathname}#/inscription ` +
-        `(avec cette adresse e-mail et le mot de passe de son choix). Son nom apparaîtra ensuite ici : choisissez alors son accès.`,
-    );
+    try {
+      const r = await callStudents<{ name: string; created: boolean; password?: string }>({ action: 'addTeacher', groupId: group.id, email: mail, name: newName, right: newRight });
+      setEmail('');
+      setNewName('');
+      syncNow();
+      const site = `${location.origin}${location.pathname}`;
+      setSent({
+        name: r.name,
+        text: r.created
+          ? `Bonjour, je t'ai ajouté(e) comme co-enseignant(e) de la classe ${shortName(group.name)} dans FoxBox.\n` +
+            `Pour te connecter : ${site}\nIdentifiant : ${mail}\nMot de passe provisoire : ${r.password}\n` +
+            `À ta première connexion, FoxBox te demandera de choisir ton propre mot de passe.`
+          : `Bonjour, je t'ai ajouté(e) comme co-enseignant(e) de la classe ${shortName(group.name)} dans FoxBox : ` +
+            `tu la retrouves en te connectant à ${site} avec ton compte habituel.`,
+      });
+    } catch (e) {
+      alertBox(`Ajout impossible : ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
   }
   return (
     <div className="stack" style={{ gap: 8 }}>
@@ -182,19 +199,44 @@ function CoTeachers({ group }: { group: Group }) {
       ))}
       {!others.length && <span className="small muted">Aucun collègue n’a encore de compte FoxBox.</span>}
       <form
-        className="row"
-        style={{ gap: 8 }}
+        className="stack"
+        style={{ gap: 8, borderTop: '1px solid var(--muted-line)', paddingTop: 8 }}
         onSubmit={(e) => {
           e.preventDefault();
-          invite();
+          add();
         }}
       >
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="adresse e-mail d’un collègue" style={{ flex: 1, minWidth: 200 }} />
-        <button className="btn" type="submit" disabled={busy || !email.trim() || !ONLINE || isDemo()}>
-          Inviter
-        </button>
+        <b className="small">Ajouter un collègue</b>
+        <div className="row" style={{ gap: 8 }}>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="son adresse e-mail" style={{ flex: 2, minWidth: 200 }} />
+          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="nom affiché (ex. H. Amane)" style={{ flex: 1, minWidth: 140 }} />
+          <select value={newRight} onChange={(e) => setNewRight(e.target.value as 'lecture' | 'modification')}>
+            <option value="lecture">Lecture seule</option>
+            <option value="modification">Modification</option>
+          </select>
+          <button className="btn" type="submit" disabled={busy || !email.trim() || !ONLINE || isDemo()}>
+            {busy ? 'Ajout…' : 'Ajouter'}
+          </button>
+        </div>
+        <span className="small muted">
+          S'il n'a pas encore de compte FoxBox, il est créé avec un mot de passe provisoire : vous recevez le message à lui envoyer. À sa première
+          connexion, il choisit son propre mot de passe.
+        </span>
       </form>
-      <span className="small muted">Inviter autorise l’adresse à créer un compte professeur FoxBox ; votre collègue ne voit rien tant que vous ne lui avez pas donné accès.</span>
+      {sent && (
+        <div className="panel note stack" style={{ gap: 8 }}>
+          <b className="small">{sent.name} est ajouté(e) à la classe. Message à lui envoyer :</b>
+          <textarea readOnly value={sent.text} rows={5} style={{ fontFamily: 'var(--font)', fontSize: '0.9rem' }} onFocus={(e) => e.target.select()} />
+          <div className="row" style={{ gap: 8 }}>
+            <button className="btn primary" type="button" onClick={() => navigator.clipboard.writeText(sent.text).then(() => toast('Message copié'))}>
+              Copier le message
+            </button>
+            <button className="btn ghost" type="button" onClick={() => setSent(null)}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

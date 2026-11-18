@@ -1,4 +1,4 @@
-// Fonction serveur : création des comptes élèves et réinitialisation des mots de passe.
+// Fonction serveur : création des comptes élèves (et des comptes des co-enseignants) et réinitialisation des mots de passe.
 // Elle seule détient la clé d'administration ; elle vérifie d'abord que l'appelant est professeur de la classe.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
@@ -169,6 +169,44 @@ Deno.serve(async (req) => {
       const { data: s } = await admin.from('students').select('data').eq('id', studentId).single();
       await admin.from('students').update({ data: { ...s!.data, password: pw } }).eq('id', studentId);
       return json({ password: pw });
+    }
+
+    // ---------- Co-enseignant ----------
+    // Le professeur principal ajoute un collègue à sa classe par son adresse e-mail, avec son droit
+    // (lecture seule ou modification). Sans compte FoxBox, le compte professeur est créé avec un mot de passe
+    // provisoire, renvoyé au professeur pour qu'il le transmette ; le collègue en choisit un autre à sa première connexion.
+    if (body.action === 'addTeacher') {
+      const { groupId, email, name, right } = body as { groupId: string; email: string; name?: string; right: 'lecture' | 'modification' };
+      const mail = (email ?? '').trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return json({ error: 'Adresse e-mail invalide' }, 400);
+      if (right !== 'lecture' && right !== 'modification') return json({ error: 'Droit inconnu' }, 400);
+      const { data: group } = await admin.from('groups').select('teacher_ids, editor_ids, data').eq('id', groupId).maybeSingle();
+      if (!group || group.teacher_ids[0] !== uid) return json({ error: 'Seul le professeur principal de la classe peut ajouter un co-enseignant' }, 403);
+
+      let pw: string | undefined;
+      let { data: colleague } = await admin.from('teachers').select('id, data').eq('data->>login', mail).maybeSingle();
+      if (!colleague) {
+        await admin.from('allowed_teachers').upsert({ email: mail });
+        pw = password() + '-' + password();
+        const shown = (name ?? '').trim() || mail.split('@')[0];
+        const { data: created, error } = await admin.auth.admin.createUser({ email: mail, password: pw, email_confirm: true, user_metadata: { name: shown } });
+        if (error || !created.user) {
+          const taken = /already|registered|exists/i.test(error?.message ?? '');
+          return json({ error: taken ? 'Cette adresse est déjà utilisée par un autre compte FoxBox (élève, parent ou Physifox).' : (error?.message ?? 'Création impossible') }, taken ? 409 : 500);
+        }
+        const { data: row } = await admin.from('teachers').select('id, data').eq('id', created.user.id).maybeSingle();
+        if (!row) return json({ error: 'Compte créé, mais la fiche professeur manque' }, 500);
+        const data = { ...row.data, name: shown, mustChangePassword: true };
+        await admin.from('teachers').update({ data }).eq('id', row.id);
+        colleague = { id: row.id, data };
+      }
+      if (colleague.id === uid) return json({ error: 'C’est votre propre adresse' }, 400);
+      const teacherIds = [...new Set([...(group.teacher_ids as string[]), colleague.id])];
+      const editors = ((group.editor_ids ?? []) as string[]).filter((x) => x !== colleague!.id);
+      const editorIds = right === 'modification' ? [...editors, colleague.id] : editors;
+      const { error: e2 } = await admin.from('groups').update({ teacher_ids: teacherIds, editor_ids: editorIds, data: { ...group.data, teacherIds, editorIds } }).eq('id', groupId);
+      if (e2) throw e2;
+      return json({ teacherId: colleague.id, name: colleague.data?.name ?? mail, created: !!pw, password: pw });
     }
 
     // ---------- Comptes parents ----------

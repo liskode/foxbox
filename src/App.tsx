@@ -7,6 +7,7 @@ import { AuthProvider, useAuth, homeOf } from './lib/auth';
 import { runOcr, subscribeOcr, type OcrState } from './lib/ocr';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
+import { ChangePassword } from './pages/ChangePassword';
 import { subscribeSync, retryFailed, type SyncState } from './lib/sync';
 import { ONLINE } from './lib/supabase';
 import { unreadTotal } from './lib/messages';
@@ -250,6 +251,8 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
   );
   // Onglet Physifox : réservé à l'administrateur du site, et seulement s'il l'a coché dans Réglages › Modules
   const pfTab = useLiveQuery(async () => (pfAdmin && session ? !!(await db.teachers.get(session.id))?.modules?.physifox : false), [pfAdmin, session?.id], false);
+  // Co-enseignant dont le compte a été créé par un collègue : mot de passe provisoire à remplacer d'abord
+  const me = useLiveQuery(async () => (session?.role === 'prof' ? db.teachers.get(session.id) : undefined), [session?.id, session?.role]);
   // Messages non lus : pastille sur « Soutien » (professeur, élève) ou « Messages » (parents)
   const unread = useLiveQuery(async () => (session && session.role !== 'visiteur' ? unreadTotal(session.id, session.role) : 0), [session?.id, session?.role], 0);
   const badgeOn = role === 'parent' ? '/parent/messages' : role === 'prof' ? '/prof/communication' : '/eleve/messages';
@@ -264,6 +267,7 @@ function Shell({ role, children }: { role: 'prof' | 'eleve' | 'parent'; children
   if (!ready) return <Loader />;
   if (!session) return <Navigate to="/" replace />;
   if (session.role !== role) return <Navigate to={homeOf(session.role)} replace />;
+  if (role === 'prof' && me?.mustChangePassword) return <ChangePassword teacherId={me.id} name={me.name} onLogout={logout} />;
   const links =
     role === 'prof'
       ? [

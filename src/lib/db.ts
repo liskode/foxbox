@@ -51,6 +51,7 @@ export interface Teacher {
   relations?: import('./relations').Relation[]; // interlocuteurs de la famille (Mère M, Père P…)
   origins?: import('./cardCodes').Origin[]; // origines des flashcards (ER, MM…)
   gradeColors?: import('./gradeColors').GradeColors; // couleurs de réussite de la grille de correction
+  mustChangePassword?: boolean; // compte créé par un collègue (co-enseignement) : mot de passe provisoire à changer à la première connexion
 }
 
 export interface Group {

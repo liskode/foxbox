@@ -234,8 +234,9 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Co-enseignement',
     text: 'Partager une classe ou une séquence avec un collègue, en lecture seule ou avec le droit de modifier.',
     details: [
-      'invitation d’un collègue par son adresse e-mail (Réglages de la classe) : il crée ensuite son compte professeur',
-      'droit choisi pour chaque collègue dans les Réglages de la classe : pas d’accès, lecture seule ou modification',
+      'ajout d’un collègue par son adresse e-mail et son droit (Réglages de la classe) : sans compte FoxBox, son compte est créé aussitôt et vous recevez le message à lui envoyer (adresse du site, identifiant, mot de passe provisoire), à copier d’un clic',
+      'à sa première connexion, le collègue choisit son propre mot de passe',
+      'droit de chaque collègue modifiable à tout moment : pas d’accès, lecture seule ou modification',
       'lecture seule : il voit les élèves, la progression, les séances faites, les évaluations de la classe et les résultats, avec un bandeau « lecture seule »',
       'modification : il peut aussi cocher les séances faites, corriger les copies, modifier les évaluations de la classe et les séquences, séances et flashcards du niveau',
       'partage d’une seule séquence en modification (case « Partager la modification » sur la séquence)',
