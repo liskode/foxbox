@@ -1,6 +1,6 @@
 // Fiche élève (professeur) : ses évaluations, et le suivi des messages envoyés aux parents.
 import { useCompetences } from './CompetencePicker';
-import { CompetenceHisto } from './CompetenceHisto';
+import { CompetenceBar, CompetenceHisto } from './CompetenceHisto';
 import { categories, competenceScores, masteryOf, subCompetenceScores, type Competence } from '../lib/competences';
 import { absencesOf } from '../lib/absences';
 import { Link } from 'react-router-dom';
@@ -51,10 +51,11 @@ export function StudentEvaluations({ student }: { student: Student }) {
   );
 }
 
-// Détail des sous-compétences évaluées : niveau (échelle du LSU) et points obtenus
+// Détail des sous-compétences évaluées : barre (longueur = points évalués, vert = réussi) et points obtenus ; niveau du LSU au survol
 const fr = (x: number) => String(Math.round(x * 10) / 10).replace('.', ',');
-export function SubCompetenceList({ subs }: { subs: ReturnType<typeof subCompetenceScores> }) {
+export function SubCompetenceList({ subs, max }: { subs: ReturnType<typeof subCompetenceScores>; max?: number }) {
   if (!subs.length) return null;
+  const top = Math.max(...subs.map((x) => x.total));
   return (
     <table className="list small" style={{ marginTop: 4 }}>
       <tbody>
@@ -66,12 +67,10 @@ export function SubCompetenceList({ subs }: { subs: ReturnType<typeof subCompete
                 <span style={{ background: c.color, borderRadius: 5, padding: '0 4px', fontWeight: 800 }}>{c.code}</span>
               </td>
               <td>{c.name}</td>
-              <td style={{ whiteSpace: 'nowrap' }}>
-                <span title={m.name} style={{ background: m.color, borderRadius: 6, padding: '1px 6px', fontWeight: 800 }}>
-                  {m.code}
-                </span>
+              <td>
+                <CompetenceBar note={note} total={total} max={max ?? top} n={n} />
               </td>
-              <td className="muted" style={{ whiteSpace: 'nowrap' }} title={`${n} critère(s) évalué(s)`}>
+              <td className="muted" style={{ whiteSpace: 'nowrap' }} title={`${n} critère(s) évalué(s) · ${m.name}`}>
                 {fr(note)}/{fr(total)} pts
               </td>
             </tr>
@@ -143,6 +142,7 @@ export function StudentCompetenceDetail({ student }: { student: Student }) {
     .sort((a, b) => a.value - b.value);
   const subs = subCompetenceScores(comps, copies);
   if (!resRows.length && !subs.length) return null;
+  const max = Math.max(...resRows.map((x) => x.total), ...subs.map((x) => x.total)); // même échelle pour les deux listes
   return (
     <div className="panel stack" style={{ gap: 8 }}>
       <h3 className="panel-title"><Icon name="target" size={16} /> Détail des compétences</h3>
@@ -159,12 +159,10 @@ export function StudentCompetenceDetail({ student }: { student: Student }) {
                   return (
                     <tr key={u?.id ?? i}>
                       <td>{u ? unitLabel(u) : '(séance supprimée)'}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        <span title={m.name} style={{ background: m.color, borderRadius: 6, padding: '1px 6px', fontWeight: 800 }}>
-                          {m.code}
-                        </span>
+                      <td>
+                        <CompetenceBar note={note} total={total} max={max} n={n} />
                       </td>
-                      <td className="muted" style={{ whiteSpace: 'nowrap' }} title={`${n} critère(s) évalué(s)`}>
+                      <td className="muted" style={{ whiteSpace: 'nowrap' }} title={`${n} critère(s) évalué(s) · ${m.name}`}>
                         {fr(note)}/{fr(total)} pts
                       </td>
                     </tr>
@@ -178,7 +176,7 @@ export function StudentCompetenceDetail({ student }: { student: Student }) {
         </div>
         <div className="stack" style={{ gap: 4 }}>
           <b className="small">Autres compétences</b>
-          {subs.length ? <SubCompetenceList subs={subs} /> : <span className="small muted">Pas encore de sous-compétence évaluée.</span>}
+          {subs.length ? <SubCompetenceList subs={subs} max={max} /> : <span className="small muted">Pas encore de sous-compétence évaluée.</span>}
         </div>
       </div>
     </div>

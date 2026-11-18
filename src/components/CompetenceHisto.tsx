@@ -35,3 +35,21 @@ export function CompetenceHisto({ bars, height = 64 }: { bars: { c: Pick<Compete
   );
 }
 
+
+// Barre horizontale sur une ligne : longueur = points évalués (par rapport à max), vert = réussi, rouge = manqué
+export function CompetenceBar({ note, total, max, n }: { note: number; total: number; max: number; n?: number }) {
+  const width = 140;
+  const w = Math.max(6, (total / Math.max(max, 0.0001)) * width);
+  const pct = total ? Math.round((note / total) * 100) : 0;
+  return (
+    <div
+      style={{ width, display: 'flex' }}
+      title={`${fr(note)}/${fr(total)} pts · ${pct} % réussi${n ? ` · évalué ${n} fois` : ''} · ${masteryOf(total ? note / total : 0).name}`}
+    >
+      <div style={{ width: w, height: 16, border: '1.5px solid var(--line)', borderRadius: 4, overflow: 'hidden', display: 'flex' }}>
+        <div style={{ width: `${pct}%`, background: 'var(--easy)' }} />
+        <div style={{ flex: 1, background: '#f08a80' }} />
+      </div>
+    </div>
+  );
+}

@@ -144,7 +144,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
       'RES : dans le barème, la séance ou la séquence de la progression à restituer ; dans la grille, une ligne par séance sous RES (points de cours à revoir)',
       'fiche élève : note privée, absences (date et commentaire) et histogramme des compétences côte à côte ; évaluations sur une ligne ; détail en 2 colonnes : points de cours à restituer (les moins réussis d’abord) et sous-compétences ; flashcards ; connexions en bas',
       'tableau de la classe par sous-compétence, avec la part des élèves au-dessus du 2e seuil des critères de réussite',
-      'niveaux du LSU (MI, MF, MS, TBM) au survol et dans la fiche élève',
+      'niveaux du LSU (MI, MF, MS, TBM) au survol ; dans la fiche élève, détail des compétences en barres horizontales (longueur = points évalués, vert = réussi), sur la même échelle pour les points de cours et les sous-compétences',
       'tableau élèves × compétences par classe : pourcentage arrondi, aux couleurs et seuils des critères de réussite (Réglages › Évaluations) ; colonnes étroites, intitulés dans le référentiel à gauche, sous-compétences séparées d’un filet',
       'sur les couleurs réglables (grille de correction, compétences), le texte s’écrit en noir sur fond clair et en blanc sur fond foncé',
       'histogramme par compétence pondéré par le barème (correction, résultats, fiche élève, espace élève)',
