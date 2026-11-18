@@ -1,5 +1,7 @@
 // À propos : présentation de FoxBox et de ses fonctionnalités.
 // ⚠️ À tenir à jour à chaque ajout ou modification de fonctionnalité (voir CLAUDE.md).
+import { useState } from 'react';
+import { Icon } from '../../components/Icon';
 // Page « Démo » : ce que chaque profil peut découvrir (à tenir à jour avec les sections ci-dessous)
 export const DEMO_COLUMNS: { key: 'prof' | 'eleve' | 'soutien' | 'parent'; icon: string; title: string; sub: string; features: string[] }[] = [
   {
@@ -366,18 +368,192 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
   },
 ];
 
+// Présentation visuelle (captures faites avec des élèves fictifs dans la démo locale : public/apropos)
+const IMG = (name: string) => `./apropos/${name}.jpg`;
+
+function Shot({ name, alt, phone }: { name: string; alt: string; phone?: boolean }) {
+  return (
+    <a href={IMG(name)} target="_blank" rel="noreferrer" className={phone ? 'ab-phone' : 'ab-shot'} title="Agrandir">
+      <img src={IMG(name)} alt={alt} loading="lazy" />
+    </a>
+  );
+}
+
+const LOOP: { icon: string; title: string; text: string }[] = [
+  { icon: 'check', title: 'Je fais cours', text: 'Je coche la séance « faite » pour la classe.' },
+  { icon: 'cards', title: 'Les flashcards arrivent', text: 'Celles de la séance rejoignent la pile de chaque élève.' },
+  { icon: 'phone', title: 'L’élève révise', text: 'Quelques minutes par jour, sur son téléphone, par boîtes.' },
+  { icon: 'eval', title: 'Le DS vérifie', text: 'Une question ratée renvoie ses flashcards en boîte 1.' },
+];
+
+const FEATURES: { kicker: string; title: string; text: string; points: string[]; shots: { name: string; alt: string; phone?: boolean }[]; signature?: boolean }[] = [
+  {
+    kicker: 'La signature de FoxBox',
+    signature: true,
+    title: 'Une erreur au DS relance les bonnes révisions',
+    text: 'Chaque question du barème est reliée aux flashcards qu’elle évalue. Pendant la correction, une question ratée remet automatiquement ces flashcards en boîte 1 pour l’élève concerné : il les reverra dès le lendemain. L’erreur devient du travail ciblé, sans rien préparer de plus.',
+    points: ['0 % à une question : ses flashcards repartent en boîte 1', '40 % : elles reculent d’une boîte', 'chaque question est aussi reliée aux compétences et aux séances à restituer'],
+    shots: [{ name: 'bareme2', alt: 'Barème : chaque critère est relié à des compétences et à des flashcards' }],
+  },
+  {
+    kicker: 'Côté élève',
+    title: 'Réviser un peu chaque jour, sur son téléphone',
+    text: 'L’élève retrouve les flashcards des séances faites en classe, au bon moment grâce aux boîtes de Leitner : ce qu’il sait revient de moins en moins souvent, ce qu’il oublie revient vite. Un objectif du jour, une série de jours, un calendrier de régularité : de quoi garder le rythme.',
+    points: ['réponses sous le pouce : rouge à gauche, vert à droite', 'formules, images et schémas sur les flashcards', 'vous voyez qui révise et qui décroche'],
+    shots: [
+      { name: 'eleve', alt: 'Accueil de l’élève : objectif du jour, série, régularité', phone: true },
+      { name: 'rev2', alt: 'Une flashcard retournée, avec les trois boutons de réponse', phone: true },
+    ],
+  },
+  {
+    kicker: 'Correction',
+    title: 'Corriger au clavier, copie par copie',
+    text: 'Les touches 1, 2, 3, 4 notent chaque critère et passent au suivant. La note, l’histogramme des compétences et la grille de la classe se mettent à jour en direct. Une appréciation vocale peut accompagner chaque copie : l’élève l’écoute dans son espace et peut répondre.',
+    points: ['grille façon tableur, réussite par question et par compétence', 'copie des notes pour Pronote', 'modèles d’évaluation réutilisables d’une année sur l’autre'],
+    shots: [{ name: 'ev', alt: 'Correction d’une copie : critères, niveaux, histogramme des compétences' }],
+  },
+  {
+    kicker: 'Original',
+    signature: true,
+    title: 'L’élève s’autocorrige avant de voir sa note',
+    text: 'Quand les copies sont rendues, l’élève reprend sa copie et dit d’abord comment il pense avoir réussi, avec quatre renards, puis estime chaque question. Il découvre ensuite la correction du professeur en face de la sienne, et écrit ce qu’il a compris. Vous voyez qui se surestime ou se sous-estime.',
+    points: ['ressenti global et commentaire', 'note estimée et note du professeur côte à côte', 'bilan : « ce que je n’avais pas compris, ce que j’ai compris »'],
+    shots: [
+      { name: 'auto2', alt: 'Autocorrection : quatre renards pour dire comment on pense avoir réussi', phone: true },
+      { name: 'notes', alt: 'Note estimée par l’élève et note du professeur, critère par critère', phone: true },
+    ],
+  },
+  {
+    kicker: 'Préparer',
+    title: 'Une progression qui calcule ses dates',
+    text: 'Séquences et séances de chaque niveau, dans l’ordre réel de l’année. D’après l’emploi du temps Pronote et le calendrier, FoxBox prévoit la date de chaque séance pour chaque classe et vous dit si vous êtes dans les temps ou en retard.',
+    points: ['avancement de chaque classe d’un coup d’œil', 'flashcards, descriptif et documents rattachés à chaque séance', 'codes de séance stables pour les fiches de cours'],
+    shots: [{ name: 'prog', alt: 'Progression : une colonne par niveau, avancement et dates prévues par classe' }],
+  },
+  {
+    kicker: 'Enseigner',
+    title: 'Des animations interactives dans le cours',
+    text: 'Une animation HTML, faite par exemple avec Claude, se joint à une séance comme un PDF. Elle s’ouvre en plein écran dans FoxBox, en classe comme chez l’élève, isolée du reste du site.',
+    points: ['même endroit que les documents de cours', 'disponible pour les élèves dès que la séance est faite'],
+    shots: [{ name: 'anim', alt: 'Animation interactive comparant un circuit électrique et un circuit d’eau' }],
+  },
+  {
+    kicker: 'Suivre',
+    title: 'Chaque classe en un coup d’œil',
+    text: 'Trombinoscope, prochain cours, avancement, appel, plans de classe et notes privées : tout ce qu’il faut avant d’entrer en salle. La fiche de chaque élève réunit ses évaluations, ses compétences, ses révisions et ses absences.',
+    points: ['appel en un clic depuis la photo', 'plans de classe et sous-groupes', 'aménagements et notes visibles par vous seul'],
+    shots: [{ name: 'classe', alt: 'Page d’une classe : trombinoscope, prochain cours, progression' }],
+  },
+];
+
+const ALSO: { icon: string; title: string; text: string }[] = [
+  { icon: 'handshake', title: 'Cours particuliers', text: 'Séances, travail à faire, règlements, attestations.' },
+  { icon: 'family', title: 'Parents', text: 'Suivi du soutien, messagerie, rendez-vous.' },
+  { icon: 'laptop', title: 'Physifox', text: 'Un site public de cours avec flashcards.' },
+  { icon: 'message', title: 'Messagerie', text: 'Photos et mémos vocaux, avec élèves et familles.' },
+  { icon: 'target', title: 'Compétences', text: 'Référentiel modifiable, niveaux du LSU.' },
+  { icon: 'cards', title: 'Import Anki et PDF', text: 'Récupérer ses paquets et ses planches.' },
+  { icon: 'sync', title: 'Même sans réseau', text: 'Copie locale et synchronisation automatique.' },
+  { icon: 'lock', title: 'Données protégées', text: 'Hébergées en France, notes privées lisibles par vous seul.' },
+];
+
 export function About() {
+  const [details, setDetails] = useState(false);
+  if (details) return <AboutDetails onBack={() => setDetails(false)} />;
+  return (
+    <div className="page stack ab" style={{ maxWidth: 1100, gap: 48 }}>
+      <section className="ab-hero">
+        <div className="stack" style={{ gap: 16 }}>
+          <div className="row" style={{ gap: 16 }}>
+            <img src="./logo.png" alt="" style={{ width: 72 }} />
+            <h1 className="title" style={{ margin: 0 }}>FoxBox</h1>
+          </div>
+          <p className="ab-lead">Vos élèves retiennent ce que vous enseignez.</p>
+          <p className="muted" style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.5 }}>
+            Progression, flashcards, évaluations et suivi des élèves dans un seul outil, conçu par un professeur de physique-chimie. Chaque partie nourrit les autres :
+            ce qui est fait en classe arrive dans les révisions, et ce qui est raté au DS y revient.
+          </p>
+          <div className="row" style={{ gap: 8 }}>
+            <span className="tag plain">en classe</span>
+            <span className="tag plain">en cours particuliers</span>
+            <span className="tag plain">sur ordinateur et téléphone</span>
+          </div>
+        </div>
+        <Shot name="dash" alt="Tableau de bord du professeur : emploi du temps, alertes, liste À faire" />
+      </section>
+
+      <section className="stack" style={{ gap: 16 }}>
+        <h2 className="ab-h2">La boucle FoxBox</h2>
+        <div className="ab-loop">
+          {LOOP.map((s, i) => (
+            <div key={s.title} className="ab-step">
+              <div className="ab-num">{i + 1}</div>
+              <Icon name={s.icon} size={22} />
+              <b>{s.title}</b>
+              <span className="muted small">{s.text}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {FEATURES.map((f, i) => (
+        <section key={f.title} className={`ab-feature${i % 2 ? ' ab-rev' : ''}${f.shots.every((s) => s.phone) ? ' phones' : ''}`}>
+          <div className="stack" style={{ gap: 8 }}>
+            <span className={`ab-kicker${f.signature ? ' sig' : ''}`}>{f.kicker}</span>
+            <h2 className="ab-h2">{f.title}</h2>
+            <p style={{ margin: 0, lineHeight: 1.55 }}>{f.text}</p>
+            <ul className="ab-points">
+              {f.points.map((p) => (
+                <li key={p}>
+                  <Icon name="check" size={16} /> {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="ab-shots">
+            {f.shots.map((s) => (
+              <Shot key={s.name} {...s} />
+            ))}
+          </div>
+        </section>
+      ))}
+
+      <section className="stack" style={{ gap: 16 }}>
+        <h2 className="ab-h2">Et aussi</h2>
+        <div className="ab-also">
+          {ALSO.map((a) => (
+            <div key={a.title} className="panel calm stack" style={{ gap: 4 }}>
+              <b className="row" style={{ gap: 8 }}>
+                <Icon name={a.icon} size={18} /> {a.title}
+              </b>
+              <span className="muted small">{a.text}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel stack" style={{ alignItems: 'center', textAlign: 'center', gap: 8 }}>
+        <b style={{ fontSize: '1.1rem' }}>Envie de tout savoir ?</b>
+        <span className="muted">La liste complète des fonctionnalités, rubrique par rubrique.</span>
+        <button className="btn" onClick={() => (setDetails(true), window.scrollTo(0, 0))}>
+          Voir toutes les fonctionnalités
+        </button>
+        <span className="muted small">Captures réalisées avec des élèves fictifs.</span>
+      </section>
+    </div>
+  );
+}
+
+// Liste exhaustive des fonctionnalités (derrière le lien « Voir toutes les fonctionnalités »)
+function AboutDetails({ onBack }: { onBack: () => void }) {
   return (
     <div className="page stack" style={{ maxWidth: 900 }}>
-      <div className="row" style={{ gap: 16 }}>
-        <img src="./logo.png" alt="" style={{ width: 80 }} />
-        <div>
-          <h1 className="title" style={{ margin: 0 }}>
-            FoxBox
-          </h1>
-          <div className="muted">Révisions, progression, évaluations et suivi des élèves, en classe et en cours particuliers — conçu par et pour un professeur.</div>
-        </div>
-      </div>
+      <button className="btn ghost small" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
+        ← Présentation
+      </button>
+      <h1 className="title" style={{ margin: 0 }}>
+        Fonctionnalités
+      </h1>
       {SECTIONS.map((s) => (
         <div key={s.title} className="stack" style={{ gap: 4 }}>
           <b style={{ fontSize: '1.1rem' }}>{s.title}</b>
