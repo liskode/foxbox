@@ -1,3 +1,4 @@
+import { useAccess, canEditCard } from '../lib/access';
 import { useEffect, useRef, useState } from 'react';
 import { ask, alertBox, confirmBox } from './Dialog';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -204,6 +205,10 @@ export function CardDetail({
     }
     return out;
   }, [cardId]);
+  // Co-enseignement : flashcard d'un collègue, modifiable seulement si elle est dans une séquence partagée en modification
+  const access = useAccess();
+  const links = useLiveQuery(() => db.unitCards.where('cardId').equals(cardId).toArray(), [cardId], []);
+  const editable = canEditCard(card, access.me, links, access.units, access.groups);
   const [edit, setEdit] = useState<Card | null>(null);
   // Texte brut du champ tags : découpé seulement à l'enregistrement (sinon la virgule tapée disparaît aussitôt)
   const [tagsText, setTagsText] = useState('');
@@ -212,7 +217,7 @@ export function CardDetail({
   }, [edit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (startEditing && card && !edit) setEdit({ ...card });
+    if (startEditing && card && !edit && editable) setEdit({ ...card });
   }, [card, startEditing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Flashcard précédente / suivante : enregistrement automatique si on est en train de modifier
@@ -310,7 +315,7 @@ export function CardDetail({
                 Enregistrer et fermer
               </button>
             )}
-            {!edit && (
+            {!edit && editable && (
               <button className="btn primary" onClick={() => setEdit({ ...card })}>
                 Modifier
               </button>

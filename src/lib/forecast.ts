@@ -160,10 +160,19 @@ export async function levelPlans(teacherId: string, subject = SUBJECTS[0]): Prom
     ...units.map((u) => u.level ?? ''),
     ...allGroups.filter((g) => !g.archived && !isClass(g)).flatMap((g) => (g.tracks ?? []).filter((t) => t.subject === subject).map((t) => t.level)),
   ]);
+  // Classe partagée par un collègue : sans cours de cette classe dans son propre emploi du temps,
+  // le co-enseignant voit les prévisions faites d'après l'emploi du temps du professeur principal
+  const owners = [...new Set(active.map((g) => g.teacherIds[0]).filter((t) => t && t !== teacherId))];
+  const ownerTt = new Map(await Promise.all(owners.map(async (t) => [t, await loadTimetable(t)] as const)));
+  const planOf = (g: Group, items: Item[]) => {
+    const p = planClass(tt, g, active, items, pubs);
+    const other = ownerTt.get(g.teacherIds[0]);
+    return !p.hasTimetable && other ? planClass(other, g, active, items, pubs) : p;
+  };
   const levels = ALL_LEVELS.filter((l) => shown.has(l)).map((level) => {
     const groups = groupsOfLevel(active, level);
     const items = itemsOf(units, level);
-    return { level, groups, items, plans: new Map(groups.map((g) => [g.id, planClass(tt, g, active, items, pubs)])) };
+    return { level, groups, items, plans: new Map(groups.map((g) => [g.id, planOf(g, items)])) };
   });
   const value = { tt, units, levels };
   cache.set(subject, { key, value });

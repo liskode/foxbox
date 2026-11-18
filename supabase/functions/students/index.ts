@@ -44,8 +44,9 @@ Deno.serve(async (req) => {
 
     if (body.action === 'create') {
       const { groupId, students } = body as { groupId: string; students: { firstName: string; lastName: string }[] };
-      const { data: group } = await admin.from('groups').select('teacher_ids, data').eq('id', groupId).maybeSingle();
-      if (!group || !group.teacher_ids.includes(uid)) return json({ error: 'Classe introuvable' }, 403);
+      const { data: group } = await admin.from('groups').select('teacher_ids, editor_ids, data').eq('id', groupId).maybeSingle();
+      if (!group || !(group.teacher_ids[0] === uid || (group.teacher_ids.includes(uid) && (group.editor_ids ?? []).includes(uid))))
+        return json({ error: 'Classe introuvable' }, 403);
       const subject = group.data.subject as string;
 
       const { data: existing } = await admin.from('students').select('id, data').eq('school_id', teacher.school_id);
@@ -97,7 +98,7 @@ Deno.serve(async (req) => {
 
     if (body.action === 'rename') {
       const { studentId, firstName, lastName } = body as { studentId: string; firstName: string; lastName: string };
-      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      const { data: mine } = await admin.rpc('editable_student_ids_for', { teacher: uid });
       if (!(mine as string[] | null)?.includes(studentId)) return json({ error: 'Élève introuvable' }, 403);
       const { data: s } = await admin.from('students').select('data, school_id').eq('id', studentId).single();
       const { data: others } = await admin.from('students').select('id, data').eq('school_id', s!.school_id).neq('id', studentId);
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
 
     if (body.action === 'delete') {
       const { studentId } = body as { studentId: string };
-      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      const { data: mine } = await admin.rpc('owned_student_ids_for', { teacher: uid });
       if (!(mine as string[] | null)?.includes(studentId)) return json({ error: 'Élève introuvable' }, 403);
       await deleteStudent(studentId);
       return json({ deleted: 1 });
@@ -139,7 +140,7 @@ Deno.serve(async (req) => {
     if (body.action === 'deleteGroup') {
       const { groupId, deleteOrphans } = body as { groupId: string; deleteOrphans: boolean };
       const { data: group } = await admin.from('groups').select('teacher_ids').eq('id', groupId).maybeSingle();
-      if (!group || !group.teacher_ids.includes(uid)) return json({ error: 'Classe introuvable' }, 403);
+      if (!group || group.teacher_ids[0] !== uid) return json({ error: 'Seul le professeur principal de la classe peut la supprimer' }, 403);
       const { data: ms } = await admin.from('memberships').select('student_id').eq('group_id', groupId).eq('deleted', false);
       let removed = 0;
       if (deleteOrphans) {
@@ -160,7 +161,7 @@ Deno.serve(async (req) => {
 
     if (body.action === 'reset') {
       const { studentId } = body as { studentId: string };
-      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      const { data: mine } = await admin.rpc('editable_student_ids_for', { teacher: uid });
       if (!(mine as string[] | null)?.includes(studentId)) return json({ error: 'Élève introuvable' }, 403);
       const pw = password();
       const { error } = await admin.auth.admin.updateUserById(studentId, { password: pw });
@@ -173,7 +174,7 @@ Deno.serve(async (req) => {
     // ---------- Comptes parents ----------
     // Identifiant : l'adresse e-mail du parent (il peut alors réinitialiser son mot de passe), sinon parent.prenom.nom
     const isMine = async (studentId: string) => {
-      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      const { data: mine } = await admin.rpc('owned_student_ids_for', { teacher: uid });
       return (mine as string[] | null)?.includes(studentId) ?? false;
     };
 
@@ -217,7 +218,7 @@ Deno.serve(async (req) => {
     const parentOfMine = async (parentId: string) => {
       const { data: p } = await admin.from('parents').select('student_ids, data').eq('id', parentId).maybeSingle();
       if (!p) return null;
-      const { data: mine } = await admin.rpc('my_student_ids_for', { teacher: uid });
+      const { data: mine } = await admin.rpc('owned_student_ids_for', { teacher: uid });
       return (p.student_ids as string[]).some((x) => (mine as string[] | null)?.includes(x)) ? p : null;
     };
 

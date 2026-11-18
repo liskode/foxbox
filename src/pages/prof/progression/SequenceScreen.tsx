@@ -22,6 +22,8 @@ import { useAuth } from '../../../lib/auth';
 import { UnitDetails } from '../../../components/UnitDetails';
 import { useHideDone, HideDoneToggle, usePlans, createSequence } from './shared';
 import { Icon } from '../../../components/Icon';
+import { useAccess } from '../../../lib/access';
+import { ReadOnlyNote } from '../../../components/ReadOnly';
 
 export function SequenceScreen({ seqId }: { seqId: string }) {
   const units = useLiveQuery(() => db.units.toArray(), [], []);
@@ -41,6 +43,9 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
   const [editNext, setEditNext] = useState<string | null>(null);
   const unit = units.find((u) => u.id === sel);
   const band = useCardBand();
+  const access = useAccess();
+  const canEdit = access.canEditUnit(unit); // co-enseignement : séquence d'un collègue partagée en lecture seule
+  const seqOfUnit = unit?.kind === 'sequence' ? unit : units.find((u) => u.id === unit?.parentId);
 
   const cardsInUnit = useLiveQuery(async () => {
     if (!unit) return [];
@@ -275,6 +280,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                     {unitLabel(unit)}
                   </h1>
                 </div>
+                {canEdit && (
                 <div className="row">
                   {unit.kind === 'sequence' && (
                     <>
@@ -313,10 +319,13 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                     Supprimer
                   </button>
                 </div>
+                )}
               </div>
 
-              {unit.isEval && <EvalLinks unit={unit} />}
-              <UnitDetails unit={unit} />
+              {!canEdit && <ReadOnlyNote ownerId={seqOfUnit?.ownerId ?? unit.ownerId} what={unit.kind === 'sequence' ? 'Séquence' : 'Séance'} />}
+              {canEdit && seqOfUnit && unit.kind === 'sequence' && (!unit.ownerId || unit.ownerId === access.me) && <ShareSequence seq={unit} />}
+              {unit.isEval && <EvalLinks unit={unit} canEdit={canEdit} />}
+              <UnitDetails unit={unit} readOnly={!canEdit} />
               {data && lp && (lp.groups.length > 0 || subject === SUBJECTS[0]) && (
                 <ClassProgress
                   seq={unit.kind === 'sequence' ? unit : units.find((u) => u.id === unit.parentId)!}
@@ -325,6 +334,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                   selected={unit.id}
                   onSelect={setSel}
                   hideDone={hideDone}
+                  canEdit={canEdit}
                 />
               )}
 
@@ -369,14 +379,16 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                         </span>
                       )}
                     </h3>
-                    <div className="row">
-                      <button className="btn" onClick={() => newCard(unit)}>
-                        + Nouvelle flashcard
-                      </button>
-                      <button className="btn primary" onClick={() => setPicking(true)}>
-                        + Ajouter des flashcards
-                      </button>
-                    </div>
+                    {canEdit && (
+                      <div className="row">
+                        <button className="btn" onClick={() => newCard(unit)}>
+                          + Nouvelle flashcard
+                        </button>
+                        <button className="btn primary" onClick={() => setPicking(true)}>
+                          + Ajouter des flashcards
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="cardgrid">
                     {cardsInUnit?.map(({ card, own, suspended }) => (
@@ -387,7 +399,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
                         <div className="meta" style={{ background: band(card).color }}>
                           <span className="band-label">{band(card).label}</span>
                           <span className="code">{card.code}</span>
-                          {own ? (
+                          {own && !canEdit ? null : own ? (
                             <span className="row" style={{ gap: 4 }}>
                             <button
                               className="btn small ghost"
@@ -440,7 +452,7 @@ export function SequenceScreen({ seqId }: { seqId: string }) {
 }
 
 // Séance d'évaluation : les évaluations liées (une par variante) et leurs classes
-function EvalLinks({ unit }: { unit: Unit }) {
+function EvalLinks({ unit, canEdit }: { unit: Unit; canEdit: boolean }) {
   const nav = useNavigate();
   const evs = useLiveQuery(async () => (await db.evaluations.toArray()).filter((e) => e.unitId === unit.id && !e.template), [unit.id], []);
   const groups = useLiveQuery(() => db.groups.toArray(), [], [] as Group[]);
@@ -448,7 +460,7 @@ function EvalLinks({ unit }: { unit: Unit }) {
     <div className="panel stack" style={{ borderColor: '#e05a4f' }}>
       <div className="spread">
         <h3 className="panel-title"><Icon name="eval" size={16} /> Évaluation{evs.length > 1 ? 's (variantes)' : ''}</h3>
-        {evs[0] && (
+        {evs[0] && canEdit && (
           <button
             className="btn small"
             title="Copie de l'évaluation pour d'autres classes du niveau"
@@ -522,6 +534,7 @@ function ClassProgress({
   selected,
   onSelect,
   hideDone,
+  canEdit,
 }: {
   seq: Unit;
   lp: LevelPlan;
@@ -529,7 +542,9 @@ function ClassProgress({
   selected: string;
   onSelect: (id: string) => void;
   hideDone: boolean;
+  canEdit: boolean;
 }) {
+  const access = useAccess();
   const items = lp.items.filter((it) => it.seq.id === seq.id);
   const shown = items.filter((it) => !hideDone || it.unit.id === selected || !finishedByAll(lp, [it]));
   return (
@@ -555,6 +570,7 @@ function ClassProgress({
                 <td style={{ width: 70 }}>
                   <select
                     value={durationOf(it.unit)}
+                    disabled={!canEdit}
                     title="Durée prévue"
                     onChange={(e) => db.units.update(it.unit.id, { duration: +e.target.value })}
                     style={{ fontSize: '0.8rem' }}
@@ -583,6 +599,7 @@ function ClassProgress({
                           tt={tt}
                           groups={lp.groups}
                           isEval={it.unit.isEval}
+                          readOnly={!access.canEditGroup(g)}
                         />
                       );
                     })}
@@ -598,6 +615,35 @@ function ClassProgress({
         Cliquez sur une date pour cocher la séance « faite » lors d'un cours : ses flashcards sont publiées pour la classe et ses documents deviennent
         visibles. Les dates prévues se recalculent à chaque fois, d'après l'emploi du temps et le calendrier.
       </span>
+    </div>
+  );
+}
+
+// Partage d'une séquence (et de ses séances, de leurs flashcards) en modification avec des collègues
+function ShareSequence({ seq }: { seq: Unit }) {
+  const { me } = useAccess();
+  const teachers = useLiveQuery(async () => (await db.teachers.toArray()).filter((t) => t.id !== me), [me], []);
+  if (!teachers.length) return null;
+  const ids = seq.editorIds ?? [];
+  return (
+    <div className="panel calm row small" style={{ gap: 16 }}>
+      <span>
+        <Icon name="users" size={16} /> <b>Partager la modification</b> de cette séquence avec :
+      </span>
+      {teachers.map((t) => (
+        <label key={t.id} className="row" style={{ gap: 6 }}>
+          <input
+            type="checkbox"
+            checked={ids.includes(t.id)}
+            onChange={(e) => {
+              const editorIds = e.target.checked ? [...ids, t.id] : ids.filter((x) => x !== t.id);
+              db.units.update(seq.id, { editorIds });
+              toast(`${t.name} ${e.target.checked ? 'peut modifier' : 'ne peut plus modifier'} « ${seq.name} »`, { undo: () => db.units.update(seq.id, { editorIds: ids }) });
+            }}
+          />
+          {t.name}
+        </label>
+      ))}
     </div>
   );
 }

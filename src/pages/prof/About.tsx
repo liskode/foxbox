@@ -231,6 +231,21 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     ],
   },
   {
+    title: 'Co-enseignement',
+    text: 'Partager une classe ou une séquence avec un collègue, en lecture seule ou avec le droit de modifier.',
+    details: [
+      'invitation d’un collègue par son adresse e-mail (Réglages de la classe) : il crée ensuite son compte professeur',
+      'droit choisi pour chaque collègue dans les Réglages de la classe : pas d’accès, lecture seule ou modification',
+      'lecture seule : il voit les élèves, la progression, les séances faites, les évaluations de la classe et les résultats, avec un bandeau « lecture seule »',
+      'modification : il peut aussi cocher les séances faites, corriger les copies, modifier les évaluations de la classe et les séquences, séances et flashcards du niveau',
+      'partage d’une seule séquence en modification (case « Partager la modification » sur la séquence)',
+      'restent privés : notes, aménagements, coordonnées des familles, absences, notes de classe, messages aux parents',
+      'seul le professeur principal choisit les co-enseignants, supprime la classe ou un élève et gère les comptes parents',
+      'rien ne change pour les élèves et les familles : messages et notes restent au nom du professeur principal',
+      'règles vérifiées par le serveur',
+    ],
+  },
+  {
     title: 'Plans de classe et appel',
     text: 'Placer les élèves dans chaque salle, projeter le plan au tableau et faire l’appel.',
     details: [
@@ -449,6 +464,7 @@ const FEATURES: { kicker: string; title: string; text: string; points: string[];
 const ALSO: { icon: string; title: string; text: string }[] = [
   { icon: 'handshake', title: 'Cours particuliers', text: 'Séances, travail à faire, règlements, attestations.' },
   { icon: 'family', title: 'Parents', text: 'Suivi du soutien, messagerie, rendez-vous.' },
+  { icon: 'users', title: 'Co-enseignement', text: 'Une classe partagée avec un collègue, en lecture ou en modification.' },
   { icon: 'laptop', title: 'Physifox', text: 'Un site public de cours avec flashcards.' },
   { icon: 'message', title: 'Messagerie', text: 'Photos et mémos vocaux, avec élèves et familles.' },
   { icon: 'target', title: 'Compétences', text: 'Référentiel modifiable, niveaux du LSU.' },

@@ -31,6 +31,7 @@ export function DoneCell({
   groups,
   showName = true,
   isEval = false,
+  readOnly = false,
 }: {
   g: Group;
   unitId: string;
@@ -41,6 +42,7 @@ export function DoneCell({
   groups: Group[];
   showName?: boolean;
   isEval?: boolean; // séance d'évaluation : cocher ouvre la saisie des copies de la classe
+  readOnly?: boolean; // co-enseignant en lecture seule : la date s'affiche, sans menu
 }) {
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
@@ -52,7 +54,7 @@ export function DoneCell({
     bottom?: number;
   }>({ left: 0 });
   const toggle = () => {
-    if (viaSeq) return;
+    if (viaSeq || readOnly) return;
     const r = btn.current?.getBoundingClientRect();
     if (r) {
       const left = Math.max(8, Math.min(r.left, window.innerWidth - 248));

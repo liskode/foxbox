@@ -90,7 +90,8 @@ export async function childrenLinks(studentIds: string[]): Promise<ChildLink[]> 
     for (const m of await db.memberships.where('studentId').equals(studentId).toArray()) {
       const g = await db.groups.get(m.groupId);
       if (!g || g.archived) continue;
-      for (const t of g.teacherIds) out.push({ studentId, groupId: g.id, teacherId: t, teacherName: (await db.teachers.get(t))?.name ?? 'Professeur', subject: g.subject });
+      // Seul le professeur principal de la classe est l'interlocuteur des familles (les co-enseignants restent invisibles)
+      for (const t of g.teacherIds.slice(0, 1)) out.push({ studentId, groupId: g.id, teacherId: t, teacherName: (await db.teachers.get(t))?.name ?? 'Professeur', subject: g.subject });
     }
   return out;
 }

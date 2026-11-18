@@ -13,6 +13,7 @@ interface TableSpec {
   remote: string;
   cols: (o: Obj) => Obj; // colonnes utilisées par les règles d'accès
   updateOnly?: boolean; // lignes créées uniquement côté serveur
+  owner?: boolean; // l'auteur (owner_id) est recopié dans l'objet reçu (ownerId) : sert à savoir qui peut modifier
 }
 
 let me: string | null = null;
@@ -21,18 +22,18 @@ export const setSyncUser = (id: string | null) => (me = id);
 const SPECS: Record<string, TableSpec> = {
   teachers: { remote: 'teachers', cols: () => ({}), updateOnly: true },
   students: { remote: 'students', cols: () => ({}), updateOnly: true },
-  groups: { remote: 'groups', cols: (g) => ({ teacher_ids: g.teacherIds }) },
+  groups: { remote: 'groups', cols: (g) => ({ teacher_ids: g.teacherIds, editor_ids: g.editorIds ?? [] }) },
   memberships: { remote: 'memberships', cols: (m) => ({ group_id: m.groupId, student_id: m.studentId }) },
-  cards: { remote: 'cards', cols: (c) => ({ owner_id: c.ownerId ?? me }) },
-  units: { remote: 'units', cols: (u) => ({ owner_id: u.ownerId ?? me }) },
-  unitCards: { remote: 'unit_cards', cols: (u) => ({ owner_id: u.ownerId ?? me, unit_id: u.unitId, card_id: u.cardId }) },
+  cards: { remote: 'cards', cols: (c) => ({ owner_id: c.ownerId ?? me }), owner: true },
+  units: { remote: 'units', cols: (u) => ({ owner_id: u.ownerId ?? me, editor_ids: u.editorIds ?? [] }), owner: true },
+  unitCards: { remote: 'unit_cards', cols: (u) => ({ owner_id: u.ownerId ?? me, unit_id: u.unitId, card_id: u.cardId }), owner: true },
   publications: { remote: 'publications', cols: (p) => ({ group_id: p.groupId }) },
   studentCards: { remote: 'student_cards', cols: (s) => ({ student_id: s.studentId }) },
   reviews: { remote: 'reviews', cols: (r) => ({ student_id: r.studentId }) },
   trombi: { remote: 'trombi', cols: (t) => ({ teacher_id: t.teacherId }) },
   imports: { remote: 'imports', cols: (i) => ({ owner_id: i.ownerId ?? me }) },
   notes: { remote: 'notes', cols: (n) => ({ teacher_id: n.teacherId, student_id: n.studentId }) },
-  evaluations: { remote: 'evaluations', cols: (e) => ({ owner_id: e.ownerId ?? me }) },
+  evaluations: { remote: 'evaluations', cols: (e) => ({ owner_id: e.ownerId ?? me, group_ids: e.groupIds ?? [] }), owner: true },
   results: { remote: 'results', cols: (r) => ({ student_id: r.studentId }) },
   resultShares: { remote: 'result_shares', cols: (r) => ({ student_id: r.studentId }) },
   selfChecks: { remote: 'self_checks', cols: (s) => ({ student_id: s.studentId, teacher_id: s.teacherId }) },
@@ -267,18 +268,21 @@ async function pullTable(name: string, spec: TableSpec) {
   const cursorKey = `cursor:${name}`;
   let cursor = ((await db.meta.get(cursorKey))?.value as string | undefined) ?? '1970-01-01T00:00:00Z';
   for (;;) {
-    const { data, error } = await supabase
+    const columns: string = spec.owner ? 'id, data, deleted, updated_at, owner_id' : 'id, data, deleted, updated_at';
+    const { data, error } = (await supabase
       .from(spec.remote)
-      .select('id, data, deleted, updated_at')
+      .select(columns)
       .gt('updated_at', cursor)
       .order('updated_at')
-      .limit(1000);
+      .limit(1000)) as unknown as { data: Obj[]; error: Error | null };
     if (error) throw error;
     if (!data.length) break;
     const pending = new Set((await db.outbox.where('key').startsWith(`${name}|`).toArray()).map((o) => o.id));
     await db.transaction('rw', db.table(name), db.meta, async () => {
       (Dexie.currentTransaction as unknown as { __remote: boolean }).__remote = true;
-      const put = data.filter((r) => !r.deleted && !pending.has(r.id)).map((r) => r.data);
+      const put = data
+        .filter((r) => !r.deleted && !pending.has(r.id))
+        .map((r) => (spec.owner && r.owner_id && r.data.ownerId !== r.owner_id ? { ...r.data, ownerId: r.owner_id } : r.data));
       const del = data.filter((r) => r.deleted && !pending.has(r.id)).map((r) => r.id);
       if (put.length) await db.table(name).bulkPut(put);
       if (del.length) await db.table(name).bulkDelete(del);

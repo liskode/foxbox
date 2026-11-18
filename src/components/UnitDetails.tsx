@@ -74,7 +74,7 @@ export function DocumentList({ docs }: { docs: NonNullable<Unit['documents']> })
   );
 }
 
-export function UnitDetails({ unit }: { unit: Unit }) {
+export function UnitDetails({ unit, readOnly = false }: { unit: Unit; readOnly?: boolean }) {
   const [desc, setDesc] = useState(unit.description ?? '');
   const [busy, setBusy] = useState('');
   useEffect(() => {
@@ -116,16 +116,19 @@ export function UnitDetails({ unit }: { unit: Unit }) {
       <textarea
         value={desc}
         onChange={(e) => setDesc(e.target.value)}
-        onBlur={() => desc !== (unit.description ?? '') && db.units.update(unit.id, { description: desc })}
+        onBlur={() => !readOnly && desc !== (unit.description ?? '') && db.units.update(unit.id, { description: desc })}
+        readOnly={readOnly}
         placeholder="Objectifs, déroulé, matériel, activités du manuel…"
         style={{ fontFamily: 'var(--font)', fontSize: '0.95rem', minHeight: 90 }}
       />
       <div className="spread">
         <b className="small">Documents ({docs.length})</b>
-        <label className="btn small">
-          + Ajouter un document
-          <input type="file" accept={ACCEPT} multiple hidden onChange={(e) => addFiles(e.target.files)} />
-        </label>
+        {!readOnly && (
+          <label className="btn small">
+            + Ajouter un document
+            <input type="file" accept={ACCEPT} multiple hidden onChange={(e) => addFiles(e.target.files)} />
+          </label>
+        )}
       </div>
       {busy && <span className="small">{busy}</span>}
       {docs.map((d) => (
@@ -134,9 +137,11 @@ export function UnitDetails({ unit }: { unit: Unit }) {
             <Icon name={isAnimation(d.name) ? 'screen' : 'file'} size={15} /> {d.name}
           </button>
           <span className="small muted">{sizeLabel(d.size)}</span>
-          <button className="btn small ghost" onClick={() => remove(d.mediaId, d.name)} title="Retirer">
-            <Icon name="x" size={14} />
-          </button>
+          {!readOnly && (
+            <button className="btn small ghost" onClick={() => remove(d.mediaId, d.name)} title="Retirer">
+              <Icon name="x" size={14} />
+            </button>
+          )}
         </div>
       ))}
       <span className="small muted">
@@ -144,7 +149,7 @@ export function UnitDetails({ unit }: { unit: Unit }) {
         Ils sont accessibles aux élèves, dans leur espace, dès que la séance est cochée « faite » pour leur classe.
         Le descriptif reste pour vous.
       </span>
-      {freeCode && (
+      {freeCode && !readOnly && (
         <span className="small muted">
           Nouvelle fiche : code libre <b>{freeCode}</b> (ajoutez -C pour un cours, -E pour des exercices corrigés), à écrire au début du nom du PDF
           et dans sa source. Ce code ne change pas si la séance est déplacée.

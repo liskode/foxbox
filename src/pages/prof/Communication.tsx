@@ -39,13 +39,14 @@ export function Communication() {
 
 // ---------- Messages ----------
 
-// Groupes du professeur (classes puis soutien), non archivés
+// Groupes du professeur (classes puis soutien), non archivés ; les classes partagées par un collègue n'y sont pas :
+// les élèves et les familles écrivent au professeur principal de la classe
 function useMyGroups() {
   const { session } = useAuth();
   return useLiveQuery(
     async () =>
       (await db.groups.toArray())
-        .filter((g) => g.teacherIds.includes(session!.id) && !g.archived)
+        .filter((g) => g.teacherIds[0] === session!.id && !g.archived)
         .sort((a, b) => Number(!isClass(a)) - Number(!isClass(b)) || a.name.localeCompare(b.name, 'fr', { numeric: true })),
     [session?.id],
     [] as Group[],

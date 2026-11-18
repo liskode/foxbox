@@ -8,6 +8,7 @@ export type Rule = 'strict' | 'douce';
 
 export interface Card {
   id: string;
+  ownerId?: string; // auteur (absent : créée sur cet appareil par l'utilisateur)
   code: string; // code unique FoxBox, ex. 43MM-012 (voir cardCodes.ts)
   sourceRef?: string; // référence d'origine, ex. 410FC01
   origin?: string; // origine (2 lettres : ER, MM…)
@@ -57,7 +58,8 @@ export interface Group {
   name: string;
   schoolYear: string;
   subject: string;
-  teacherIds: string[];
+  teacherIds: string[]; // le premier est le propriétaire de la classe ; les autres sont co-enseignants
+  editorIds?: string[]; // co-enseignants autorisés à modifier (les autres sont en lecture seule)
   archived?: boolean;
   color?: string; // couleur de repérage (celle de son niveau)
   seatPlans?: import('./rooms').SeatPlan[]; // plans de classe
@@ -150,6 +152,8 @@ export interface Membership {
 
 export interface Unit {
   id: string;
+  ownerId?: string; // auteur (absent : créée sur cet appareil par l'utilisateur)
+  editorIds?: string[]; // séquence partagée en modification avec ces collègues
   kind: 'sequence' | 'seance';
   parentId?: string;
   subject: string;

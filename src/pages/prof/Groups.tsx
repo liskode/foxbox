@@ -13,6 +13,8 @@ import { levelOfName, levelColors, applyLevelColors, setLevelColor, LEVELS, LYCE
 import { StatsTab } from './groups/StatsTab';
 import { StudentsTab } from './groups/StudentsTab';
 import { TeachersTab } from './groups/SettingsTab';
+import { useAccess } from '../../lib/access';
+import { ReadOnlyNote, ReadOnlyZone } from '../../components/ReadOnly';
 import { Icon } from '../../components/Icon';
 import { TabBar } from '../../components/TabBar';
 import { askForm } from '../../components/Dialog';
@@ -99,6 +101,7 @@ export function GroupPage() {
   const { session } = useAuth();
   const rooms = useLiveQuery(() => loadRooms(session!.id), [session?.id], []);
   const [choosing, setChoosing] = useState(false);
+  const access = useAccess();
   if (group === undefined) return null;
   if (!group) return <div className="page muted">Classe introuvable.</div>;
   const tabs = [
@@ -112,6 +115,7 @@ export function GroupPage() {
     ['profs', 'Réglages'],
   ] as const;
   const plans = group.seatPlans ?? [];
+  const ro = !access.canEditGroup(group); // co-enseignant en lecture seule
   const project = (planId: string) => window.open(`#/prof/plan/${group.id}/${planId}`, 'foxbox-plan', 'popup,width=1400,height=900');
   return (
     <div className="page stack">
@@ -124,9 +128,11 @@ export function GroupPage() {
           </span>
           <div style={{ flex: 1 }} />
           <div className="row" style={{ gap: 8, alignSelf: 'center' }}>
-            <button className="btn primary" onClick={() => setParams({ onglet: 'plan', appel: '1' }, { replace: true })}>
-              <Icon name="eval" /> Faire l'appel
-            </button>
+            {!ro && (
+              <button className="btn primary" onClick={() => setParams({ onglet: 'plan', appel: '1' }, { replace: true })}>
+                <Icon name="eval" /> Faire l'appel
+              </button>
+            )}
             {plans.length > 0 && (
               <div style={{ position: 'relative' }}>
                 <button
@@ -154,17 +160,20 @@ export function GroupPage() {
         </div>
         <TabBar tabs={tabs} current={tab} onChange={setTab} variant="underline" />
       </div>
+      {ro && <ReadOnlyNote ownerId={group.teacherIds[0]} what="Classe" />}
       {tab === 'apercu' && <ClassOverview group={group} goTab={setTab} />}
-      {tab === 'progression' && (
-        <div className="stack">
-          <Progression group={group} />
-        </div>
-      )}
-      {tab === 'suivi' && <StatsTab groupId={group.id} />}
-      {tab === 'eleves' && <StudentsTab group={group} />}
+      <ReadOnlyZone readOnly={ro && tab !== 'apercu' && tab !== 'trombi' && tab !== 'profs'} className="stack">
+        {tab === 'progression' && (
+          <div className="stack">
+            <Progression group={group} />
+          </div>
+        )}
+        {tab === 'suivi' && <StatsTab groupId={group.id} />}
+        {tab === 'eleves' && <StudentsTab group={group} />}
+        {tab === 'plan' && <SeatPlanTab group={group} />}
+        {tab === 'evaluations' && <ClassEvaluations group={group} />}
+      </ReadOnlyZone>
       {tab === 'trombi' && <Trombi groupId={group.id} />}
-      {tab === 'plan' && <SeatPlanTab group={group} />}
-      {tab === 'evaluations' && <ClassEvaluations group={group} />}
       {tab === 'profs' && <TeachersTab group={group} />}
     </div>
   );

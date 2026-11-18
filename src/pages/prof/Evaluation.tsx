@@ -9,6 +9,8 @@ import { CopiesTab } from './evaluation/Copies';
 import { GrilleTab } from './evaluation/Grille';
 import { ResultatsTab } from './evaluation/Resultats';
 import { TabBar } from '../../components/TabBar';
+import { useAccess } from '../../lib/access';
+import { ReadOnlyNote, ReadOnlyZone } from '../../components/ReadOnly';
 
 // ---------------------------------------------------------------- Page
 export function EvaluationPage() {
@@ -17,6 +19,7 @@ export function EvaluationPage() {
   const [params, setParams] = useSearchParams();
   type Tab = 'bareme' | 'copies' | 'grille' | 'resultats';
   const tab = (params.get('onglet') as Tab) || 'copies';
+  const access = useAccess();
   if (ev === undefined) return null;
   if (!ev) return <div className="page muted">Évaluation introuvable.</div>;
   const update = async (p: Partial<Evaluation>) => {
@@ -30,7 +33,11 @@ export function EvaluationPage() {
         ['grille', 'Grille'],
         ['resultats', 'Résultats'],
       ];
-  const current = ev.template ? 'bareme' : tab;
+  // Co-enseignement : évaluation d'un collègue en lecture seule (pas de saisie copie par copie)
+  const ro = !access.canEditEval(ev);
+  const copiesAt = tabs.findIndex(([k]) => k === 'copies');
+  if (ro && copiesAt >= 0) tabs.splice(copiesAt, 1);
+  const current = ev.template ? 'bareme' : ro && tab === 'copies' ? 'grille' : tab;
 
   return (
     <div className={'page stack' + (current === 'grille' ? ' wide' : '')}>
@@ -53,9 +60,12 @@ export function EvaluationPage() {
         </div>
         <TabBar tabs={tabs} current={current} onChange={(k) => setParams({ onglet: k }, { replace: true })} />
       </div>
-      {current === 'bareme' && <BaremeTab ev={ev} update={update} />}
+      {ro && <ReadOnlyNote ownerId={ev.ownerId} what="Évaluation" />}
+      <ReadOnlyZone readOnly={ro} className="stack">
+        {current === 'bareme' && <BaremeTab ev={ev} update={update} />}
+        {current === 'grille' && <GrilleTab ev={ev} />}
+      </ReadOnlyZone>
       {current === 'copies' && <CopiesTab ev={ev} />}
-      {current === 'grille' && <GrilleTab ev={ev} />}
       {current === 'resultats' && <ResultatsTab ev={ev} />}
     </div>
   );
