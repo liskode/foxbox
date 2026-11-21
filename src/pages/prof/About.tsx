@@ -25,7 +25,7 @@ export const DEMO_COLUMNS: { key: 'prof' | 'eleve' | 'soutien' | 'parent'; icon:
     title: 'Élève en classe',
     sub: 'Réviser un peu chaque jour',
     features: [
-      'révision quotidienne des flashcards par boîtes (objectif du jour)',
+      'révision quotidienne des flashcards par boîtes, toutes matières mélangées (objectif du jour)',
       'pensé pour le téléphone : réponses sous le pouce',
       'progrès : série, régularité, avancement',
       'notes des évaluations et histogramme des compétences',
@@ -337,12 +337,12 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Espace élève',
     text: 'Ce que voit l’élève sur ordinateur ou téléphone.',
     details: [
-      'révision quotidienne par boîtes de Leitner (7 boîtes, objectif du jour)',
+      'révision quotidienne par boîtes de Leitner (7 boîtes, objectif du jour par matière) : un seul bouton « Commencer » mélange toutes les matières ; cases à décocher pour ne réviser qu’une partie des matières',
       'le jour de révision change à 3 h du matin (et non à minuit), à l’heure de l’élève : celle du fuseau fixé dans son suivi de soutien, sinon celle de son appareil',
       'pensé pour le téléphone : flashcard en grand, boutons de réponse sous le pouce, menu en bas de l’écran',
       'réponses « Je ne sais pas », « J’hésite… », « Facile »',
       'langues : bouton haut-parleur au verso des flashcards de vocabulaire, qui lit la réponse avec la voix de l’appareil (tchèque : voix « Zuzana » sur iPhone, iPad et Mac) ; aussi sur la fiche d’une flashcard côté professeur',
-      'progrès : série, régularité, boîtes (avec les flashcards suspendues)',
+      'progrès : série, régularité, boîtes (avec les flashcards suspendues), toutes matières confondues ou matière par matière',
       'si sa classe ou son soutien l’autorise : bouton « Retirer cette flashcard de ma pile » au-dessus de la flashcard pendant la révision, et bloc « Retirées de ma pile » sur l’accueil pour les reprendre',
       'onglet Évaluations (élèves suivis en soutien) : « Signaler un DS à venir » (date, matière, programme par points cochés, texte ou capture Pronote), puis copie, corrigé et note ; graphique de progression par matière ; notes des évaluations rendues en classe',
       'documents de cours des séances faites',
@@ -414,7 +414,7 @@ const FEATURES: { kicker: string; title: string; text: string; points: string[];
   {
     kicker: 'Côté élève',
     title: 'Réviser un peu chaque jour, sur son téléphone',
-    text: 'L’élève retrouve les flashcards des séances faites en classe, au bon moment grâce aux boîtes de Leitner : ce qu’il sait revient de moins en moins souvent, ce qu’il oublie revient vite. Un objectif du jour, une série de jours, un calendrier de régularité : de quoi garder le rythme.',
+    text: 'L’élève retrouve les flashcards des séances faites en classe, au bon moment grâce aux boîtes de Leitner : ce qu’il sait revient de moins en moins souvent, ce qu’il oublie revient vite. Un seul bouton pour réviser toutes ses matières mélangées, un objectif du jour, une série de jours, un calendrier de régularité : de quoi garder le rythme.',
     points: ['réponses sous le pouce : rouge à gauche, vert à droite', 'formules, images et schémas sur les flashcards', 'vous voyez qui révise et qui décroche'],
     shots: [
       { name: 'eleve', alt: 'Accueil de l’élève : objectif du jour, série, régularité', phone: true },

@@ -152,6 +152,37 @@ export async function todaySession(studentId: string, subject: string, extra = 0
   return { goal, done, queue, pending, scMap };
 }
 
+// Révision mélangée de plusieurs matières (esprit des boîtes de Leitner : tout, chaque jour) : la file de chaque
+// matière garde son ordre (en retard d'abord, puis nouvelles), et on les entrelace une flashcard sur deux.
+export async function mixedSession(studentId: string, subjects: string[], extra = 0) {
+  const per = await Promise.all(subjects.map(async (subject) => ({ subject, ...(await todaySession(studentId, subject, extra)) })));
+  const queue: { cardId: string; subject: string }[] = [];
+  const seen = new Set<string>();
+  for (let k = 0; per.some((p) => k < p.queue.length); k++)
+    for (const p of per) {
+      const cardId = p.queue[k];
+      if (cardId && !seen.has(cardId)) (seen.add(cardId), queue.push({ cardId, subject: p.subject }));
+    }
+  const remaining = per.reduce((a, p) => a + Math.max(0, p.goal - p.done), 0);
+  return {
+    per,
+    queue: extra ? queue.slice(0, remaining + extra) : queue,
+    goal: per.reduce((a, p) => a + p.goal, 0),
+    done: per.reduce((a, p) => a + p.done, 0),
+    pending: per.reduce((a, p) => a + p.pending, 0),
+  };
+}
+
+// Adresse de la révision mélangée ; `subjects` absent = toutes les matières de l'élève
+export const mixedPath = (subjects?: string[], extra = 0) => {
+  const q = new URLSearchParams();
+  if (subjects) q.set('m', subjects.join('|'));
+  if (extra) q.set('extra', String(extra));
+  const qs = q.toString();
+  return `/eleve/revision/${MIXED}${qs ? '?' + qs : ''}`;
+};
+export const MIXED = 'toutes';
+
 export async function recordAnswer(studentId: string, cardId: string, subject: string, rating: Rating) {
   const student = await db.students.get(studentId);
   const prev = await db.studentCards.get(`${studentId}|${cardId}`);

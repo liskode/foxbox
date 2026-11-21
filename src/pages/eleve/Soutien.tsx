@@ -10,7 +10,7 @@ import { durationLabel } from '../../lib/tutoring';
 import { RichText } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
 import { Link, useNavigate } from 'react-router-dom';
-import { studentSubjects, todaySession } from '../../lib/leitner';
+import { mixedPath, studentSubjects, todaySession } from '../../lib/leitner';
 import { unreadTotal } from '../../lib/messages';
 
 export function StudentSoutien() {
@@ -76,7 +76,7 @@ function DailyCards({ studentId }: { studentId: string }) {
   }, [studentId]);
   if (!today) return null;
   return (
-    <button className="btn primary big daily-cards" onClick={() => nav(today.first ? `/eleve/revision/${encodeURIComponent(today.first.subject)}` : '/eleve')}>
+    <button className="btn primary big daily-cards" onClick={() => nav(today.first ? mixedPath() : '/eleve')}>
       <Icon name="cards" size={30} />
       <span className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
         <span>Je révise mes flashcards CHAQUE JOUR</span>

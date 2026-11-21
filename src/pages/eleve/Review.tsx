@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { db, type Card, type Rating } from '../../lib/db';
-import { recordAnswer, todaySession } from '../../lib/leitner';
+import { MIXED, mixedSession, recordAnswer, studentSubjects, todaySession } from '../../lib/leitner';
 import { CardFace } from '../../components/CardFace';
 import { Icon } from '../../components/Icon';
 import { useCardBand } from '../../lib/cardLevel';
@@ -15,6 +15,7 @@ export function ReviewSession() {
   const { subject = '' } = useParams();
   const [params] = useSearchParams();
   const [queue, setQueue] = useState<Card[] | null>(null);
+  const subjectOf = useRef(new Map<string, string>()); // révision mélangée : matière d'où vient chaque flashcard
   const [i, setI] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const flippedAt = useRef(0);
@@ -28,8 +29,15 @@ export function ReviewSession() {
 
   useEffect(() => {
     (async () => {
-      const s = await todaySession(session!.id, subject, Number(params.get('extra') ?? 0));
-      const cards = await db.cards.bulkGet(s.queue);
+      const extra = Number(params.get('extra') ?? 0);
+      let ids: string[];
+      if (subject === MIXED) {
+        const m = params.get('m');
+        const s = await mixedSession(session!.id, m ? m.split('|') : await studentSubjects(session!.id), extra);
+        subjectOf.current = new Map(s.queue.map((q) => [q.cardId, q.subject]));
+        ids = s.queue.map((q) => q.cardId);
+      } else ids = (await todaySession(session!.id, subject, extra)).queue;
+      const cards = await db.cards.bulkGet(ids);
       setQueue(cards.filter(Boolean) as Card[]);
     })();
   }, [session, subject, params]);
@@ -48,7 +56,7 @@ export function ReviewSession() {
       if (!queue || !flipped || busy.current || (!byKey && Date.now() - flippedAt.current < 500)) return;
       busy.current = true; // une seule réponse par flashcard, même en appuyant deux fois très vite
       try {
-        await recordAnswer(session!.id, queue[i].id, subject, r);
+        await recordAnswer(session!.id, queue[i].id, subjectOf.current.get(queue[i].id) ?? subject, r);
         setTally((t) => ({ ...t, [r]: t[r] + 1 }));
         setFlipped(false);
         setI((n) => n + 1);

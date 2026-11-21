@@ -36,22 +36,31 @@ export const when = (t: number) => {
 
 // compact (vue professeur : fiche élève et soutien) : chiffres en pictos, régularité, boîtes et dernières révisions sur une ligne,
 // puis le détail des boîtes ; teacherView : objectif par jour et règle d'erreur modifiables dans ce récapitulatif
+const ALL = '__toutes';
 export function StudentReport({ studentId, teacherView = false, compact = false }: { studentId: string; teacherView?: boolean; compact?: boolean }) {
   const band = useCardBand();
   const student = useLiveQuery(() => (teacherView ? db.students.get(studentId) : undefined), [studentId, teacherView]);
   const subjects = useLiveQuery(() => studentSubjects(studentId), [studentId], []);
   const [subject, setSubject] = useState<string | null>(null);
-  const subj = subject ?? subjects[0];
+  // « Toutes les matières » (par défaut, hors cadre compact du soutien) ou une seule matière
+  const canAll = !compact && subjects.length > 1;
+  const subj = subject ?? (canAll ? ALL : subjects[0]);
   const data = useLiveQuery(async () => {
     if (!subj) return null;
-    const reviews = (await db.reviews.where('studentId').equals(studentId).toArray()).filter((r) => r.subject === subj);
+    const list = subj === ALL ? subjects : [subj];
+    const reviews = (await db.reviews.where('studentId').equals(studentId).toArray()).filter((r) => list.includes(r.subject));
     const day = await studentDay(studentId);
-    const dist = await boxDistribution(studentId, subj);
+    const dists = await Promise.all(list.map((x) => boxDistribution(studentId, x)));
+    const dist = Object.assign(
+      dists.reduce((a, d) => a.map((n, i) => n + d[i]), [0, 0, 0, 0, 0, 0, 0, 0]),
+      { suspended: dists.reduce((a, d) => a + (d.suspended ?? 0), 0) },
+    );
     const hard = difficultForStudent(reviews);
     const cards = await db.cards.bulkGet(hard.map((h) => h.cardId));
     // Soutien : flashcards en cours (boîtes 1 à 7), avec leur prochaine date de révision
     const byBox: { card: Card; due: string }[][] = [[], [], [], [], [], [], [], []];
-    const split = await availableSplit(studentId, subj);
+    const splits = await Promise.all(list.map((x) => availableSplit(studentId, x)));
+    const split = { avail: splits.flatMap((x) => x.avail), suspended: splits.flatMap((x) => x.suspended) };
     if (compact) {
       const availList = split.avail;
       const avail = new Set(availList.map((a) => a.cardId));
@@ -89,7 +98,7 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
       dist,
       hard: hard.map((h, i) => ({ agg: h, card: cards[i] })).filter((x) => x.card && !x.card.deleted),
     };
-  }, [studentId, subj, compact, subjects.length]);
+  }, [studentId, subj, compact, subjects.join('|')]);
   const [open, setOpen] = useState<string | null>(null);
 
   if (!subjects.length) return <div className="notice">Pas encore de classe : rien à afficher.</div>;
@@ -105,6 +114,11 @@ export function StudentReport({ studentId, teacherView = false, compact = false 
     <div className="stack">
       {subjects.length > 1 && (
         <div className="row">
+          {canAll && (
+            <button className={'btn small' + (subj === ALL ? ' primary' : ' ghost')} onClick={() => setSubject(ALL)}>
+              Toutes les matières
+            </button>
+          )}
           {subjects.map((s) => (
             <button key={s} className={'btn small' + (s === subj ? ' primary' : ' ghost')} onClick={() => setSubject(s)}>
               {s}
