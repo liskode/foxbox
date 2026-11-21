@@ -371,7 +371,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     title: 'Sécurité et fonctionnement',
     text: 'FoxBox fonctionne même sans réseau et protège les données personnelles.',
     details: [
-      'copie locale et synchronisation automatique',
+      'copie locale et synchronisation automatique, qui rattrape aussi les changements envoyés au même moment depuis un autre appareil',
       'envois refusés mis de côté sans bloquer les autres',
       'données privées (notes, aménagements, famille, absences, notes de séance de soutien) lisibles par le seul professeur, protégées par le serveur',
       'hébergement en France (Paris)',

@@ -264,15 +264,27 @@ export async function retryFailed() {
 
 // ---------- Réception ----------
 
+const OVERLAP_MS = 5 * 60_000; // marge relue à chaque réception
+// Réparation : les copies locales qui ont pu manquer des lignes (avant la marge ci-dessus) retéléchargent tout une fois
+const RESYNC = 'resync:2026-11-21';
+async function repairOnce() {
+  if (await db.meta.get(RESYNC)) return;
+  await db.meta.where('key').startsWith('cursor:').delete();
+  await db.meta.put({ key: RESYNC, value: Date.now() });
+}
+
 async function pullTable(name: string, spec: TableSpec) {
   const cursorKey = `cursor:${name}`;
   let cursor = ((await db.meta.get(cursorKey))?.value as string | undefined) ?? '1970-01-01T00:00:00Z';
+  // Une ligne horodatée au début d'un envoi long n'est visible qu'à la fin de cet envoi : un autre appareil a pu
+  // avancer son curseur au-delà entre-temps. On relit donc à chaque fois les dernières minutes (première page).
+  let from = new Date(Math.max(0, new Date(cursor).getTime() - OVERLAP_MS)).toISOString();
   for (;;) {
     const columns: string = spec.owner ? 'id, data, deleted, updated_at, owner_id' : 'id, data, deleted, updated_at';
     const { data, error } = (await supabase
       .from(spec.remote)
       .select(columns)
-      .gt('updated_at', cursor)
+      .gt('updated_at', from)
       .order('updated_at')
       .limit(1000)) as unknown as { data: Obj[]; error: Error | null };
     if (error) throw error;
@@ -286,7 +298,9 @@ async function pullTable(name: string, spec: TableSpec) {
       const del = data.filter((r) => r.deleted && !pending.has(r.id)).map((r) => r.id);
       if (put.length) await db.table(name).bulkPut(put);
       if (del.length) await db.table(name).bulkDelete(del);
-      cursor = data[data.length - 1].updated_at;
+      const last = data[data.length - 1].updated_at;
+      if (last > cursor) cursor = last;
+      from = last;
       await db.meta.put({ key: cursorKey, value: cursor });
     });
     if (data.length < 1000) break;
@@ -365,6 +379,7 @@ export async function startSync(userId: string, role?: string) {
   installHooks();
   // Visiteur : une flashcard ancienne peut devenir publique, on relit donc les flashcards à chaque ouverture
   if (role === 'visiteur') await db.meta.delete('cursor:cards');
+  await repairOnce();
   // Au chargement, on retente les envois refusés lors d'une session précédente
   await db.outbox.toCollection().modify((o) => {
     delete o.err;
