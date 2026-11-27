@@ -251,7 +251,7 @@ const SECTIONS: { title: string; text: string; details: string[] }[] = [
     text: 'Placer les élèves dans chaque salle, projeter le plan au tableau et faire l’appel.',
     details: [
       'salles dessinées en cochant un quadrillage',
-      'un ou plusieurs plans par classe, salle et sous-groupe',
+      'un ou plusieurs plans par classe, salle et sous-groupe ; un nouveau plan peut partir d’un plan vide ou de la copie d’un plan existant (mêmes élèves, salle et places)',
       'placement au clic, échange, ordre alphabétique ou hasard',
       'vue depuis le bureau',
       'sauvegardes datées avec commentaire et restauration',

@@ -182,7 +182,8 @@ export function SeatPlanTab({ group }: { group: Group }) {
     );
 
   // Nouveau plan : élèves (classe entière ou sous-groupe), salle (parmi celles dessinées), puis nom
-  const [creating, setCreating] = useState<{ roomId: string; name: string; subgroupId?: string } | null>(null);
+  // fromId : plan recopié (places des élèves reprises, dans la limite des places de la salle choisie)
+  const [creating, setCreating] = useState<{ roomId: string; name: string; subgroupId?: string; fromId?: string } | null>(null);
   function createPlan(roomId?: string) {
     if (!rooms.length) return;
     const r = rooms.find((x) => x.id === roomId) ?? rooms.find((x) => x.name === usual) ?? rooms[0];
@@ -190,7 +191,10 @@ export function SeatPlanTab({ group }: { group: Group }) {
   }
   async function confirmCreate() {
     if (!creating?.name.trim()) return;
-    const p: SeatPlan = { id: uid(), name: creating.name.trim(), roomId: creating.roomId, subgroupId: creating.subgroupId, seats: {} };
+    const from = plans.find((x) => x.id === creating.fromId);
+    const target = new Set(rooms.find((r) => r.id === creating.roomId)?.seats ?? []);
+    const seats = from ? Object.fromEntries(Object.entries(from.seats).filter(([k]) => target.has(k))) : {};
+    const p: SeatPlan = { id: uid(), name: creating.name.trim(), roomId: creating.roomId, subgroupId: creating.subgroupId, seats };
     await savePlans(group, [...plans, p]);
     setPlanId(p.id);
     setCreating(null);
@@ -331,6 +335,26 @@ export function SeatPlanTab({ group }: { group: Group }) {
       {creating && (
         <div className="panel stack" style={{ gap: 10, borderColor: 'var(--matiere)' }}>
           <b>Nouveau plan de {shortName(group.name)}</b>
+          {plans.length > 0 && (
+            <div className="row" style={{ gap: 6 }}>
+              <span className="small" style={{ fontWeight: 700 }}>
+                Partir de :
+              </span>
+              <button className={'btn small' + (!creating.fromId ? ' primary' : ' ghost')} onClick={() => setCreating({ ...creating, fromId: undefined })}>
+                Plan vide
+              </button>
+              {plans.map((p) => (
+                <button
+                  key={p.id}
+                  className={'btn small' + (creating.fromId === p.id ? ' primary' : ' ghost')}
+                  title="Copie : mêmes élèves, même salle et mêmes places (modifiables ensuite)"
+                  onClick={() => setCreating({ ...creating, fromId: p.id, roomId: p.roomId, subgroupId: p.subgroupId, name: `${p.name} (copie)` })}
+                >
+                  Copie de « {p.name} »
+                </button>
+              ))}
+            </div>
+          )}
           <div className="row" style={{ gap: 6 }}>
             <span className="small" style={{ fontWeight: 700 }}>
               1. Élèves :
