@@ -4,6 +4,17 @@ import { db, byName, groupStudents } from '../../lib/db';
 import { useAuth } from '../../lib/auth';
 import { Avatar } from '../../components/Avatar';
 import { Icon } from '../../components/Icon';
+import qrcode from 'qrcode-generator';
+
+const PER_PAGE = 10;
+const SITE_URL = 'https://foxbox.physifox.fr';
+// QR code de l'adresse du site (dessin vectoriel, net à l'impression)
+function qrSvg(url: string) {
+  const q = qrcode(0, 'M');
+  q.addData(url);
+  q.make();
+  return q.createSvgTag({ cellSize: 2, margin: 0, scalable: true });
+}
 
 // Texte imprimé sur chaque fiche (réglable dans les Réglages) ; [identifiants] marque la place de l'identifiant et du mot de passe
 export const TICKET_SLOT = '[identifiants]';
@@ -22,6 +33,12 @@ export function Tickets() {
     return (await groupStudents(id!)).sort(byName);
   }, [id], []);
 
+  // Pages A4 explicites : 5 lignes de 2 étiquettes par page, chaque page suivie d'un saut de page
+  // (Safari ne respecte pas « ne pas couper » sur les cases d'une grille)
+  const pages: (typeof students)[] = [];
+  for (let k = 0; k < students.length; k += PER_PAGE) pages.push(students.slice(k, k + PER_PAGE));
+  const qr = qrSvg(SITE_URL);
+
   return (
     <div className="page stack">
       <div className="spread noprint">
@@ -32,26 +49,31 @@ export function Tickets() {
           <Icon name="print" size={16} /> Imprimer
         </button>
       </div>
-      <div className="tickets">
-        {students.map((s) => (
-          <div key={s.id} className="ticket">
-            {s.photoId ? <Avatar student={s} size={48} /> : <img src="./logo.png" alt="" />}
-            <div>
-              <div className="who">
-                {s.firstName} {s.lastName} <span className="muted small">· {group?.name}</span>
+      {pages.map((list, pi) => (
+        <div key={pi} className="ticket-page">
+          {list.map((s) => (
+            <div key={s.id} className="ticket">
+              <div className="ticket-side">
+                {s.photoId ? <Avatar student={s} size={48} /> : <img src="./logo.png" alt="" />}
+                <div className="ticket-qr" dangerouslySetInnerHTML={{ __html: qr }} title={SITE_URL} />
               </div>
-              {before.trim() && <div className="ticket-text">{before.trim()}</div>}
-              <div className="cred">
-                Identifiant : <b>{s.login}</b>
+              <div className="ticket-body">
+                <div className="who">
+                  {s.firstName} {s.lastName} <span className="muted small">· {group?.name}</span>
+                </div>
+                {before.trim() && <div className="ticket-text">{before.trim()}</div>}
+                <div className="cred">
+                  Identifiant : <b>{s.login}</b>
+                </div>
+                <div className="cred">
+                  Mot de passe : <b>{s.password}</b>
+                </div>
+                {after.trim() && <div className="ticket-text">{after.trim()}</div>}
               </div>
-              <div className="cred">
-                Mot de passe : <b>{s.password}</b>
-              </div>
-              {after.trim() && <div className="ticket-text">{after.trim()}</div>}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

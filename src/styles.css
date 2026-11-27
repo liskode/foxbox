@@ -287,21 +287,24 @@ table.list tr.click:hover td { background: #faf7ef; }
 }
 
 /* Fiches identifiants */
-/* 2 étiquettes par ligne, largeur d'une page A4 (190 mm utiles) ; rien ne déborde (identifiants longs coupés) */
-.tickets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; width: 100%; max-width: 190mm; }
-.ticket { border: 1px dashed #999; padding: 12px 14px; display: flex; gap: 10px; align-items: center; break-inside: avoid; page-break-inside: avoid; min-width: 0; }
-.ticket > div { min-width: 0; flex: 1; }
+/* 2 étiquettes par ligne, 5 lignes par page A4 (190 × 277 mm utiles) ; une page = un bloc suivi d'un saut de page */
+.ticket-page { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 54mm; width: 100%; max-width: 190mm; margin-bottom: 16px; }
+.ticket { border: 1px dashed #999; padding: 3mm 4mm; display: flex; gap: 10px; align-items: center; min-width: 0; overflow: hidden; }
+.ticket-side { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: none; }
+.ticket-side img { width: 44px; }
+.ticket-qr { width: 20mm; height: 20mm; }
+.ticket-qr svg { width: 100%; height: 100%; display: block; }
+.ticket-body { min-width: 0; flex: 1; }
 .ticket .cred b { overflow-wrap: anywhere; }
-.ticket img { width: 44px; flex: none; }
-.ticket .who { font-weight: 900; }
-.ticket .cred { font-family: ui-monospace, Menlo, monospace; font-size: 0.95rem; }
-.ticket .ticket-text { font-size: 0.78rem; line-height: 1.3; white-space: pre-line; margin: 4px 0; }
+.ticket .who { font-weight: 900; font-size: 0.92rem; line-height: 1.2; }
+.ticket .cred { font-family: ui-monospace, Menlo, monospace; font-size: 0.82rem; line-height: 1.3; }
+.ticket .ticket-text { font-size: 0.72rem; line-height: 1.25; white-space: pre-line; margin: 3px 0; }
 @media print {
   .noprint, .topbar { display: none !important; }
   body { background: #fff; }
   .page { padding: 0; max-width: none; }
-  .tickets { width: 190mm; max-width: 190mm; }
-  .ticket { padding: 4mm 5mm; }
+  .ticket-page { width: 190mm; max-width: 190mm; margin: 0; break-after: page; page-break-after: always; }
+  .ticket-page:last-child { break-after: auto; page-break-after: auto; }
   .eleve-shell, .page, body, html { overflow: visible !important; height: auto !important; }
 }
 
