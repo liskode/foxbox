@@ -15,6 +15,7 @@ import { DemoSettings } from '../../components/DemoSettings';
 import { GradeColorsEditor } from '../../components/GradeColorsEditor';
 import { usePfAdmin } from '../../lib/physifoxAdmin';
 import { setPfSiteOpen, usePfSiteOpen } from '../../lib/physifoxSite';
+import { DEFAULT_TICKET_TEXT, TICKET_SLOT } from './Tickets';
 
 export function Settings() {
   const { session, logout } = useAuth();
@@ -43,6 +44,7 @@ export function Settings() {
       <OriginsPanel />
       <GradeColorsEditor />
       <DemoSettings />
+      <TicketTextPanel />
       <Groups embedded />
       <div className="panel spread">
         <span>
@@ -254,6 +256,38 @@ function MessagesProfile() {
         <button className="btn small" onClick={() => save({ relations: [...relations, { label: 'Autre', code: 'A' }] })}>
           <Icon name="plus" size={15} /> Ajouter
         </button>
+      </div>
+    </div>
+  );
+}
+
+// Texte des fiches identifiants imprimées pour les élèves
+function TicketTextPanel() {
+  const { session } = useAuth();
+  const me = useLiveQuery(() => db.teachers.get(session!.id), [session?.id]);
+  if (!me) return null;
+  return (
+    <div className="panel stack" style={{ gap: 8 }}>
+      <h3 className="panel-title">
+        <Icon name="print" size={16} /> Fiches identifiants
+      </h3>
+      <span className="small muted">
+        Texte imprimé sur l'étiquette de chaque élève (page « Fiches identifiants » d'une classe). Écrivez {TICKET_SLOT} là où doivent apparaître son identifiant et son mot de passe.
+      </span>
+      <textarea
+        key={me.ticketText ?? ''}
+        defaultValue={me.ticketText?.trim() || DEFAULT_TICKET_TEXT}
+        onBlur={(e) => {
+          const v = e.target.value.trim();
+          db.teachers.update(me.id, { ticketText: !v || v === DEFAULT_TICKET_TEXT ? undefined : v });
+        }}
+        style={{ fontFamily: 'var(--font)', minHeight: 96, maxWidth: 640 }}
+      />
+      <div className="row">
+        <button className="btn ghost small" onClick={() => db.teachers.update(me.id, { ticketText: undefined })}>
+          Revenir au texte d'origine
+        </button>
+        <span className="small muted">Enregistré en quittant le champ.</span>
       </div>
     </div>
   );
